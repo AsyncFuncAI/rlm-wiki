@@ -1,4 +1,4 @@
-import { createHash, createPublicKey, createVerify, type KeyObject } from "node:crypto";
+import { createHash, createPublicKey, createVerify, randomBytes, type KeyObject } from "node:crypto";
 
 export type AuthMode = "off" | "dev" | "cloudflare_access";
 
@@ -7,6 +7,17 @@ export interface AuthIdentity {
   email: string;
   authMode: AuthMode;
 }
+
+/** Result of authenticating a request, including optional response cookies. */
+export interface AuthResult {
+  identity: AuthIdentity;
+  /** Set-Cookie header value when a new anonymous session was minted (AUTH_MODE=off). */
+  setCookie?: string;
+}
+
+/** HttpOnly cookie that scopes product storage for open (AUTH_MODE=off) deployments. */
+export const ANON_SESSION_COOKIE = "rlm_wiki_anon";
+const ANON_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 400; // ~13 months
 
 interface JwksCache {
   url: string;
@@ -22,16 +33,26 @@ export function authMode(): AuthMode {
   return "off";
 }
 
-export async function authenticateRequest(req: Request): Promise<AuthIdentity | null> {
+/**
+ * Authenticate a request.
+ *
+ * AUTH_MODE=off (public BYOK hosting): mint or reuse a per-browser anonymous
+ * session cookie so users do not all collapse into one shared tenant. This is
+ * isolation-by-cookie, not login. It is intentionally weaker than Cloudflare
+ * Access, but far safer than one global `local@rlm-wiki.dev` identity.
+ */
+export async function authenticateRequest(req: Request): Promise<AuthResult | null> {
   const mode = authMode();
   if (mode === "off") {
-    return identityFromEmail(process.env.RLM_WIKI_DEV_USER_EMAIL || "local@rlm-wiki.dev", mode);
+    return anonymousAuthResult(req);
   }
   if (mode === "dev") {
     const headerEmail = req.headers.get("x-rlm-wiki-dev-user");
-    return identityFromEmail(headerEmail || process.env.RLM_WIKI_DEV_USER_EMAIL || "dev@rlm-wiki.local", mode);
+    return {
+      identity: identityFromEmail(headerEmail || process.env.RLM_WIKI_DEV_USER_EMAIL || "dev@rlm-wiki.local", mode),
+    };
   }
-  return authenticateCloudflareAccess(req);
+  return { identity: await authenticateCloudflareAccess(req) };
 }
 
 export function identityFromEmail(emailInput: string, authModeValue: AuthMode): AuthIdentity {
@@ -41,6 +62,51 @@ export function identityFromEmail(emailInput: string, authModeValue: AuthMode): 
     authMode: authModeValue,
     userId: createHash("sha256").update(email).digest("hex").slice(0, 32),
   };
+}
+
+function anonymousAuthResult(req: Request): AuthResult {
+  const existing = anonIdFromRequest(req);
+  if (existing) {
+    return { identity: identityFromAnonId(existing) };
+  }
+  const userId = randomBytes(16).toString("hex");
+  return {
+    identity: identityFromAnonId(userId),
+    setCookie: anonSessionCookie(userId),
+  };
+}
+
+function identityFromAnonId(userId: string): AuthIdentity {
+  return {
+    userId,
+    email: `anon-${userId.slice(0, 8)}@rlm-wiki.local`,
+    authMode: "off",
+  };
+}
+
+function anonIdFromRequest(req: Request): string | null {
+  const header = req.headers.get("x-rlm-wiki-anon-id")?.trim() || "";
+  if (isAnonId(header)) return header.toLowerCase();
+  const cookie = cookieValue(req.headers.get("cookie") || "", ANON_SESSION_COOKIE);
+  if (isAnonId(cookie)) return cookie.toLowerCase();
+  return null;
+}
+
+function isAnonId(value: string): boolean {
+  return /^[a-f0-9]{32}$/i.test(value.trim());
+}
+
+export function anonSessionCookie(userId: string): string {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${ANON_SESSION_COOKIE}=${userId}; Path=/; Max-Age=${ANON_SESSION_MAX_AGE_SECONDS}; HttpOnly; SameSite=Lax${secure}`;
+}
+
+function cookieValue(header: string, name: string): string {
+  for (const part of header.split(";")) {
+    const [rawKey, ...rest] = part.trim().split("=");
+    if (rawKey === name) return decodeURIComponent(rest.join("=").trim());
+  }
+  return "";
 }
 
 async function authenticateCloudflareAccess(req: Request): Promise<AuthIdentity> {

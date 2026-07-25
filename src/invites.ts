@@ -32,7 +32,9 @@ export function inviteGateEnabled(): boolean {
 }
 
 export function isInviteAdmin(identity: AuthIdentity): boolean {
-  if (authMode() === "off") return true;
+  // AUTH_MODE=off is the open public surface. Do not treat every anonymous
+  // browser session as an invite admin.
+  if (authMode() === "off") return false;
   const admins = emailSet(process.env.RLM_WIKI_ADMIN_EMAILS);
   if (admins.size) return admins.has(identity.email);
   const allowed = emailSet(process.env.RLM_WIKI_ALLOWED_EMAILS);

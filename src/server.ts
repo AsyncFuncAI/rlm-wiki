@@ -56,6 +56,8 @@ import { providerSetupInfo } from "./provider-setup.ts";
 import { ANTHROPIC_PROXY_PREFIX, configureAnthropicProxyEnvForServer, proxyAnthropicOpenAI } from "./anthropic-openai-proxy.ts";
 import { GEMINI_PROXY_PREFIX, configureGeminiProxyEnvForServer, proxyGeminiOpenAI } from "./gemini-openai-proxy.ts";
 import { authenticateRequest, authMode, type AuthIdentity } from "./auth.ts";
+// AuthResult.identity is unwrapped in the request handler; optional Set-Cookie
+// for AUTH_MODE=off anonymous sessions is applied via withAuthCookies.
 import {
   authorizeInviteRequest,
   createInviteLinksForEmails,
@@ -566,6 +568,23 @@ function jsonResponse(data: unknown, status = 200, req?: Request): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { "content-type": "application/json", ...corsHeaders(req) },
+  });
+}
+
+function withAuthCookies(response: Response, setCookie?: string, extra?: Record<string, string>): Response {
+  if (!setCookie && !extra) return response;
+  const headers = new Headers(response.headers);
+  if (setCookie) headers.append("set-cookie", setCookie);
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (key.toLowerCase() === "set-cookie") headers.append("set-cookie", value);
+      else headers.set(key, value);
+    }
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
 }
 
@@ -3906,10 +3925,12 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
       }
 
       let authIdentity: AuthIdentity;
+      let authSetCookie: string | undefined;
       try {
-        const identity = await authenticateRequest(req);
-        if (!identity) return jsonResponse({ error: "Authentication required" }, 401, req);
-        authIdentity = identity;
+        const auth = await authenticateRequest(req);
+        if (!auth) return jsonResponse({ error: "Authentication required" }, 401, req);
+        authIdentity = auth.identity;
+        authSetCookie = auth.setCookie;
       } catch (e) {
         const status = typeof (e as { status?: unknown }).status === "number" ? (e as { status: number }).status : 401;
         if (isUiPath(method, url.pathname)) {
@@ -3919,23 +3940,23 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
       }
 
       if (method === "GET" && url.pathname.startsWith("/invite/")) {
-        return inviteAcceptResponse(req, authIdentity);
+        return withAuthCookies(inviteAcceptResponse(req, authIdentity), authSetCookie);
       }
 
       const inviteGate = authorizeInviteRequest(req, authIdentity);
       if (!inviteGate.allowed) {
         if (url.pathname.startsWith("/api/")) {
-          return jsonResponse({
+          return withAuthCookies(jsonResponse({
             error: inviteGate.reason || "Invite required.",
             code: "INVITE_REQUIRED",
             inviteOnly: true,
-          }, 403, req);
+          }, 403, req), authSetCookie);
         }
-        return inviteDeniedResponse(inviteGate.reason || "Invite required.", 403);
+        return withAuthCookies(inviteDeniedResponse(inviteGate.reason || "Invite required.", 403), authSetCookie);
       }
 
       if (isUiPath(method, url.pathname)) {
-        return indexResponse(servedIndexHtml);
+        return withAuthCookies(indexResponse(servedIndexHtml), authSetCookie, inviteGate.headers);
       }
 
       const store = opts.store ?? new WikiStore(join(baseStore.root, "users", authIdentity.userId));
@@ -3951,11 +3972,11 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         persistCapabilitySettings(productStore, settings);
 
       if (method === "GET" && url.pathname === "/api/me") {
-        return jsonResponse({
+        return withAuthCookies(jsonResponse({
           userId: authIdentity.userId,
           email: authIdentity.email,
           authMode: authIdentity.authMode,
-        }, 200, req);
+        }, 200, req), authSetCookie, inviteGate.headers);
       }
 
       if (method === "POST" && url.pathname === "/api/admin/invites") {
