@@ -34,7 +34,7 @@ export class CodexClient extends BaseLLMClient {
 
   constructor(opts: CodexClientOptions = {}) {
     super();
-    this.model = opts.model || "gpt-5.5";
+    this.model = opts.model || "gpt-5.6-sol";
     this.maxTokens = opts.maxTokens || 8192;
     this.cwd = opts.cwd || process.cwd();
   }

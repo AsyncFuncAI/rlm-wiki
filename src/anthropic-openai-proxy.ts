@@ -169,7 +169,7 @@ function openAIChatToAnthropicMessages(payload: JsonRecord): JsonRecord {
   }
 
   const body: JsonRecord = {
-    model: stringValue(payload.model) || "claude-sonnet-4-6",
+    model: stringValue(payload.model) || "claude-sonnet-5",
     max_tokens: numberValue(payload.max_tokens) ?? 8192,
     messages,
   };

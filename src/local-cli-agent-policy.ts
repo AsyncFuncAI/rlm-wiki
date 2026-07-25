@@ -40,17 +40,18 @@ export const GROK_CLI_MODELS = ["default", "grok-4.5", "composer-2.5"] as const;
 
 export const CODEX_CLI_MODELS = [
   "default",
-  "gpt-5.5",
-  "gpt-5.6-luna",
   "gpt-5.6-sol",
   "gpt-5.6-terra",
+  "gpt-5.6-luna",
+  "gpt-5.5",
 ] as const;
 
 export const CLAUDE_CLI_MODELS = [
   "default",
+  "claude-fable-5",
+  "claude-opus-5",
   "claude-sonnet-5",
   "claude-opus-4-8",
-  "claude-fable-5",
   "claude-sonnet-4-6",
 ] as const;
 

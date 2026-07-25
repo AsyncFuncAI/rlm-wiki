@@ -569,7 +569,7 @@ function asJCodeModel(client: LLMClient): JCodeModelClient {
   return {
     ...client,
     providerArg: maybe.providerArg || "auto",
-    model: maybe.model || "gpt-5.5",
+    model: maybe.model || "gpt-5.6-sol",
     channelId: maybe.channelId,
     label: maybe.label,
     env: maybe.env,
