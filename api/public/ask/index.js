@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       const result = await store.publish({
         record: body.ask,
         publicId,
-        managementToken: body.managementToken || req.headers["x-grok-wiki-publish-token"],
+        managementToken: body.managementToken || req.headers["x-rlm-wiki-publish-token"],
         visibility: body.visibility,
         baseUrl: publicWikiBaseUrl(req),
       });
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       const body = await requestBody(req).catch(() => ({}));
       const result = await store.unpublish({
         publicId,
-        managementToken: body.managementToken || req.headers["x-grok-wiki-publish-token"],
+        managementToken: body.managementToken || req.headers["x-rlm-wiki-publish-token"],
         baseUrl: publicWikiBaseUrl(req),
       });
       return res.status(200).json({ ok: true, publication: result.publication });

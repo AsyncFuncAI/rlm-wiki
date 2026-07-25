@@ -180,8 +180,8 @@ import {
 } from "./agent-capabilities.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = resolveOptionalEnvPath("GROK_WIKI_PUBLIC_DIR") ?? join(__dirname, "..", "public");
-const DIST_PUBLIC_DIR = resolveOptionalEnvPath("GROK_WIKI_DIST_PUBLIC_DIR") ?? join(__dirname, "..", "dist", "public");
+const PUBLIC_DIR = resolveOptionalEnvPath("RLM_WIKI_PUBLIC_DIR") ?? join(__dirname, "..", "public");
+const DIST_PUBLIC_DIR = resolveOptionalEnvPath("RLM_WIKI_DIST_PUBLIC_DIR") ?? join(__dirname, "..", "dist", "public");
 const AI_ICON_PATH_PATTERN = /^\/ai-icons\/[a-z0-9-]+\.svg$/;
 const STYLE_HREF_PATTERN = /href="\/styles\.css(?:\?v=[^"]*)?"/;
 const BUILT_ASSET_EXTENSIONS = "css|js|png|ico|webmanifest";
@@ -212,9 +212,9 @@ const MAX_ASK_REPOS = parseInt(process.env.RLM_WIKI_MAX_ASK_REPOS || "6", 10);
 const MAX_DISTILL = parseInt(process.env.RLM_WIKI_MAX_DISTILL || process.env.RLM_WIKI_MAX_ASK || "3", 10);
 const MAX_BATCH_REGENERATE_PAGES = 50;
 // BRANCH gate (Phase 0 outcome). Phase 0 returned gate=PASS, branch=full-self-heal,
-// so the auto-apply resolver is wired on by default. Setting GROK_WIKI_KB_SELF_HEAL=0
+// so the auto-apply resolver is wired on by default. Setting RLM_WIKI_KB_SELF_HEAL=0
 // forces the Phase-0 PARTIAL fallback (provisional-marking-only) without a code change.
-const KB_SELF_HEAL_ENABLED = process.env.GROK_WIKI_KB_SELF_HEAL !== "0";
+const KB_SELF_HEAL_ENABLED = process.env.RLM_WIKI_KB_SELF_HEAL !== "0";
 const WORKSPACE_GOALS = new Set(["compare", "steal", "understand", "bridge", "audit"]);
 const ASK_MODES = new Set(["fast", "deep"]);
 const PROCESS_SNAPSHOT_EVENT_LIMIT = 240;
@@ -454,7 +454,7 @@ export interface ServerOptions {
 function desktopEnabled(opts?: ServerOptions): boolean {
   return Boolean(
     opts?.desktop?.enabled ||
-      process.env.GROK_WIKI_DESKTOP === "1" ||
+      process.env.RLM_WIKI_DESKTOP === "1" ||
       process.env.RLM_WIKI_DESKTOP === "1",
   );
 }
@@ -466,7 +466,7 @@ export function desktopDirectPagesEnabled(input: {
 } = {}): boolean {
   if (!desktopEnabled(input.server)) return false;
   const benchmarkMode = input.benchmarkMode
-    ?? process.env.GROK_WIKI_DESKTOP_BENCHMARK === "1";
+    ?? process.env.RLM_WIKI_DESKTOP_BENCHMARK === "1";
   if (benchmarkMode && typeof input.benchmarkFastPages === "boolean") {
     return input.benchmarkFastPages;
   }
@@ -474,15 +474,15 @@ export function desktopDirectPagesEnabled(input: {
 }
 
 function desktopBenchmarkEnabled(opts?: ServerOptions): boolean {
-  return desktopEnabled(opts) && process.env.GROK_WIKI_DESKTOP_BENCHMARK === "1";
+  return desktopEnabled(opts) && process.env.RLM_WIKI_DESKTOP_BENCHMARK === "1";
 }
 
 function desktopToken(opts?: ServerOptions): string {
-  return opts?.desktop?.token || process.env.GROK_WIKI_DESKTOP_TOKEN || process.env.RLM_WIKI_DESKTOP_TOKEN || "";
+  return opts?.desktop?.token || process.env.RLM_WIKI_DESKTOP_TOKEN || "";
 }
 
 function desktopAppDataDir(opts?: ServerOptions): string {
-  return opts?.desktop?.appDataDir || process.env.GROK_WIKI_DESKTOP_APP_DATA || process.env.RLM_WIKI_DESKTOP_APP_DATA || "";
+  return opts?.desktop?.appDataDir || process.env.RLM_WIKI_DESKTOP_APP_DATA || "";
 }
 
 function requestHostname(value: string): string {
@@ -546,7 +546,7 @@ function corsHeaders(req?: Request): Record<string, string> {
   const requestOrigin = req ? new URL(req.url).origin : "";
   const headers: Record<string, string> = {
     "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type, cf-access-jwt-assertion, cf-access-authenticated-user-email, x-rlm-wiki-dev-user, x-grok-wiki-desktop-token",
+    "access-control-allow-headers": "content-type, cf-access-jwt-assertion, cf-access-authenticated-user-email, x-rlm-wiki-dev-user, x-rlm-wiki-desktop-token",
   };
   if (authMode() === "off" && !allowed.length) {
     headers["access-control-allow-origin"] = "*";
@@ -902,7 +902,7 @@ async function localCliPreflightResponse(
       localCli,
       agent: null,
       enabled: false,
-      setupHint: "Open Grok-Wiki Desktop or run Grok-Wiki on localhost to use local CLI agents.",
+      setupHint: "Open rlm-wiki Desktop or run rlm-wiki on localhost to use local CLI agents.",
     }, 400, req);
   }
   const status = await getLocalCliAgents({ rescan: true });
@@ -988,12 +988,12 @@ const ROUTE_PAGE_COUNT_MAX = 30;
 
 const ROUTE_AGENT_TIMEOUT_MS = Math.max(
   5_000,
-  Number(process.env.GROK_WIKI_ROUTE_TIMEOUT_MS || process.env.RLM_WIKI_ROUTE_TIMEOUT_MS || 30_000),
+  Number(process.env.RLM_WIKI_ROUTE_TIMEOUT_MS || 30_000),
 );
 
 export function buildRouteSystemPrompt(query: string): string {
   return [
-    "You are the routing brain for Grok-Wiki, a tool that explains and works with code repositories.",
+    "You are the routing brain for rlm-wiki, a tool that explains and works with code repositories.",
     "Classify the user's request into exactly one action and return the decision as JSON.",
     "",
     "Actions:",
@@ -1486,7 +1486,7 @@ async function syncPublishedWikiRecord(
 }
 
 function publicSiteBaseUrl(): string {
-  return (process.env.GROK_WIKI_PUBLIC_URL || process.env.RLM_WIKI_PUBLIC_URL || "https://grok-wiki.com")
+  return (process.env.RLM_WIKI_PUBLIC_URL || "https://rlmwiki.deepascii.com")
     .trim()
     .replace(/\/+$/, "");
 }
@@ -1521,7 +1521,7 @@ async function publishWikiRecordToPublicSite(
     method: publicId ? "PUT" : "POST",
     headers: {
       "content-type": "application/json",
-      ...(managementToken ? { "x-grok-wiki-publish-token": managementToken } : {}),
+      ...(managementToken ? { "x-rlm-wiki-publish-token": managementToken } : {}),
     },
     body: JSON.stringify({
       wiki: sanitizePublicWikiRecord(record),
@@ -1561,7 +1561,7 @@ async function unpublishWikiRecordFromPublicSite(
     method: "DELETE",
     headers: {
       "content-type": "application/json",
-      "x-grok-wiki-publish-token": managementToken,
+      "x-rlm-wiki-publish-token": managementToken,
     },
     body: JSON.stringify({ managementToken }),
   });
@@ -1612,7 +1612,7 @@ async function publishAskRecordToPublicSite(
     method: publicId ? "PUT" : "POST",
     headers: {
       "content-type": "application/json",
-      ...(managementToken ? { "x-grok-wiki-publish-token": managementToken } : {}),
+      ...(managementToken ? { "x-rlm-wiki-publish-token": managementToken } : {}),
     },
     body: JSON.stringify({
       ask: record,
@@ -1652,7 +1652,7 @@ async function unpublishAskRecordFromPublicSite(
     method: "DELETE",
     headers: {
       "content-type": "application/json",
-      "x-grok-wiki-publish-token": managementToken,
+      "x-rlm-wiki-publish-token": managementToken,
     },
     body: JSON.stringify({ managementToken }),
   });
@@ -2285,7 +2285,7 @@ function wikiExportFiles(record: WikiRecord): Array<{ path: string; content: str
     .filter((pageId) => !generatedIds.has(pageId));
   const indexMarkdown = [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `title: ${yamlString(record.structure.title)}`,
     `repository: ${yamlString(`${record.owner}/${record.repo}`)}`,
     `branch: ${yamlString(record.branch || "default")}`,
@@ -2334,7 +2334,7 @@ function wikiObsidianPageMarkdown(args: {
 }): string {
   const frontmatter = [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `page_id: ${yamlString(args.pageId)}`,
     `title: ${yamlString(args.title)}`,
     `repository: ${yamlString(`${args.record.owner}/${args.record.repo}`)}`,
@@ -2373,7 +2373,7 @@ function wikiObsidianSourcesMarkdown(
   const rows = [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   return [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `title: ${yamlString(`${record.structure.title} sources`)}`,
     "---",
     "",
@@ -2447,18 +2447,18 @@ function wikiPrintExportHtml(record: WikiRecord): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${htmlEscape(title)} - Grok-Wiki PDF Export</title>
+  <title>${htmlEscape(title)} - rlm-wiki PDF Export</title>
   <style>${wikiPrintCss()}</style>
 </head>
 <body>
   <div class="wiki-print-toolbar no-print">
-    <strong>Grok-Wiki PDF export</strong>
+    <strong>rlm-wiki PDF export</strong>
     <span>This page stays local. Use Save as PDF in the print dialog.</span>
     <button type="button" onclick="window.print()">Print / Save PDF</button>
   </div>
   <main class="wiki-print-document">
     <section class="wiki-print-cover">
-      <p class="wiki-print-kicker">Grok-Wiki</p>
+      <p class="wiki-print-kicker">rlm-wiki</p>
       <h1>${htmlEscape(title)}</h1>
       ${record.structure.description ? `<p>${htmlEscape(record.structure.description)}</p>` : ""}
       <dl>
@@ -3831,7 +3831,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         if (!desktopEnabled(opts)) return jsonResponse({ error: "Desktop mode is not enabled." }, 404, req);
         const expectedToken = desktopToken(opts);
         const desktopTokenHeader =
-          req.headers.get("x-grok-wiki-desktop-token") ||
+          req.headers.get("x-rlm-wiki-desktop-token") ||
           req.headers.get("x-rlm-wiki-desktop-token");
         if (expectedToken && desktopTokenHeader !== expectedToken) {
           return jsonResponse({ error: "Desktop token required." }, 403, req);
@@ -4408,7 +4408,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
           typeof htmlBody.codeGraphHint === "string" && htmlBody.codeGraphHint.trim()
             ? htmlBody.codeGraphHint.trim()
             : undefined;
-        // Desktop opt-in + server gate (GROK_WIKI_CODE_KB). Same gate as Ask.
+        // Desktop opt-in + server gate (RLM_WIKI_CODE_KB). Same gate as Ask.
         const htmlCodeGraphRequested = htmlBody.codeGraphEnabled === true;
         const htmlCodeGraphEnabled = codeGraphEnabledForRequest(htmlBody.codeGraphEnabled);
         // Kick shared provisioning only when the server gate is actually open.
@@ -4438,11 +4438,11 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
           // Do not start the local agent until the graph is ready or definitively skipped.
           const HTML_CODE_KB_BUDGET_MS = Math.max(
             20_000,
-            Number(process.env.GROK_WIKI_CODE_KB_HTML_BUDGET_MS || 45_000),
+            Number(process.env.RLM_WIKI_CODE_KB_HTML_BUDGET_MS || 45_000),
           );
 
           if (htmlCodeGraphRequested && !htmlCodeGraphEnabled) {
-            // Settings on in desktop, but server KB is disabled (GROK_WIKI_CODE_KB=0).
+            // Settings on in desktop, but server KB is disabled (RLM_WIKI_CODE_KB=0).
             send("code-graph", {
               state: "skipped",
               message: "Code graph unavailable on server. Using checkout exploration.",
@@ -8192,7 +8192,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
     },
   });
 
-  const productName = desktopEnabled(opts) ? "Grok-Wiki" : "rlm-wiki";
+  const productName = desktopEnabled(opts) ? "rlm-wiki" : "rlm-wiki";
   console.log(`${productName} listening at http://${server.hostname}:${server.port}`);
   console.log(`  UI:        http://${server.hostname}:${server.port}/`);
   console.log(`  Health:    http://${server.hostname}:${server.port}/api/health`);
@@ -8935,7 +8935,7 @@ async function resolveAskWikiContexts(
  */
 export const ASK_CODE_KB_BUDGET_MS = Math.max(
   1_000,
-  Number(process.env.GROK_WIKI_CODE_KB_ASK_BUDGET_MS || 12_000),
+  Number(process.env.RLM_WIKI_CODE_KB_ASK_BUDGET_MS || 12_000),
 );
 
 export function codeGraphEnabledForRequest(requested: unknown): boolean {

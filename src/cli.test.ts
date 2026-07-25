@@ -63,7 +63,7 @@ function wikiRecord(owner = "owner", repo = "repo"): WikiRecord {
 }
 
 function depsWith(overrides: Partial<CliDeps> = {}): CliDeps {
-  const root = mkdtempSync(join(tmpdir(), "grok-wiki-cli-test-"));
+  const root = mkdtempSync(join(tmpdir(), "rlm-wiki-cli-test-"));
   return {
     createStore: () => new WikiStore(root),
     generateWiki: async () => wikiRecord(),
@@ -92,7 +92,7 @@ function depsWith(overrides: Partial<CliDeps> = {}): CliDeps {
   } as CliDeps;
 }
 
-describe("grok-wiki CLI", () => {
+describe("rlm-wiki CLI", () => {
   test("parses repeated and equals flags without losing sources", () => {
     const parsed = parseFlags([
       "--source",
@@ -109,7 +109,7 @@ describe("grok-wiki CLI", () => {
   });
 
   test("generate uses local-cli runtime, local agent config, and workspace refs", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-cli-src-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-cli-src-"));
     const repoA = join(root, "repo-a");
     const repoB = join(root, "repo-b");
     mkdirSync(repoA);
@@ -211,7 +211,7 @@ describe("grok-wiki CLI", () => {
   });
 
   test("generate persists a product wiki artifact for desktop library hydration", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-cli-product-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-cli-product-"));
     const io = ioBuffer();
     const store = new WikiStore(root);
 
@@ -325,7 +325,7 @@ describe("grok-wiki CLI", () => {
   });
 
   test("ask supports multi-source local paths for workspace Ask", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-cli-local-ask-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-cli-local-ask-"));
     const repoA = join(root, "api");
     const repoB = join(root, "web");
     mkdirSync(repoA);
@@ -454,7 +454,7 @@ describe("grok-wiki CLI", () => {
   });
 
   test("ask persists a product ask run for desktop recent asks", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-cli-ask-product-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-cli-ask-product-"));
     const io = ioBuffer();
     const store = new WikiStore(root);
 
@@ -721,9 +721,9 @@ describe("grok-wiki CLI", () => {
     expect(workerOptions).toEqual({ once: true });
   });
 
-  test("package exposes the grok-wiki executable alias", () => {
+  test("package exposes the rlm-wiki executable alias", () => {
     const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-    expect(pkg.bin["grok-wiki"]).toBe("./bin/grok-wiki.ts");
+    expect(pkg.bin["rlm-wiki"]).toBe("./bin/rlm-wiki.ts");
     expect(pkg.bin["rlm-wiki"]).toBe("./bin/rlm-wiki.ts");
   });
 });

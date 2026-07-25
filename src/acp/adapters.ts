@@ -94,9 +94,9 @@ export function acpAdapterFor(agentId: LocalCliAgentId): AcpLaunchConfig {
   return ACP_ADAPTERS[agentId] || ACP_ADAPTERS.grok;
 }
 
-/** Env override: GROK_WIKI_ACP=0 disables ACP path; =1 forces try; unset = auto. */
+/** Env override: RLM_WIKI_ACP=0 disables ACP path; =1 forces try; unset = auto. */
 export function acpTransportPreference(): "off" | "auto" | "force" {
-  const raw = (process.env.GROK_WIKI_ACP || "").trim().toLowerCase();
+  const raw = (process.env.RLM_WIKI_ACP || "").trim().toLowerCase();
   if (raw === "0" || raw === "false" || raw === "off" || raw === "legacy") return "off";
   if (raw === "1" || raw === "true" || raw === "on" || raw === "force") return "force";
   return "auto";

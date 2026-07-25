@@ -15,9 +15,9 @@ describe("public landing SEO", () => {
 
   test("canonicalizes crawlable static marketing routes", async () => {
     const pages = [
-      ["../public/grok-wiki.html", "https://grok-wiki.com/"],
-      ["../public/episodes.html", "https://grok-wiki.com/episodes"],
-      ["../public/changelog.html", "https://grok-wiki.com/changelog"],
+      ["../public/rlm-wiki.html", "https://rlmwiki.deepascii.com/"],
+      ["../public/episodes.html", "https://rlmwiki.deepascii.com/episodes"],
+      ["../public/changelog.html", "https://rlmwiki.deepascii.com/changelog"],
     ];
 
     for (const [path, canonicalUrl] of pages) {
@@ -29,7 +29,7 @@ describe("public landing SEO", () => {
   });
 
   test("exposes answer-ready homepage structured data", async () => {
-    const html = await Bun.file(new URL("../public/grok-wiki.html", import.meta.url)).text();
+    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
     const jsonLd = Array.from(html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g), ([, raw]) => JSON.parse(raw));
     const nodes = jsonLd.flatMap((value) => Array.isArray(value["@graph"]) ? value["@graph"] : [value]);
 
@@ -37,7 +37,7 @@ describe("public landing SEO", () => {
       expect.arrayContaining([
         expect.objectContaining({
           "@type": "SoftwareApplication",
-          name: "Grok-Wiki",
+          name: "rlm-wiki",
           applicationCategory: "DeveloperApplication",
           operatingSystem: "macOS",
         }),
@@ -45,13 +45,13 @@ describe("public landing SEO", () => {
           "@type": "FAQPage",
           mainEntity: expect.arrayContaining([
             expect.objectContaining({
-              name: "Why use Grok-Wiki instead of just Codex, Claude Code, Grok, or ChatGPT?",
+              name: "Why use rlm-wiki instead of just Codex, Claude Code, Grok, or ChatGPT?",
             }),
             expect.objectContaining({
-              name: "How does Grok-Wiki keep the wiki grounded in the source?",
+              name: "How does rlm-wiki keep the wiki grounded in the source?",
             }),
             expect.objectContaining({
-              name: "Can another agent use a Grok-Wiki page after it is generated?",
+              name: "Can another agent use a rlm-wiki page after it is generated?",
             }),
           ]),
         }),
@@ -65,23 +65,10 @@ describe("public landing SEO", () => {
       headers: VercelHeaderRule[];
     };
 
-    expect(config.redirects).toContainEqual({
-      source: "/",
-      has: [{ type: "host", value: "www.grok-wiki.com" }],
-      destination: "https://grok-wiki.com/",
-      permanent: true,
-    });
-
     expect(config.redirects).toEqual(
       expect.arrayContaining([
         {
-          source: "/:path*",
-          has: [{ type: "host", value: "www.grok-wiki.com" }],
-          destination: "https://grok-wiki.com/:path*",
-          permanent: true,
-        },
-        {
-          source: "/grok-wiki.html",
+          source: "/rlm-wiki.html",
           destination: "/",
           permanent: true,
         },
@@ -102,6 +89,7 @@ describe("public landing SEO", () => {
         },
       ]),
     );
+    expect(JSON.stringify(config.redirects).toLowerCase()).not.toMatch(/g\s*rok[\s_-]*wiki/);
 
     expect(config.redirects.filter((redirect) => redirect.source === "/public-wiki-gallery.html")).toHaveLength(0);
     expect(config.headers).toEqual(
@@ -123,27 +111,27 @@ describe("public landing SEO", () => {
   });
 
   test("gives every landing video a crawlable thumbnail poster", async () => {
-    const html = await Bun.file(new URL("../public/grok-wiki.html", import.meta.url)).text();
+    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
     const videoTags = Array.from(html.matchAll(/<video\b[^>]*>/g), ([tag]) => tag);
 
     expect(videoTags.length).toBeGreaterThan(0);
     for (const tag of videoTags) {
-      expect(tag).toContain('poster="https://grok-wiki.com/');
+      expect(tag).toContain('poster="https://rlmwiki.deepascii.com/');
     }
-    expect(html).toContain('poster="https://grok-wiki.com/episodes/grok-wiki-ep1-poster.jpg"');
+    expect(html).toContain('poster="https://rlmwiki.deepascii.com/episodes/rlm-wiki-ep1-poster.jpg"');
   });
 
-  test("includes the Grok-Wiki FAQ with onboarding contact and hardware artwork", async () => {
-    const html = await Bun.file(new URL("../public/grok-wiki.html", import.meta.url)).text();
+  test("includes the rlm-wiki FAQ with onboarding contact and hardware artwork", async () => {
+    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
 
     expect(html).toContain('id="faq"');
     expect(html).toContain("Frequently Asked Questions");
-    expect(html).toContain("https://calendly.com/asyncfunc/grok-wiki-onboarding");
-    expect(html).toContain("./editorial/grok-wiki-faq-90s-hardware.webp");
-    expect(html).toContain("Why use Grok-Wiki instead of just Codex, Claude Code, Grok, or ChatGPT?");
-    expect(html).toContain("How does Grok-Wiki keep the wiki grounded in the source?");
+    expect(html).toContain("https://calendly.com/asyncfunc/rlm-wiki-onboarding");
+    expect(html).toContain("./editorial/rlm-wiki-faq-90s-hardware.webp");
+    expect(html).toContain("Why use rlm-wiki instead of just Codex, Claude Code, Grok, or ChatGPT?");
+    expect(html).toContain("How does rlm-wiki keep the wiki grounded in the source?");
     expect(html).toContain("What happens when I publish a wiki?");
-    expect(html).toContain("Can another agent use a Grok-Wiki page after it is generated?");
+    expect(html).toContain("Can another agent use a rlm-wiki page after it is generated?");
     expect(html).toContain("What kinds of repositories are a good fit?");
 
     const faqStart = html.indexOf('<section class="faq-section"');

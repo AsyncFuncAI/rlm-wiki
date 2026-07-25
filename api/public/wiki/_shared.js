@@ -8,8 +8,8 @@ export function normalizePublicWikiId(value) {
   return /^[a-z0-9][a-z0-9_-]{7,95}$/.test(clean) ? clean : "";
 }
 
-export function publicWikiBaseUrlFromEnv(defaultBaseUrl = "https://grok-wiki.com") {
-  return String(process.env.GROK_WIKI_PUBLIC_URL || process.env.RLM_WIKI_PUBLIC_URL || defaultBaseUrl)
+export function publicWikiBaseUrlFromEnv(defaultBaseUrl = "https://rlmwiki.deepascii.com") {
+  return String(process.env.RLM_WIKI_PUBLIC_URL || defaultBaseUrl)
     .trim()
     .replace(/\/+$/, "");
 }
@@ -17,7 +17,7 @@ export function publicWikiBaseUrlFromEnv(defaultBaseUrl = "https://grok-wiki.com
 export function publicWikiBaseUrl(req) {
   const configured = publicWikiBaseUrlFromEnv("");
   if (configured) return configured;
-  const host = req.headers["x-forwarded-host"] || req.headers.host || "grok-wiki.com";
+  const host = req.headers["x-forwarded-host"] || req.headers.host || "rlmwiki.deepascii.com";
   const proto = req.headers["x-forwarded-proto"] || "https";
   return `${proto}://${host}`.replace(/\/+$/, "");
 }
@@ -44,7 +44,7 @@ export async function requestBody(req) {
 
 export function setCors(res, methods) {
   res.setHeader("access-control-allow-methods", methods);
-  res.setHeader("access-control-allow-headers", "content-type, x-grok-wiki-publish-token");
+  res.setHeader("access-control-allow-headers", "content-type, x-rlm-wiki-publish-token");
 }
 
 export function normalizePublicWikiVisibility(value) {
@@ -253,7 +253,7 @@ export function wikiExportFiles(record) {
     .filter((pageId) => !generatedIds.has(pageId));
   const indexMarkdown = [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `title: ${yamlString(record.structure?.title || `${record.owner}/${record.repo}`)}`,
     `repository: ${yamlString(`${record.owner}/${record.repo}`)}`,
     `branch: ${yamlString(record.branch || "default")}`,
@@ -294,7 +294,7 @@ export function wikiExportFiles(record) {
 function wikiObsidianPageMarkdown(args) {
   const frontmatter = [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `page_id: ${yamlString(args.pageId)}`,
     `title: ${yamlString(args.title)}`,
     `repository: ${yamlString(`${args.record.owner}/${args.record.repo}`)}`,
@@ -330,7 +330,7 @@ function wikiObsidianSourcesMarkdown(record, pageEntries) {
   const rows = [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   return [
     "---",
-    "grok_wiki: true",
+    "rlm_wiki: true",
     `title: ${yamlString(`${record.structure?.title || record.repo} sources`)}`,
     "---",
     "",
@@ -393,8 +393,8 @@ export function publicWikiMarkdownIndex(snapshot, baseUrl) {
   const context = publicWikiMarkdownContext(snapshot, baseUrl);
   const artifact = context.surface === "docs" ? "docs" : "wiki";
   const artifactDescription = context.surface === "docs"
-    ? "Grok-Wiki source-grounded repository documentation set"
-    : "Grok-Wiki source-grounded repository wiki";
+    ? "rlm-wiki source-grounded repository documentation set"
+    : "rlm-wiki source-grounded repository wiki";
   const lines = [
     `# ${context.title}`,
     "",
@@ -550,7 +550,7 @@ export function publicWikiSitemapXml(baseUrl, items = []) {
 
 export function publicWikiMarkdownFileName(snapshot, suffix = "wiki.md") {
   const wiki = snapshot?.wiki || {};
-  const owner = slugPathPart(wiki.owner || snapshot?.owner || "grok");
+  const owner = slugPathPart(wiki.owner || snapshot?.owner || "repo");
   const repo = slugPathPart(wiki.repo || snapshot?.repo || "wiki");
   const cleanSuffix = String(suffix || "wiki.md").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+/, "") || "wiki.md";
   return `${owner}-${repo}-${cleanSuffix}`;
@@ -562,7 +562,7 @@ export function publicWikiAgentHtmlFallback(snapshot, baseUrl) {
   const artifactLabel = context.surface === "docs" ? "docs" : "wiki";
   const headingLabel = context.surface === "docs" ? "Agent-readable docs" : "Agent-readable wiki";
   return `
-      <article class="public-wiki-agent-fallback" data-agent-readable="true" aria-label="Agent-readable Grok-Wiki ${artifactLabel} fallback">
+      <article class="public-wiki-agent-fallback" data-agent-readable="true" aria-label="Agent-readable rlm-wiki ${artifactLabel} fallback">
         <header class="public-wiki-agent-head">
           <p class="public-wiki-agent-kicker">${escapeHtml(headingLabel)}</p>
           <h1>${escapeHtml(context.title)}</h1>
@@ -611,7 +611,7 @@ function publicWikiMarkdownContext(snapshot, baseUrl) {
     repository,
     repoUrl: safePublicRepoUrl(wiki.repoUrl) || firstRepoUrl(wiki.repos),
     title: markdownLine(snapshot?.title || structure.title || `${repository} Wiki`, `${repository} Wiki`),
-    description: markdownLine(snapshot?.description || structure.description || `A source-grounded repository ${surface === "docs" ? "documentation set" : "wiki"} generated with Grok-Wiki.`, ""),
+    description: markdownLine(snapshot?.description || structure.description || `A source-grounded repository ${surface === "docs" ? "documentation set" : "wiki"} generated with rlm-wiki.`, ""),
     branch: cleanOptional(snapshot?.branch) || cleanOptional(wiki.branch),
     generatedAt: cleanOptional(snapshot?.generatedAt) || cleanOptional(wiki.generatedAt),
     updatedAt: cleanOptional(snapshot?.updatedAt) || cleanOptional(wiki.updatedAt),

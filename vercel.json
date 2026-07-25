@@ -3,29 +3,7 @@
   "outputDirectory": "dist/public",
   "redirects": [
     {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.grok-wiki.com"
-        }
-      ],
-      "destination": "https://grok-wiki.com/",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.grok-wiki.com"
-        }
-      ],
-      "destination": "https://grok-wiki.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/grok-wiki.html",
+      "source": "/rlm-wiki.html",
       "destination": "/",
       "permanent": true
     },

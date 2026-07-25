@@ -63,7 +63,7 @@ const USER_STOP_MESSAGE = "Stopped by user.";
 // Generation runs minutes, so a cold sharenow kb provision (~5-20s) is worth
 // waiting for; anything slower degrades to the instruction-only blocks when a
 // provisioning session is already cached (pre-warm), else to the no-kb prompts.
-const WIKI_CODE_KB_BUDGET_MS = envPositiveInt("GROK_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000);
+const WIKI_CODE_KB_BUDGET_MS = envPositiveInt("RLM_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000);
 // U2 evidence pre-fetch (KTD-4): bounded fan-out so a burst of kb reads never
 // swamps the session sandbox, plus deterministic head sizes for cache-stable
 // prompts. All fetches are best-effort; a failed item is silently omitted.
@@ -478,13 +478,13 @@ export async function fetchWikiDirectPageEvidencePacks(
   }
 }
 
-/** B7 gate: default ON for fast depth; opt out with GROK_WIKI_CODE_KB_FAST_STRUCTURE=0. */
+/** B7 gate: default ON for fast depth; opt out with RLM_WIKI_CODE_KB_FAST_STRUCTURE=0. */
 function fastStructureEnabled(): boolean {
-  return process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE !== "0";
+  return process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE !== "0";
 }
 
 function fastPagesEnabled(): boolean {
-  return process.env.GROK_WIKI_CODE_KB_FAST_PAGES !== "0";
+  return process.env.RLM_WIKI_CODE_KB_FAST_PAGES !== "0";
 }
 
 export function fastPageTimeoutDefaultMs(style: WikiStyle | string): number {
@@ -496,7 +496,7 @@ export function fastPageTimeoutDefaultMs(style: WikiStyle | string): number {
 /**
  * Default budget (ms) for the B7 direct structure call, scaled by the requested
  * page count: FAST_STRUCTURE_TIMEOUT_BASE_MS plus FAST_STRUCTURE_TIMEOUT_PER_PAGE_MS
- * per page, clamped to FAST_STRUCTURE_TIMEOUT_MAX_MS. GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS
+ * per page, clamped to FAST_STRUCTURE_TIMEOUT_MAX_MS. RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS
  * overrides this. A deeper plan is a longer single completion, so the flat 60s
  * default timed out every deep (Docs, up to 30 pages) run.
  */
@@ -736,7 +736,7 @@ export async function structureFromCodeKb(
 
     if (opts.signal?.aborted) return null;
     const timeoutMs = envPositiveInt(
-      "GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS",
+      "RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS",
       fastStructureTimeoutDefaultMs(opts.pageCount),
     );
     const timer = setTimeout(() => controller.abort("fast structure direct call timed out"), timeoutMs);
@@ -840,10 +840,10 @@ function envPositiveInt(name: string, fallback: number): number {
 /**
  * Per-page evidence packs are off by default: the A/B benchmark showed the
  * per-iteration token tax of the injected file heads outweighed the tool-call
- * savings on a local checkout. Opt in with GROK_WIKI_CODE_KB_PAGE_EVIDENCE=1.
+ * savings on a local checkout. Opt in with RLM_WIKI_CODE_KB_PAGE_EVIDENCE=1.
  */
 function pageEvidenceEnabled(): boolean {
-  return process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE === "1";
+  return process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE === "1";
 }
 
 function maxPageConcurrencyForLocalCli(localCli?: LocalCliConfig | unknown): number {
@@ -1931,7 +1931,7 @@ async function runDirectPageWriter(args: {
   };
   args.signal?.addEventListener("abort", onParentAbort, { once: true });
   const timeoutMs = envPositiveInt(
-    "GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS",
+    "RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS",
     fastPageTimeoutDefaultMs(args.style),
   );
   let timedOut = false;
@@ -2274,7 +2274,7 @@ export async function generateWiki(
   // U2 (R4): pre-fetch the per-page evidence packs from the same snapshot
   // before spawning page agents. Off by default (the A/B benchmark showed the
   // token tax lost to free tool calls on the checkout); opt in with
-  // GROK_WIKI_CODE_KB_PAGE_EVIDENCE=1. Best-effort: an empty map leaves every
+  // RLM_WIKI_CODE_KB_PAGE_EVIDENCE=1. Best-effort: an empty map leaves every
   // page prompt byte-identical to the pre-evidence output (R8).
   let pageEvidencePacks = new Map<string, string>();
   if (pageEvidenceEnabled() && codeKbPrompts?.session && codeKbPrompts.pageCodeKb) {

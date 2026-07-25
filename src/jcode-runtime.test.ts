@@ -6,7 +6,7 @@ import { loadSource, resolveGitHubLoadTarget } from "./jcode-runtime.ts";
 
 describe("local source loading", () => {
   test("allows non-git local folders for read-only workspaces", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-local-folder-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-local-folder-"));
     const source = join(root, "loose-notes");
     const target = join(root, "workspace", "loose-notes");
     mkdirSync(join(source, "node_modules", "ignored"), { recursive: true });
@@ -25,7 +25,7 @@ describe("local source loading", () => {
   });
 
   test("can scope a loaded source to a subfolder", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-local-folder-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-local-folder-"));
     const source = join(root, "repo");
     const target = join(root, "workspace", "repo");
     mkdirSync(join(source, "codex-rs", "app-server"), { recursive: true });
@@ -70,7 +70,7 @@ describe("local source loading", () => {
   });
 
   test("still rejects branch selection for non-git local folders", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-local-folder-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-local-folder-"));
     const source = join(root, "loose-notes");
     mkdirSync(source, { recursive: true });
 

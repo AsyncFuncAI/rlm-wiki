@@ -15,7 +15,7 @@ const DEFAULT_ENSURE_BUDGET_MS = 45_000;
 // caller with a short budget (Ask's ~5s) does not strand a half-provisioned
 // sandbox: the attempt keeps polling after the caller gives up and caches the
 // ready session for the next call. Tunable via
-// GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS.
+// RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS.
 const DEFAULT_PROVISION_BUDGET_MS = 150_000;
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
 // Sharenow reaps sessions after 30 min idle / 60 min hard cap. Cache entries
@@ -112,11 +112,11 @@ export interface CodeKbClientOptions {
 }
 
 export function codeKbEnabled(): boolean {
-  return process.env.GROK_WIKI_CODE_KB !== "0";
+  return process.env.RLM_WIKI_CODE_KB !== "0";
 }
 
 export function codeKbBaseUrl(): string {
-  const raw = String(process.env.GROK_WIKI_CODE_KB_BASE_URL || "").trim();
+  const raw = String(process.env.RLM_WIKI_CODE_KB_BASE_URL || "").trim();
   const trimmed = raw.replace(/\/+$/, "");
   return trimmed || DEFAULT_BASE_URL;
 }
@@ -290,7 +290,7 @@ export async function raceWithBudget<T>(promise: Promise<T>, budgetMs: number): 
 
 function provisionBudgetMs(opts: CodeKbClientOptions): number {
   if (typeof opts.internalBudgetMs === "number" && opts.internalBudgetMs > 0) return opts.internalBudgetMs;
-  const raw = Number(process.env.GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS || "");
+  const raw = Number(process.env.RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS || "");
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_PROVISION_BUDGET_MS;
 }
 

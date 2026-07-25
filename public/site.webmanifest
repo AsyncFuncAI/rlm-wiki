@@ -1,6 +1,6 @@
 {
-  "name": "Grok-Wiki",
-  "short_name": "Grok-Wiki",
+  "name": "rlm-wiki",
+  "short_name": "rlm-wiki",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

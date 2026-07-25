@@ -122,7 +122,7 @@ describe("share-safe labels", () => {
 describe("markdown builders", () => {
   test("llms.txt index lists context links and every question", () => {
     const snapshot = baseSnapshot();
-    const markdown = publicAskMarkdownIndex(snapshot, "https://grok-wiki.com");
+    const markdown = publicAskMarkdownIndex(snapshot, "https://rlmwiki.deepascii.com");
     expect(markdown).toContain("# How does the launchpad route asks?");
     expect(markdown).toContain("/llms-full.txt");
     expect(markdown).toContain("01. How does the launchpad route asks?");
@@ -133,7 +133,7 @@ describe("markdown builders", () => {
 
   test("full markdown carries answers, clarifications, and sources", () => {
     const snapshot = baseSnapshot();
-    const markdown = publicAskMarkdownFull(snapshot, "https://grok-wiki.com");
+    const markdown = publicAskMarkdownFull(snapshot, "https://rlmwiki.deepascii.com");
     expect(markdown).toContain("## Q1: How does the launchpad route asks?");
     expect(markdown).toContain("It uses an **agent brain** that decides routing.");
     expect(markdown).toContain("Which surface?: Desktop");
@@ -143,8 +143,8 @@ describe("markdown builders", () => {
   });
 
   test("markdown urls follow the canonical path for both visibilities", () => {
-    const urls = publicAskMarkdownUrls("https://grok-wiki.com", baseSnapshot("private"));
-    expect(urls.canonicalUrl).toMatch(/^https:\/\/grok-wiki\.com\/share\/ask\/private-[0-9a-f]{32}$/);
+    const urls = publicAskMarkdownUrls("https://rlmwiki.deepascii.com", baseSnapshot("private"));
+    expect(urls.canonicalUrl).toMatch(/^https:\/\/rlm-wiki\.com\/share\/ask\/private-[0-9a-f]{32}$/);
     expect(urls.llmsUrl.endsWith("/llms.txt")).toBe(true);
     expect(urls.markdownUrl.endsWith(".md")).toBe(true);
   });
@@ -153,7 +153,7 @@ describe("markdown builders", () => {
 describe("agent fallback and publication", () => {
   test("fallback html embeds questions and the complete markdown", () => {
     const snapshot = baseSnapshot();
-    const html = publicAskAgentHtmlFallback(snapshot, "https://grok-wiki.com");
+    const html = publicAskAgentHtmlFallback(snapshot, "https://rlmwiki.deepascii.com");
     expect(html).toContain('data-agent-readable="true"');
     expect(html).toContain("How does the launchpad route asks?");
     expect(html).toContain("Complete Markdown");
@@ -162,7 +162,7 @@ describe("agent fallback and publication", () => {
 
   test("publication carries recordVersion for desktop freshness checks", () => {
     const snapshot = baseSnapshot();
-    const publication = publicAskPublicationFromSnapshot(snapshot, "https://grok-wiki.com");
+    const publication = publicAskPublicationFromSnapshot(snapshot, "https://rlmwiki.deepascii.com");
     expect(publication.published).toBe(true);
     expect(publication.publicUrl).toContain("/public/ask/");
     expect(publication.recordVersion).toBe("2026-06-10T12:00:00.000Z");
@@ -210,7 +210,7 @@ describe("UpstashPublicAskStore", () => {
   test("publish mints a token once and get() reassembles the turns", async () => {
     installFakeUpstash();
     const store = makeStore();
-    const published = await store.publish({ record: baseRecord, visibility: "private", baseUrl: "https://grok-wiki.com" });
+    const published = await store.publish({ record: baseRecord, visibility: "private", baseUrl: "https://rlmwiki.deepascii.com" });
     expect(published.managementToken).toBeTruthy();
     expect(published.publication.publicUrl).toContain("/share/ask/private-");
 
@@ -223,7 +223,7 @@ describe("UpstashPublicAskStore", () => {
   test("updates require the management token and trim stale tail turns", async () => {
     const kv = installFakeUpstash();
     const store = makeStore();
-    const published = await store.publish({ record: baseRecord, visibility: "private", baseUrl: "https://grok-wiki.com" });
+    const published = await store.publish({ record: baseRecord, visibility: "private", baseUrl: "https://rlmwiki.deepascii.com" });
     const publicId = published.publication.publicId;
 
     await expect(store.publish({ record: baseRecord, publicId, managementToken: "wrong" })).rejects.toThrow(/token rejected/i);
@@ -233,7 +233,7 @@ describe("UpstashPublicAskStore", () => {
       record: shorter,
       publicId,
       managementToken: published.managementToken,
-      baseUrl: "https://grok-wiki.com",
+      baseUrl: "https://rlmwiki.deepascii.com",
     });
     expect(updated.managementToken).toBeUndefined();
     expect(kv.has(`gw:public:ask:${publicId}:turn:1`)).toBe(false);
@@ -244,7 +244,7 @@ describe("UpstashPublicAskStore", () => {
   test("unpublish hides the snapshot and deletes turn bodies", async () => {
     const kv = installFakeUpstash();
     const store = makeStore();
-    const published = await store.publish({ record: baseRecord, visibility: "public", baseUrl: "https://grok-wiki.com" });
+    const published = await store.publish({ record: baseRecord, visibility: "public", baseUrl: "https://rlmwiki.deepascii.com" });
     const publicId = published.publication.publicId;
 
     const result = await store.unpublish({ publicId, managementToken: published.managementToken });

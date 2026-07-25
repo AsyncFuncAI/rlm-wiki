@@ -211,8 +211,8 @@ describe("ask source parsing", () => {
   test("normalizes Ask GitHub tree URLs before clone setup", () => {
     const refs = parseAskRefsFromUrls([
       "https://github.com/openai/codex/tree/main/codex-rs/app-server?tab=readme",
-      "https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey?tab=readme",
-      "https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey/apps/desktop",
+      "https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey?tab=readme",
+      "https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey/apps/desktop",
       "openai/codex@main:codex-rs/core",
       "https://github.com/openai/codex/blob/main/codex-rs/app-server/src/main.rs",
     ]);
@@ -226,17 +226,17 @@ describe("ask source parsing", () => {
     });
     expect(refs[1]).toMatchObject({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
+      repo: "rlm-wiki",
       branch: "feature/hotkey",
       sourcePath: null,
-      label: "AsyncFuncAI/grok-wiki",
+      label: "AsyncFuncAI/rlm-wiki",
     });
     expect(refs[2]).toMatchObject({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
+      repo: "rlm-wiki",
       branch: "feature/hotkey",
       sourcePath: "apps/desktop",
-      label: "AsyncFuncAI/grok-wiki:apps/desktop",
+      label: "AsyncFuncAI/rlm-wiki:apps/desktop",
     });
     expect(refs[3]).toMatchObject({
       owner: "openai",
@@ -447,20 +447,20 @@ describe("ask code-kb wiring", () => {
     const gate = (serverModule as Record<string, unknown>).codeGraphEnabledForRequest;
     expect(typeof gate).toBe("function");
     const enabledForRequest = gate as (requested: unknown) => boolean;
-    const previous = process.env.GROK_WIKI_CODE_KB;
+    const previous = process.env.RLM_WIKI_CODE_KB;
     try {
-      delete process.env.GROK_WIKI_CODE_KB;
+      delete process.env.RLM_WIKI_CODE_KB;
       // Opt-in only: missing/undefined defaults off.
       expect(enabledForRequest(undefined)).toBe(false);
       expect(enabledForRequest(true)).toBe(true);
       expect(enabledForRequest(false)).toBe(false);
 
-      process.env.GROK_WIKI_CODE_KB = "0";
+      process.env.RLM_WIKI_CODE_KB = "0";
       expect(enabledForRequest(true)).toBe(false);
       expect(enabledForRequest(undefined)).toBe(false);
     } finally {
-      if (previous === undefined) delete process.env.GROK_WIKI_CODE_KB;
-      else process.env.GROK_WIKI_CODE_KB = previous;
+      if (previous === undefined) delete process.env.RLM_WIKI_CODE_KB;
+      else process.env.RLM_WIKI_CODE_KB = previous;
     }
   });
 
@@ -567,8 +567,8 @@ describe("ask code-kb wiring", () => {
   });
 
   test("disabled flag leaves contexts unchanged with zero fetches", async () => {
-    const previous = process.env.GROK_WIKI_CODE_KB;
-    process.env.GROK_WIKI_CODE_KB = "0";
+    const previous = process.env.RLM_WIKI_CODE_KB;
+    process.env.RLM_WIKI_CODE_KB = "0";
     try {
       const contexts = baseContexts();
       const before = contexts.map((entry) => ({ ...entry }));
@@ -590,8 +590,8 @@ describe("ask code-kb wiring", () => {
       expect(ensureCalls).toBe(0);
       expect(queryCalls).toBe(0);
     } finally {
-      if (previous === undefined) delete process.env.GROK_WIKI_CODE_KB;
-      else process.env.GROK_WIKI_CODE_KB = previous;
+      if (previous === undefined) delete process.env.RLM_WIKI_CODE_KB;
+      else process.env.RLM_WIKI_CODE_KB = previous;
     }
   });
 
@@ -894,7 +894,7 @@ describe("ask code-kb evidence (U3)", () => {
       },
       readFile: async (_session, path, range) => {
         readFileCalls.push({ path, range });
-        return { content: "# Grok Wiki\nRun docker compose up." };
+        return { content: "# rlm-wiki\nRun docker compose up." };
       },
     });
 

@@ -51,27 +51,27 @@ import {
 
 const SIDE_CAR_TTL_MS = Math.max(
   60_000,
-  Number(process.env.GROK_WIKI_LOCAL_CLI_WORKSPACE_TTL_MS || process.env.RLM_WIKI_LOCAL_CLI_WORKSPACE_TTL_MS || 15 * 60_000),
+  Number(process.env.RLM_WIKI_LOCAL_CLI_WORKSPACE_TTL_MS || 15 * 60_000),
 );
 const LOCAL_CLI_PROMPT_TIMEOUT_MS = Math.max(
   60_000,
-  Number(process.env.GROK_WIKI_LOCAL_CLI_PROMPT_TIMEOUT_MS || process.env.RLM_WIKI_LOCAL_CLI_PROMPT_TIMEOUT_MS || 31 * 60_000),
+  Number(process.env.RLM_WIKI_LOCAL_CLI_PROMPT_TIMEOUT_MS || 31 * 60_000),
 );
 const LOCAL_CLI_PROBE_TIMEOUT_MS = Math.max(
   500,
-  Number(process.env.GROK_WIKI_LOCAL_CLI_PROBE_TIMEOUT_MS || process.env.RLM_WIKI_LOCAL_CLI_PROBE_TIMEOUT_MS || 1_500),
+  Number(process.env.RLM_WIKI_LOCAL_CLI_PROBE_TIMEOUT_MS || 1_500),
 );
 const ANTIGRAVITY_STATUS_HEARTBEAT_MS = Math.max(
   5_000,
-  Number(process.env.GROK_WIKI_ANTIGRAVITY_STATUS_HEARTBEAT_MS || process.env.RLM_WIKI_ANTIGRAVITY_STATUS_HEARTBEAT_MS || 15_000),
+  Number(process.env.RLM_WIKI_ANTIGRAVITY_STATUS_HEARTBEAT_MS || 15_000),
 );
 const ANTIGRAVITY_QUIET_TIMEOUT_MS = Math.max(
   60_000,
-  Number(process.env.GROK_WIKI_ANTIGRAVITY_QUIET_TIMEOUT_MS || process.env.RLM_WIKI_ANTIGRAVITY_QUIET_TIMEOUT_MS || 5 * 60_000),
+  Number(process.env.RLM_WIKI_ANTIGRAVITY_QUIET_TIMEOUT_MS || 5 * 60_000),
 );
-const LOCAL_CLI_RUN_PREFIX = "grok-wiki-local-cli-";
+const LOCAL_CLI_RUN_PREFIX = "rlm-wiki-local-cli-";
 const LOCAL_CLI_PROVIDER_ENV_ALLOW =
-  process.env.GROK_WIKI_LOCAL_CLI_ALLOW_PROVIDER_ENV === "1" ||
+  process.env.RLM_WIKI_LOCAL_CLI_ALLOW_PROVIDER_ENV === "1" ||
   process.env.RLM_WIKI_LOCAL_CLI_ALLOW_PROVIDER_ENV === "1";
 const LOCAL_CLI_PROVIDER_ENV_KEYS = new Set([
   ...PROVIDER_SECRET_KEYS,
@@ -89,10 +89,10 @@ const LOCAL_CLI_PROVIDER_ENV_KEYS = new Set([
 ]);
 const LOCAL_CLI_PROVIDER_ENV_PATTERNS = [
   /^DEEPSEEK_API_KEY_\d+$/,
-  /^GROK_WIKI_.*(?:API_KEY|AUTH_TOKEN|ACCESS_TOKEN|SECRET|KEY)$/,
+  /^RLM_WIKI_.*(?:API_KEY|AUTH_TOKEN|ACCESS_TOKEN|SECRET|KEY)$/,
   /^RLM_WIKI_.*(?:API_KEY|AUTH_TOKEN|ACCESS_TOKEN|SECRET|KEY)$/,
 ];
-const LOCAL_CLI_TERMINAL_PREFIX = "grok-wiki-local-cli-terminal-";
+const LOCAL_CLI_TERMINAL_PREFIX = "rlm-wiki-local-cli-terminal-";
 const CODEX_DEFAULT_MODEL = "gpt-5.5";
 const PI_CODEX_PROVIDER = "openai-codex";
 const PI_CODEX_DEFAULT_MODEL = "gpt-5.5";
@@ -104,11 +104,11 @@ const PI_THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "
 // both the per-event payload on ingest and the total retained event bytes per run.
 export const LOCAL_CLI_EVENT_PAYLOAD_BYTE_CAP = Math.max(
   4_096,
-  Number(process.env.GROK_WIKI_LOCAL_CLI_EVENT_PAYLOAD_BYTES || process.env.RLM_WIKI_LOCAL_CLI_EVENT_PAYLOAD_BYTES || 64 * 1024),
+  Number(process.env.RLM_WIKI_LOCAL_CLI_EVENT_PAYLOAD_BYTES || 64 * 1024),
 );
 export const LOCAL_CLI_RUN_EVENT_BYTE_BUDGET = Math.max(
   LOCAL_CLI_EVENT_PAYLOAD_BYTE_CAP,
-  Number(process.env.GROK_WIKI_LOCAL_CLI_RUN_EVENT_BUDGET_BYTES || process.env.RLM_WIKI_LOCAL_CLI_RUN_EVENT_BUDGET_BYTES || 12 * 1024 * 1024),
+  Number(process.env.RLM_WIKI_LOCAL_CLI_RUN_EVENT_BUDGET_BYTES || 12 * 1024 * 1024),
 );
 const LOCAL_CLI_PAYLOAD_TRUNCATION_MARKER = "\n…[truncated under memory pressure]";
 let cachedLoginShellPathDirs: string[] | null = null;
@@ -1119,7 +1119,7 @@ export async function runAntigravityPrint(args: {
   onEvent: (event: LocalCliEvent) => void;
   phase?: (label: string, message: string, extra?: Partial<Extract<LocalCliEvent, { type: "status" }>>) => void;
 }): Promise<void> {
-  const promptFileName = `.grok-wiki-antigravity-prompt-${randomBytes(4).toString("hex")}.md`;
+  const promptFileName = `.rlm-wiki-antigravity-prompt-${randomBytes(4).toString("hex")}.md`;
   const promptPath = join(args.cwd, promptFileName);
   writeFileSync(promptPath, args.prompt, "utf8");
   const commandArgs = antigravityArgs({
@@ -1322,7 +1322,7 @@ async function runGrokHeadless(args: {
   reasoning?: string;
   onEvent: (event: LocalCliEvent) => void;
 }): Promise<void> {
-  const promptPath = join(args.cwd, `.grok-wiki-grok-prompt-${randomBytes(4).toString("hex")}.md`);
+  const promptPath = join(args.cwd, `.rlm-wiki-grok-prompt-${randomBytes(4).toString("hex")}.md`);
   writeFileSync(promptPath, args.prompt, "utf8");
   const commandArgs = grokHeadlessArgs({
     cwd: args.cwd,
@@ -1737,7 +1737,7 @@ async function waitForGrokAcpStreamSettle(lastStreamAt: () => number): Promise<v
   const requiredIdleSlices = 3; // ~1.2s of continuous quiet
   const maxWaitMs = Math.max(
     15_000,
-    Number(process.env.GROK_WIKI_ACP_STREAM_SETTLE_MS || 45_000),
+    Number(process.env.RLM_WIKI_ACP_STREAM_SETTLE_MS || 45_000),
   );
   let stableChecks = 0;
   const started = Date.now();

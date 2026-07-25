@@ -80,7 +80,7 @@ describe("Open Slide wiki export", () => {
 
     expect(source).toContain("export const meta");
     expect(source).toContain("export default [Cover]");
-    expect(source).not.toContain("Generated from Grok-Wiki");
+    expect(source).not.toContain("Generated from rlm-wiki");
   });
 
   test("extracts and validates agent Open Slide TSX", () => {

@@ -495,7 +495,7 @@ describe("Grok CLI local CLI adapter", () => {
   test("runs headless streaming JSON in documented always-approve mode", () => {
     expect(grokHeadlessArgs({
       cwd: "/tmp/repo",
-      promptPath: "/tmp/repo/.grok-wiki-grok-prompt.md",
+      promptPath: "/tmp/repo/.rlm-wiki-grok-prompt.md",
     })).toEqual([
       "--cwd",
       "/tmp/repo",
@@ -503,14 +503,14 @@ describe("Grok CLI local CLI adapter", () => {
       "streaming-json",
       "--always-approve",
       "--prompt-file",
-      "/tmp/repo/.grok-wiki-grok-prompt.md",
+      "/tmp/repo/.rlm-wiki-grok-prompt.md",
     ]);
   });
 
   test("passes selected model and reasoning to headless mode", () => {
     expect(grokHeadlessArgs({
       cwd: "/tmp/repo",
-      promptPath: "/tmp/repo/.grok-wiki-grok-prompt.md",
+      promptPath: "/tmp/repo/.rlm-wiki-grok-prompt.md",
       model: "grok-code-fast-1",
       reasoning: "high",
     })).toEqual([
@@ -524,7 +524,7 @@ describe("Grok CLI local CLI adapter", () => {
       "--reasoning-effort",
       "high",
       "--prompt-file",
-      "/tmp/repo/.grok-wiki-grok-prompt.md",
+      "/tmp/repo/.rlm-wiki-grok-prompt.md",
     ]);
   });
 
@@ -534,7 +534,7 @@ describe("Grok CLI local CLI adapter", () => {
 
   test("runs Antigravity in sandboxed unattended print mode", () => {
     expect(antigravityArgs({
-      promptPath: "/tmp/repo/.grok-wiki-antigravity-prompt-abcd.md",
+      promptPath: "/tmp/repo/.rlm-wiki-antigravity-prompt-abcd.md",
       workspaceDir: "/tmp/repo",
       timeoutMs: 1234,
     })).toEqual([
@@ -545,12 +545,12 @@ describe("Grok CLI local CLI adapter", () => {
       "--print-timeout",
       "1234ms",
       "--print",
-      "Read /tmp/repo/.grok-wiki-antigravity-prompt-abcd.md and complete the task exactly as written.",
+      "Read /tmp/repo/.rlm-wiki-antigravity-prompt-abcd.md and complete the task exactly as written.",
     ]);
   });
 
   test("uses Antigravity stdout as the answer stream", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-run-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-run-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -561,7 +561,7 @@ describe("Grok CLI local CLI adapter", () => {
       "  shift",
       "done",
       "case \"$prompt\" in",
-      "  *'.grok-wiki-antigravity-prompt-'*) printf '<ANSWER>Antigravity done</ANSWER>\\n<SOURCES>\\n- README.md:1\\n</SOURCES>\\n'; exit 0 ;;",
+      "  *'.rlm-wiki-antigravity-prompt-'*) printf '<ANSWER>Antigravity done</ANSWER>\\n<SOURCES>\\n- README.md:1\\n</SOURCES>\\n'; exit 0 ;;",
       "  *) echo 'missing prompt file instruction' >&2; exit 2 ;;",
       "esac",
       "",
@@ -592,7 +592,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("emits Antigravity quiet-mode status while stdout is buffered", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-quiet-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-quiet-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -625,7 +625,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("stops Antigravity after a tunable quiet period", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-quiet-timeout-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-quiet-timeout-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -658,7 +658,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("adds Antigravity setup guidance when print mode exits non-zero", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-error-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-error-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -682,7 +682,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("treats Antigravity print timeout stdout as a runtime error", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-timeout-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-timeout-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -706,7 +706,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("treats empty Antigravity print stdout as a runtime error", async () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-empty-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-empty-"));
     const bin = join(root, "agy");
     writeFileSync(bin, [
       "#!/bin/sh",
@@ -747,7 +747,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("allows canonical paths that point inside a symlinked workspace", () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-workspace-real-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-workspace-real-"));
     const alias = `${root}-alias`;
     try {
       symlinkSync(root, alias, "dir");
@@ -762,7 +762,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("still rejects real paths outside the local CLI workspace", () => {
-    const root = mkdtempSync(join(tmpdir(), "grok-wiki-workspace-"));
+    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-workspace-"));
     try {
       expect(() => resolveWorkspacePath(root, "/etc/passwd")).toThrow(/outside local CLI workspace/);
     } finally {
@@ -947,7 +947,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("searches common shell install locations for packaged desktop agents", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-agent-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-agent-home-"));
     const npmPrefix = join(home, "custom-npm");
     const pnpmHome = join(home, "custom-pnpm");
     const bunInstall = join(home, "custom-bun");
@@ -1015,13 +1015,13 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("spawns packaged local CLI sidecars through the bundled server entry", () => {
-    const previous = process.env.GROK_WIKI_SERVER_ENTRY;
+    const previous = process.env.RLM_WIKI_SERVER_ENTRY;
     try {
-      process.env.GROK_WIKI_SERVER_ENTRY = "/Applications/Grok-Wiki.app/Contents/Resources/server/rlm-wiki.js";
-      expect(localCliSidecarEntrypoint()).toBe("/Applications/Grok-Wiki.app/Contents/Resources/server/rlm-wiki.js");
+      process.env.RLM_WIKI_SERVER_ENTRY = "/Applications/rlm-wiki.app/Contents/Resources/server/rlm-wiki.js";
+      expect(localCliSidecarEntrypoint()).toBe("/Applications/rlm-wiki.app/Contents/Resources/server/rlm-wiki.js");
     } finally {
-      if (previous === undefined) delete process.env.GROK_WIKI_SERVER_ENTRY;
-      else process.env.GROK_WIKI_SERVER_ENTRY = previous;
+      if (previous === undefined) delete process.env.RLM_WIKI_SERVER_ENTRY;
+      else process.env.RLM_WIKI_SERVER_ENTRY = previous;
     }
   });
 
@@ -1032,7 +1032,7 @@ describe("Grok CLI local CLI adapter", () => {
       __setLocalCliSidecarStarterForTests(async () => {
         starts++;
         if (starts === 1) throw new Error("bad bundled sidecar path");
-        return { baseUrl: "http://127.0.0.1:1", token: "token", stampPath: join(tmpdir(), "grok-wiki-test-sidecar.json") };
+        return { baseUrl: "http://127.0.0.1:1", token: "token", stampPath: join(tmpdir(), "rlm-wiki-test-sidecar.json") };
       });
       globalThis.fetch = (async () =>
         new Response(JSON.stringify({ agents: [] }), { status: 200 })
@@ -1061,7 +1061,7 @@ describe("Grok CLI local CLI adapter", () => {
         return {
           baseUrl: `http://127.0.0.1:${41000 + starts}`,
           token: "token",
-          stampPath: join(tmpdir(), `grok-wiki-test-sidecar-${starts}.json`),
+          stampPath: join(tmpdir(), `rlm-wiki-test-sidecar-${starts}.json`),
         };
       });
       globalThis.fetch = (async (_url: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
@@ -1091,7 +1091,7 @@ describe("Grok CLI local CLI adapter", () => {
         return {
           baseUrl: `http://127.0.0.1:${42000 + starts}`,
           token: "token",
-          stampPath: join(tmpdir(), `grok-wiki-test-stale-sidecar-${starts}.json`),
+          stampPath: join(tmpdir(), `rlm-wiki-test-stale-sidecar-${starts}.json`),
         };
       });
       globalThis.fetch = (async () => {
@@ -1116,7 +1116,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("rescans local CLI availability without executing installed agent shims", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-agent-rescan-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-agent-rescan-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1160,7 +1160,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("rescan does not clear cached readiness, so the run path does not re-probe the shim", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-readiness-cache-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-readiness-cache-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1203,7 +1203,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("run-path readiness never invokes the version args, while probe does", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-readiness-version-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-readiness-version-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1243,7 +1243,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("detects Antigravity CLI as runnable when agy is installed", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1272,7 +1272,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("detects Antigravity CLI from the desktop app shim directory", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-antigravity-shim-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-antigravity-shim-home-"));
     const bin = join(home, ".antigravity", "antigravity", "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: "/usr/bin", SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1299,7 +1299,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("marks Pi Codex unavailable until openai-codex auth exists", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-pi-codex-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-pi-codex-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1339,7 +1339,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("marks Pi Claude unavailable until anthropic auth exists", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-pi-claude-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-pi-claude-home-"));
     const bin = join(home, "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: bin, SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });
@@ -1379,7 +1379,7 @@ describe("Grok CLI local CLI adapter", () => {
   });
 
   test("detects Codex installed under fnm when the desktop app lacks the terminal PATH", () => {
-    const home = mkdtempSync(join(tmpdir(), "grok-wiki-agent-fnm-home-"));
+    const home = mkdtempSync(join(tmpdir(), "rlm-wiki-agent-fnm-home-"));
     const bin = join(home, ".fnm", "node-versions", "v22.0.0", "installation", "bin");
     const restoreEnv = useIsolatedLocalCliEnv({ HOME: home, PATH: "/usr/bin", SHELL: "/bin/sh" });
     mkdirSync(bin, { recursive: true });

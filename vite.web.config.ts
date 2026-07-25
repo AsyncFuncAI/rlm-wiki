@@ -17,11 +17,11 @@ const copiedStaticAssets = new Set([
   "favicon-48x48.png",
   "favicon.ico",
   "github-async-review-preview.html",
-  "grok-wiki-logo.png",
-  "grok-wiki-preview-bottom-left.png",
-  "grok-wiki-preview.png",
-  "grok-wiki-preview-90s-office.png",
-  "grok-wiki-wordmark.json",
+  "rlm-wiki-logo.png",
+  "rlm-wiki-preview-bottom-left.png",
+  "rlm-wiki-preview.png",
+  "rlm-wiki-preview-90s-office.png",
+  "rlm-wiki-wordmark.json",
   "site.webmanifest",
 ]);
 
@@ -78,11 +78,11 @@ function withoutInjectedAppStyles(html: string): string {
   );
 }
 
-function publishGrokWikiLanding(): Plugin {
+function publishrlm-wikiLanding(): Plugin {
   return {
-    name: "grok-wiki-publish-landing",
+    name: "rlm-wiki-publish-landing",
     writeBundle() {
-      const landingPath = join(distPublicRoot, "grok-wiki.html");
+      const landingPath = join(distPublicRoot, "rlm-wiki.html");
       const indexPath = join(distPublicRoot, "index.html");
       if (!statSync(landingPath, { throwIfNoEntry: false })?.isFile()) return;
       const landingHtml = withoutInjectedAppStyles(readFileSync(landingPath, "utf8"));
@@ -95,7 +95,7 @@ function publishGrokWikiLanding(): Plugin {
 export default defineConfig({
   root: publicRoot,
   publicDir: false,
-  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishGrokWikiLanding()],
+  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishrlm-wikiLanding()],
   // Public pages import shared reader UI from ../src/ui (outside public/).
   server: {
     fs: {
@@ -114,7 +114,7 @@ export default defineConfig({
         index: join(publicRoot, "index.html"),
         changelog: join(publicRoot, "changelog.html"),
         episodes: join(publicRoot, "episodes.html"),
-        "grok-wiki": join(publicRoot, "grok-wiki.html"),
+        "rlm-wiki": join(publicRoot, "rlm-wiki.html"),
         "public-ask": join(publicRoot, "public-ask.html"),
         "public-wiki": join(publicRoot, "public-wiki.html"),
         "public-wiki-gallery": join(publicRoot, "public-wiki-gallery.html"),

@@ -59,17 +59,17 @@ let sidecarStarter: () => Promise<SidecarHandle> = startLocalCliSidecarProcess;
 
 export function localCliSidecarEnabled(): boolean {
   const raw = (
-    process.env.GROK_WIKI_LOCAL_CLI ||
-    process.env.GROK_WIKI_ENABLE_LOCAL_CLI ||
+    process.env.RLM_WIKI_LOCAL_CLI ||
+    process.env.RLM_WIKI_ENABLE_LOCAL_CLI ||
     process.env.RLM_WIKI_LOCAL_CLI ||
     process.env.RLM_WIKI_ENABLE_LOCAL_CLI ||
     ""
   ).trim().toLowerCase();
   if (raw === "0" || raw === "false" || raw === "off") return false;
   if (raw === "1" || raw === "true" || raw === "on") return true;
-  if (process.env.GROK_WIKI_LOCAL_CLI_SIDECAR === "1") return true;
   if (process.env.RLM_WIKI_LOCAL_CLI_SIDECAR === "1") return true;
-  if (process.env.GROK_WIKI_PROCESS === "worker" || process.env.RLM_WIKI_PROCESS === "worker") return false;
+  if (process.env.RLM_WIKI_LOCAL_CLI_SIDECAR === "1") return true;
+  if (process.env.RLM_WIKI_PROCESS === "worker" || process.env.RLM_WIKI_PROCESS === "worker") return false;
   if (process.env.RAILWAY_ENVIRONMENT || process.env.FLY_APP_NAME || process.env.RENDER || process.env.VERCEL || process.env.NETLIFY || process.env.HEROKU_APP_NAME) {
     return false;
   }
@@ -77,9 +77,9 @@ export function localCliSidecarEnabled(): boolean {
 }
 
 export function localCliSidecarEntrypoint(): string {
-  const bundled = process.env.GROK_WIKI_SERVER_ENTRY?.trim();
+  const bundled = process.env.RLM_WIKI_SERVER_ENTRY?.trim();
   if (bundled) return bundled;
-  return fileURLToPath(new URL("../bin/grok-wiki.ts", import.meta.url));
+  return fileURLToPath(new URL("../bin/rlm-wiki.ts", import.meta.url));
 }
 
 export async function getLocalCliAgents(opts: { rescan?: boolean; probe?: boolean } = {}): Promise<{ enabled: boolean; agents: LocalCliAgentStatus[]; error?: string }> {
@@ -230,7 +230,7 @@ function resetLocalCliSidecar(handle?: SidecarHandle): void {
 
 async function startLocalCliSidecarProcess(): Promise<SidecarHandle> {
   const token = randomBytes(24).toString("hex");
-  const stampPath = join(tmpdir(), `grok-wiki-local-cli-${process.pid}-${randomBytes(4).toString("hex")}.json`);
+  const stampPath = join(tmpdir(), `rlm-wiki-local-cli-${process.pid}-${randomBytes(4).toString("hex")}.json`);
   const binPath = localCliSidecarEntrypoint();
   mkdirSync(dirname(stampPath), { recursive: true });
   rmSync(stampPath, { force: true });
@@ -249,7 +249,7 @@ async function startLocalCliSidecarProcess(): Promise<SidecarHandle> {
   ], {
     stdout: "pipe",
     stderr: "pipe",
-    env: { ...process.env, GROK_WIKI_LOCAL_CLI_SIDECAR: "1" },
+    env: { ...process.env, RLM_WIKI_LOCAL_CLI_SIDECAR: "1" },
   });
   drainProcessLog(proc.stderr, "local-cli-sidecar");
   drainProcessLog(proc.stdout, "local-cli-sidecar");

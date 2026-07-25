@@ -26,8 +26,7 @@ export const TASK_EXTRACT_MAX_TASKS_PER_EPIC = 8;
 export const TASK_EXTRACT_TIMEOUT_MS = Math.max(
   5_000,
   Number(
-    process.env.GROK_WIKI_TASK_EXTRACT_TIMEOUT_MS ||
-      process.env.GROK_WIKI_ROUTE_TIMEOUT_MS ||
+    process.env.RLM_WIKI_TASK_EXTRACT_TIMEOUT_MS ||
       process.env.RLM_WIKI_ROUTE_TIMEOUT_MS ||
       45_000,
   ),
@@ -35,7 +34,7 @@ export const TASK_EXTRACT_TIMEOUT_MS = Math.max(
 
 export function buildTaskExtractPrompt(answer: string, question: string | null): string {
   return [
-    "You are the task-extraction brain for Grok-Wiki's Tasks board (a kanban backlog).",
+    "You are the task-extraction brain for rlm-wiki's Tasks board (a kanban backlog).",
     "Below is an assistant answer from a conversation about a code repository. Distill it into a",
     `clean list of 1 to ${TASK_EXTRACT_MAX_TASKS} actionable engineering tasks.`,
     "Rules:",

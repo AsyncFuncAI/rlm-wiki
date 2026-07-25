@@ -107,7 +107,7 @@ describe("wiki prompts", () => {
   test("auto page-count prompts ask the structure agent to choose under the ceiling", () => {
     const prompt = buildStructurePrompt({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
+      repo: "rlm-wiki",
       pageCount: 12,
       pageCountMode: "auto",
     });
@@ -121,7 +121,7 @@ describe("wiki prompts", () => {
   test("fixed page-count prompts preserve exact-count API behavior", () => {
     const prompt = buildStructurePrompt({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
+      repo: "rlm-wiki",
       pageCount: 12,
       pageCountMode: "fixed",
     });
@@ -381,7 +381,7 @@ describe("wiki prompts", () => {
     expect(structurePrompt).not.toContain("persona routes");
     expect(structurePrompt).not.toContain("Prefer component tags for content pages");
     expect(structurePrompt).not.toContain("Prefer diagrams when architecture");
-    expect(pagePrompt).toContain("Grok Docs MDX components");
+    expect(pagePrompt).toContain("Docs MDX components");
     expect(pagePrompt).toContain("The very first element must be YAML frontmatter");
     expect(pagePrompt).toContain('title: "Configuration reference"');
     expect(pagePrompt).toContain("Agent-friendly output matters");
@@ -1092,12 +1092,12 @@ describe("wiki prompts", () => {
 describe("wiki code-kb wiring", () => {
   const structureArgs = {
     owner: "AsyncFuncAI",
-    repo: "grok-wiki",
+    repo: "rlm-wiki",
     pageCount: 6,
   };
   const pageArgs = {
     owner: "AsyncFuncAI",
-    repo: "grok-wiki",
+    repo: "rlm-wiki",
     page: {
       id: "page-overview",
       title: "Overview",
@@ -1107,14 +1107,14 @@ describe("wiki code-kb wiring", () => {
   };
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "grok-wiki",
-    url: "https://github.com/AsyncFuncAI/grok-wiki",
+    repo: "rlm-wiki",
+    url: "https://github.com/AsyncFuncAI/rlm-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-test-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/grok-wiki@default",
+    cacheKey: "github:asyncfuncai/rlm-wiki@default",
     ref: kbRef,
   };
 
@@ -1375,33 +1375,33 @@ describe("wiki code-kb wiring", () => {
   });
 
   test("disabled flag: prefetch with the default client resolves null with no network (Covers R8)", async () => {
-    const previous = process.env.GROK_WIKI_CODE_KB;
-    process.env.GROK_WIKI_CODE_KB = "0";
+    const previous = process.env.RLM_WIKI_CODE_KB;
+    process.env.RLM_WIKI_CODE_KB = "0";
     try {
       expect(await prefetchWikiCodeKbPrompts(kbRef)).toBeNull();
     } finally {
-      if (previous === undefined) delete process.env.GROK_WIKI_CODE_KB;
-      else process.env.GROK_WIKI_CODE_KB = previous;
+      if (previous === undefined) delete process.env.RLM_WIKI_CODE_KB;
+      else process.env.RLM_WIKI_CODE_KB = previous;
     }
   });
 
   test("primary budget defaults to 20s and stays env-tunable (source pin)", () => {
     const generator = readFileSync(new URL("./generator.ts", import.meta.url), "utf8");
-    expect(generator).toContain('envPositiveInt("GROK_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000)');
+    expect(generator).toContain('envPositiveInt("RLM_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000)');
   });
 });
 
 describe("wiki code-kb evidence pre-fetch (U2)", () => {
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "grok-wiki",
-    url: "https://github.com/AsyncFuncAI/grok-wiki",
+    repo: "rlm-wiki",
+    url: "https://github.com/AsyncFuncAI/rlm-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-evidence-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/grok-wiki@default",
+    cacheKey: "github:asyncfuncai/rlm-wiki@default",
     ref: kbRef,
   };
   const makeKbPage = (id: string, filePaths: string[]): WikiPage => ({
@@ -1425,7 +1425,7 @@ describe("wiki code-kb evidence pre-fetch (U2)", () => {
       },
       readFile: async (_session, path) => {
         reads.push(path);
-        return { path, content: "# Grok Wiki\nGenerates grounded wikis.", truncated: false };
+        return { path, content: "# rlm-wiki\nGenerates grounded wikis.", truncated: false };
       },
     });
 
@@ -1678,21 +1678,21 @@ describe("wiki code-kb evidence pre-fetch (U2)", () => {
 describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)", () => {
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "grok-wiki",
-    url: "https://github.com/AsyncFuncAI/grok-wiki",
+    repo: "rlm-wiki",
+    url: "https://github.com/AsyncFuncAI/rlm-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-generate-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/grok-wiki@default",
+    cacheKey: "github:asyncfuncai/rlm-wiki@default",
     ref: kbRef,
   };
 
   const structureAnswer = [
     "<ANSWER>",
     "<wiki_structure>",
-    "  <title>Grok Wiki</title>",
+    "  <title>rlm-wiki</title>",
     "  <description>Test wiki for the code-kb seam.</description>",
     "  <sections>",
     '    <section id="section-overview">',
@@ -1741,16 +1741,16 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     answers?: { structure?: string; pageAnswerFor?: (prompt: string) => string },
   ): Promise<{ result: T; prompts: Array<{ contextLabel: string; prompt: string }> }> {
     const previousFetch = globalThis.fetch;
-    const previousLocalCli = process.env.GROK_WIKI_LOCAL_CLI;
+    const previousLocalCli = process.env.RLM_WIKI_LOCAL_CLI;
     const prompts: Array<{ contextLabel: string; prompt: string }> = [];
     const runs = new Map<string, { contextLabel: string; prompt: string }>();
     let runCounter = 0;
 
-    process.env.GROK_WIKI_LOCAL_CLI = "1";
+    process.env.RLM_WIKI_LOCAL_CLI = "1";
     __setLocalCliSidecarStarterForTests(async () => ({
       baseUrl: "http://127.0.0.1:1",
       token: "token",
-      stampPath: join(tmpdir(), "grok-wiki-generate-test-sidecar.json"),
+      stampPath: join(tmpdir(), "rlm-wiki-generate-test-sidecar.json"),
     }));
     globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
       const url = String(input);
@@ -1779,13 +1779,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       .finally(() => {
         globalThis.fetch = previousFetch;
         __resetLocalCliSidecarForTests();
-        if (previousLocalCli === undefined) delete process.env.GROK_WIKI_LOCAL_CLI;
-        else process.env.GROK_WIKI_LOCAL_CLI = previousLocalCli;
+        if (previousLocalCli === undefined) delete process.env.RLM_WIKI_LOCAL_CLI;
+        else process.env.RLM_WIKI_LOCAL_CLI = previousLocalCli;
       });
   }
 
   test("throwing or never-resolving kb clients still complete generation with no <code-kb> block (Covers R4)", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-fallback-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-fallback-"));
     try {
       const store = new WikiStore(storeRoot);
       const { result, prompts } = await withFakeSidecar(async () => {
@@ -1825,13 +1825,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
   });
 
   test("a ready kb session puts the code map in the structure prompt and instructions-only in page prompts", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-ready-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-ready-"));
     // This test pins the structure-AGENT prompt wiring; keep the B7 direct
     // path (own suite below) out of the way.
-    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
     try {
       const store = new WikiStore(storeRoot);
       const ensuredRefs: RepoRef[] = [];
@@ -1872,17 +1872,17 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       }
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
   const twoPageStructureAnswer = [
     "<ANSWER>",
     "<wiki_structure>",
-    "  <title>Grok Wiki</title>",
+    "  <title>rlm-wiki</title>",
     "  <description>Test wiki for the code-kb evidence seam.</description>",
     "  <sections>",
     '    <section id="section-overview">',
@@ -1919,13 +1919,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     // Page packs are off by default (token-tax trim); this test exercises the
     // wiring, so opt in via the env flag and restore it afterward. The B7
     // direct path (own suite below) is disabled to pin the agent path.
-    const previousPageEvidence = process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
-    process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = "1";
-    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
-    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-evidence-"));
+    const previousPageEvidence = process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
+    process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = "1";
+    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-evidence-"));
     try {
       const store = new WikiStore(storeRoot);
       const { result, prompts } = await withFakeSidecar(
@@ -1986,17 +1986,17 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       expect(runtimePrompt).not.toContain("# Code graph evidence (pre-fetched)");
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousPageEvidence === undefined) delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
-      else process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
-      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousPageEvidence === undefined) delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
+      else process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
+      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
   test("all evidence fetches failing leaves prompts byte-identical to the pre-evidence blocks (Covers R8)", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-evidence-r8-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-evidence-r8-"));
     try {
       const store = new WikiStore(storeRoot);
       const architecture = { nodes: [{ id: "src/index.ts" }], edges: [] };
@@ -2049,13 +2049,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     // it; save and restore so the assertion is deterministic. The B7 direct path
     // (own suite below) is disabled because its evidence gather issues README and
     // manifest reads that would confound the zero-page-head-reads assertion.
-    const previousPageEvidence = process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
-    delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
-    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
-    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-page-off-"));
+    const previousPageEvidence = process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
+    delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
+    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-page-off-"));
     try {
       const store = new WikiStore(storeRoot);
       let pageHeadReads = 0;
@@ -2096,12 +2096,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       expect(pageHeadReads).toBe(0);
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousPageEvidence === undefined) delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
-      else process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
-      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousPageEvidence === undefined) delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
+      else process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
+      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
@@ -2109,7 +2109,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     const directStructureAnswer = [
       "<ANSWER>",
       "<wiki_structure>",
-      "  <title>Grok Wiki</title>",
+      "  <title>rlm-wiki</title>",
       "  <description>Fast structure via the code-kb direct call.</description>",
       "  <sections>",
       '    <section id="section-overview">',
@@ -2144,7 +2144,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       return [
         "<ANSWER>",
         "<wiki_structure>",
-        "  <title>Grok Wiki</title>",
+        "  <title>rlm-wiki</title>",
         "  <description>Manifest-sized direct structure.</description>",
         "  <sections>",
         '    <section id="section-get-started">',
@@ -2232,12 +2232,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         return null;
       },
       readFile: async (_session, path) =>
-        path === "README.md" ? { path, content: "# Grok Wiki\nGenerates grounded wikis.", truncated: false } : null,
+        path === "README.md" ? { path, content: "# rlm-wiki\nGenerates grounded wikis.", truncated: false } : null,
       ...overrides,
     });
 
     test("fast depth plans the structure from ONE direct call and never spawns the structure agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-happy-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-happy-"));
       try {
         const store = new WikiStore(storeRoot);
         const directPrompts: string[] = [];
@@ -2266,7 +2266,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         // The direct prompt carries the agent's exact structure contract plus
         // the evidence block, with the exploration instructions swapped out.
         const directPrompt = directPrompts[0]!;
-        expect(directPrompt).toContain("Repository: **AsyncFuncAI/grok-wiki**");
+        expect(directPrompt).toContain("Repository: **AsyncFuncAI/rlm-wiki**");
         expect(directPrompt).toContain("## Required shape of the output");
         expect(directPrompt).toContain("exactly 1 total page");
         expect(directPrompt).toContain("# Repository evidence (code graph snapshot)");
@@ -2291,9 +2291,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("writes a page from one direct call", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-happy-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-happy-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const directPagePrompts: string[] = [];
@@ -2315,7 +2315,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
                 path,
                 content: path === "src/index.ts"
                   ? "export function generateWiki() { return 'grounded'; }"
-                  : "# Grok Wiki\nGenerates grounded wikis.",
+                  : "# rlm-wiki\nGenerates grounded wikis.",
                 truncated: false,
               }),
               directPageCall: async (prompt, receivedLocalCli) => {
@@ -2354,15 +2354,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(directPageResults[0]?.reason).toBeUndefined();
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("writes and saves a direct page through the default chat runner", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-default-runner-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-default-runner-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const { result, prompts } = await withFakeSidecar(() =>
@@ -2386,15 +2386,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(saved?.pages["page-overview"]?.content).toBe(pageAnswer);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("does not direct-call pages when the per-run opt-in is omitted or false", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-default-off-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-default-off-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         let directPageCalls = 0;
@@ -2432,14 +2432,14 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes.every((outcome) => outcome.attempted === false)).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("reports disabled, workspace, and missing-evidence pages as one-agent fallbacks", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-gates-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-gates-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ scenario: string; state: string; attempted: boolean; reason?: string }> = [];
@@ -2449,7 +2449,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           return `<ANSWER>\n${pageAnswer}\n</ANSWER>`;
         };
 
-        process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+        process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
         const { prompts: disabledPrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, {
             store,
@@ -2465,10 +2465,10 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           }),
         );
 
-        delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
         const workspaceRefs = [
           { ...kbRef, id: "primary", label: "primary" },
-          { ...kbRef, id: "extra", repo: "grok-wiki-extra", url: "https://github.com/AsyncFuncAI/grok-wiki-extra", label: "extra" },
+          { ...kbRef, id: "extra", repo: "rlm-wiki-extra", url: "https://github.com/expressjs/multer", label: "extra" },
         ];
         const { prompts: workspacePrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, {
@@ -2494,7 +2494,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
               directCall: async () => directStructureAnswer,
               readFile: async (_session, path) =>
                 path === "README.md"
-                  ? { path, content: "# Grok Wiki", truncated: false }
+                  ? { path, content: "# rlm-wiki", truncated: false }
                   : null,
               directPageCall,
               onDirectPageResult: (result) => {
@@ -2517,13 +2517,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes.every((outcome) => outcome.attempted === false)).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("falls back once without page errors when a direct call throws or fails quality", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-invalid-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-invalid-"));
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ scenario: string; state: string; attempted: boolean; reason?: string }> = [];
@@ -2577,7 +2577,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("does not repeat a direct miss when the repository page succeeds during outer recovery", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-outer-recovery-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-outer-recovery-"));
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ state: string; reason?: string }> = [];
@@ -2626,9 +2626,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("times out a direct page below agent latency and falls back exactly once", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-timeout-"));
-      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-      process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "20";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-timeout-"));
+      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+      process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "20";
       try {
         const store = new WikiStore(storeRoot);
         let directSignal: AbortSignal | undefined;
@@ -2667,8 +2667,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes[0]?.reason).toContain("timed out");
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
       }
     });
 
@@ -2681,7 +2681,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("parent cancellation aborts the direct page and never starts fallback", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-cancel-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-cancel-"));
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2716,9 +2716,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("parent cancellation settles even when the direct page runner ignores abort", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-noncooperative-cancel-"));
-      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-      process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "250";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-noncooperative-cancel-"));
+      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+      process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "250";
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2755,13 +2755,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes).toEqual([]);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
       }
     });
 
     test("ignores direct-page metric callback failures", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-"));
       try {
         const store = new WikiStore(storeRoot);
         let directPageCalls = 0;
@@ -2799,7 +2799,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("does not wait for a delayed direct-page metric callback", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-delay-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-delay-"));
       try {
         const store = new WikiStore(storeRoot);
         let callbackSettled = false;
@@ -2835,7 +2835,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("a never-settling direct-page metric callback cannot block parent cancellation", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-cancel-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-cancel-"));
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2884,9 +2884,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("accepts compact documentation auto manifests while preserving basic auto and fixed bounds", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-structure-doc-bounds-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-structure-doc-bounds-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
       try {
         const store = new WikiStore(storeRoot);
         const run = (style: "basic" | "documentation", pageCount: number, pageCountMode: "auto" | "fixed") =>
@@ -2914,15 +2914,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(fixedMismatch.prompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("uses accepted auto manifest size for repository page-agent depth without changing request identity", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-page-agent-manifest-depth-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-page-agent-manifest-depth-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
       try {
         const store = new WikiStore(storeRoot);
         const run = (actualPages: number, pageCount: number, pageCountMode: "auto" | "fixed") =>
@@ -2959,15 +2959,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(fixed.result.wikiPageCount).toBe(13);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("uses accepted auto manifest size for direct page prompt depth without changing request identity", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-manifest-depth-"));
-      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-manifest-depth-"));
+      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const run = (actualPages: number) => {
@@ -3005,13 +3005,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(compactAuto.result.variantKey).toBe(regularAuto.result.variantKey);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("an unparseable direct reply falls back to the structure agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-badxml-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-badxml-"));
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3041,7 +3041,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("a page path missing from the inventory or an out-of-bounds page count falls back", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-validate-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-validate-"));
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3138,8 +3138,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("flag off and no ready session take the agent path with zero direct-call attempts; non-fast depths now attempt the direct path (Covers R8)", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-gates-"));
-      const previousFlag = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-gates-"));
+      const previousFlag = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3148,12 +3148,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           return directStructureAnswer;
         };
 
-        process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+        process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
         const { prompts: flagOffPrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, { store, pageCount: 1, codeKb: fastKbClient({ directCall }) }),
         );
-        if (previousFlag === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
+        if (previousFlag === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
         expect(directCalls).toBe(0);
         expect(flagOffPrompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
 
@@ -3186,15 +3186,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(provisioningPrompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFlag === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
-        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
+        if (previousFlag === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
       }
     });
 
     test("a direct call hanging past the env-tunable budget or throwing falls back to the agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-hang-"));
-      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-      process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "40";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-hang-"));
+      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+      process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "40";
       try {
         const store = new WikiStore(storeRoot);
         let hangingSignal: AbortSignal | undefined;
@@ -3229,15 +3229,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(hangingSignal?.aborted).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
       }
     });
 
     test("parent cancellation settles when the direct structure runner ignores abort", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-structure-parent-abort-"));
-      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-      process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "500";
+      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-structure-parent-abort-"));
+      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+      process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "500";
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -3276,8 +3276,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         await run.catch(() => undefined);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
       }
     });
 

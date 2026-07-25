@@ -2251,7 +2251,7 @@ kbd {
   padding: 12px 14px 18px;
   overflow: auto;
   color: var(--code-text, #d8dde6);
-  font-family: "Grok Wiki Terminal Mono", "SF Mono", Menlo, Monaco, monospace;
+  font-family: "rlm-wiki Terminal Mono", "SF Mono", Menlo, Monaco, monospace;
   font-size: 12px;
   line-height: 1.45;
   white-space: pre;
@@ -14074,7 +14074,7 @@ button.ask-context-chip:active {
  * Nerd PUA + box drawing (reviewer + live Grok capture conclusion).
  */
 @font-face {
-  font-family: "Grok Wiki Terminal Mono";
+  font-family: "rlm-wiki Terminal Mono";
   src: url("./assets/fonts/MesloLGS-NF-Regular.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
@@ -14083,7 +14083,7 @@ button.ask-context-chip:active {
 
 /* Keep symbols face as last-resort PUA-only fallback (not primary). */
 @font-face {
-  font-family: "Grok Wiki Nerd Font Symbols";
+  font-family: "rlm-wiki Nerd Font Symbols";
   src: url("./assets/fonts/SymbolsNerdFontMono-Regular.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
@@ -14115,7 +14115,7 @@ button.ask-context-chip:active {
   width: 100%;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Grok Wiki Terminal Mono", "MesloLGS NF", "SF Mono", Menlo, Monaco, monospace;
+  font-family: "rlm-wiki Terminal Mono", "MesloLGS NF", "SF Mono", Menlo, Monaco, monospace;
 }
 
 .terminal-output .xterm {
@@ -16281,7 +16281,7 @@ button.ask-context-chip:active {
     animation: none;
   }
 }
-/* The clarify "thinking" row uses the grok-wiki orb: it morphs internally (its own
+/* The clarify "thinking" row uses the rlm-wiki orb: it morphs internally (its own
    <animate>), so it must NOT also spin. Size it to sit inline with the label. */
 .ask-clarify-glyph {
   width: 16px;
@@ -21058,9 +21058,9 @@ button.ask-context-chip:active {
   height: 26px;
 }
 
-/* The grok-wiki orb mark (shared with the chat-panel thinking indicator). Stroke
+/* The rlm-wiki orb mark (shared with the chat-panel thinking indicator). Stroke
    orb, currentColor, so it inherits the muted empty-state tone. */
-.grok-wiki-glyph {
+.rlm-wiki-glyph {
   width: 20px;
   height: 20px;
   flex: 0 0 auto;

@@ -3,8 +3,8 @@
 // slices (plan 2026-07-06-002, U4/R6).
 //
 // Runs the SAME small wiki generation plus one canned ask twice — kb evidence
-// ON, then OFF (GROK_WIKI_CODE_KB=0) — each against a fresh scratch
-// GROK_WIKI_ROOT, and prints a per-phase comparison table: wall-clock,
+// ON, then OFF (RLM_WIKI_CODE_KB=0) — each against a fresh scratch
+// RLM_WIKI_ROOT, and prints a per-phase comparison table: wall-clock,
 // iteration proxies (tool calls / RLM steps), and retry signals.
 //
 // ⚠️ MANUAL DEV TOOL — REAL LLM COST. Every invocation runs a structure agent,
@@ -131,9 +131,9 @@ async function runMode(mode: AbMode, repoInput: string, pages: number, localCli:
     recoveryRounds: 0,
   };
   // codeKbEnabled() reads the flag at call time, so a runtime flip is enough.
-  process.env.GROK_WIKI_CODE_KB = mode === "off" ? "0" : "1";
+  process.env.RLM_WIKI_CODE_KB = mode === "off" ? "0" : "1";
   const root = mkdtempSync(join(tmpdir(), `code-kb-ab-${mode}-`));
-  process.env.GROK_WIKI_ROOT = root;
+  process.env.RLM_WIKI_ROOT = root;
   const ref = parseGithubUrl(repoInput);
 
   console.log(`\n=== kb-${mode} · generate ${ref.owner}/${ref.repo} (${pages} pages) · scratch ${root}`);
@@ -238,7 +238,7 @@ const modes: AbMode[] = requestedMode === "both" ? ["on", "off"] : [requestedMod
 const agents = await getLocalCliAgents({ rescan: true });
 if (!agents.enabled) throw new Error(`Local CLI sidecar unavailable: ${agents.error || "unknown error"}`);
 const agent = agents.agents.find((candidate) => candidate.runnable);
-if (!agent) throw new Error("No ready local CLI agent found. Run `grok-wiki agents --rescan`.");
+if (!agent) throw new Error("No ready local CLI agent found. Run `rlm-wiki agents --rescan`.");
 const localCli = normalizeLocalCliConfig({
   agentId: agent.id,
   ...(agent.defaultModel && agent.defaultModel !== "default" ? { model: agent.defaultModel } : {}),

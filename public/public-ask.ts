@@ -134,7 +134,7 @@ async function loadPublicAsk(): Promise<void> {
     currentAsk = data.ask;
     currentSnapshot = data.snapshot || null;
     currentPublication = data.publication || null;
-    document.title = `${currentAsk.title || "Shared Ask"} · Grok-Wiki Ask`;
+    document.title = `${currentAsk.title || "Shared Ask"} · rlm-wiki Ask`;
     render();
   } catch (error) {
     if (!root) return;
@@ -151,7 +151,7 @@ function render(): void {
   root.innerHTML = `
     <header class="public-wiki-topbar public-ask-topbar">
       <a class="public-wiki-brand" href="/">
-        <strong>Grok-Wiki</strong>
+        <strong>rlm-wiki</strong>
         <span>${escapeHtml(ask.title || "Shared conversation")}</span>
       </a>
       <nav class="public-wiki-actions" aria-label="Shared conversation links">
@@ -374,7 +374,7 @@ function renderPublicThemeToggle(): string {
 
 function togglePublicTheme(): void {
   publicTheme = publicTheme === "light" ? "dark" : "light";
-  localStorage.setItem("grok-wiki-public:theme", publicTheme);
+  localStorage.setItem("rlm-wiki-public:theme", publicTheme);
   applyPublicTheme(publicTheme);
   const button = root?.querySelector<HTMLElement>("[data-public-theme-toggle]");
   const next = publicTheme === "light" ? "dark" : "light";
@@ -652,7 +652,7 @@ function canonicalPath(): string {
 }
 
 function readPublicTheme(): "dark" | "light" {
-  return localStorage.getItem("grok-wiki-public:theme") === "light" ? "light" : "dark";
+  return localStorage.getItem("rlm-wiki-public:theme") === "light" ? "light" : "dark";
 }
 
 function formatDate(value: string): string {

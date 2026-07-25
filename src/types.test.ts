@@ -23,17 +23,17 @@ describe("repository source refs", () => {
       branch: "main",
       sourcePath: "codex-rs/app-server",
     });
-    expect(parseGithubUrl("https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey?tab=readme")).toMatchObject({
+    expect(parseGithubUrl("https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey?tab=readme")).toMatchObject({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
-      url: "https://github.com/AsyncFuncAI/grok-wiki",
+      repo: "rlm-wiki",
+      url: "https://github.com/AsyncFuncAI/rlm-wiki",
       branch: "feature/hotkey",
       sourcePath: null,
     });
-    expect(parseGithubUrl("https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey/apps/desktop")).toMatchObject({
+    expect(parseGithubUrl("https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey/apps/desktop")).toMatchObject({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
-      url: "https://github.com/AsyncFuncAI/grok-wiki",
+      repo: "rlm-wiki",
+      url: "https://github.com/AsyncFuncAI/rlm-wiki",
       branch: "feature/hotkey",
       sourcePath: "apps/desktop",
     });
@@ -47,10 +47,10 @@ describe("repository source refs", () => {
       branch: "main",
       sourcePath: "codex-rs/app-server/src/main.rs",
     });
-    expect(parseGithubUrl("https://github.com/AsyncFuncAI/grok-wiki/blob/feature/hotkey/apps/desktop/src/main.ts")).toMatchObject({
+    expect(parseGithubUrl("https://github.com/AsyncFuncAI/rlm-wiki/blob/feature/hotkey/apps/desktop/src/main.ts")).toMatchObject({
       owner: "AsyncFuncAI",
-      repo: "grok-wiki",
-      url: "https://github.com/AsyncFuncAI/grok-wiki",
+      repo: "rlm-wiki",
+      url: "https://github.com/AsyncFuncAI/rlm-wiki",
       branch: "feature/hotkey",
       sourcePath: "apps/desktop/src/main.ts",
     });

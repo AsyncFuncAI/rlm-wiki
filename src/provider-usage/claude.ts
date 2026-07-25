@@ -83,7 +83,7 @@ function getCredentialsFilePath(): string {
 }
 
 function getKeychainUser(): string {
-  return process.env.USER || process.env.USERNAME || "user";
+  return process.env.USERNAME || "user";
 }
 
 async function readKeychainPassword(service: string): Promise<string | null> {

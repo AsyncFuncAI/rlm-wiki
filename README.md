@@ -144,6 +144,3 @@ Long-form notes live under [docs/](docs/README.md).
 
 MIT. See [LICENSE](LICENSE).
 
-## Related
-
-A separate closed-source desktop shell (Grok-Wiki) exists for native local workflows. This repository is the open-source **web app, CLI, and server** only.

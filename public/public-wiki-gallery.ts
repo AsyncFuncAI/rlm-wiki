@@ -1,5 +1,5 @@
 import "./public-wiki-gallery.css";
-import galleryHeroArtUrl from "./editorial/grok-wiki-gallery-archive.jpg";
+import galleryHeroArtUrl from "./editorial/rlm-wiki-gallery-archive.jpg";
 
 type GalleryFacet = {
   value: string;
@@ -76,8 +76,8 @@ function renderShell(): void {
   if (!root) return;
   root.innerHTML = `
     <header class="gallery-topbar">
-      <a class="gallery-brand" href="/" aria-label="Grok-Wiki home">
-        <strong>Grok-Wiki</strong>
+      <a class="gallery-brand" href="/" aria-label="rlm-wiki home">
+        <strong>rlm-wiki</strong>
         <span>Public library</span>
       </a>
       <nav class="gallery-nav" aria-label="Public navigation">
@@ -535,8 +535,8 @@ function galleryHeroTitle(surface: string): string {
 
 function galleryHeroCopy(surface: string): string {
   if (surface === "docs") return "Functional technical docs generated from repositories and folders.";
-  if (surface === "wiki") return "Source-grounded repository wikis published from Grok-Wiki.";
-  return "Source-grounded wikis and technical docs published from Grok-Wiki.";
+  if (surface === "wiki") return "Source-grounded repository wikis published from rlm-wiki.";
+  return "Source-grounded wikis and technical docs published from rlm-wiki.";
 }
 
 function galleryItemLabel(count: number, surface: string): string {

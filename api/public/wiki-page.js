@@ -32,9 +32,9 @@ export default async function handler(req, res) {
     const surface = publicWikiSurfaceFromSnapshot(snapshot);
     const docs = surface === "docs";
     const pageUrl = `${baseUrl}${publicWikiPath(publicId, snapshot.visibility, surface)}`;
-    const title = plainText(snapshot.title || snapshot.wiki?.structure?.title || (docs ? "Grok Docs" : "Grok-Wiki"));
+    const title = plainText(snapshot.title || snapshot.wiki?.structure?.title || (docs ? "Docs" : "rlm-wiki"));
     const description = plainText(
-      snapshot.description || snapshot.wiki?.structure?.description || `A source-grounded public repository ${docs ? "documentation set" : "wiki"} generated with Grok-Wiki.`,
+      snapshot.description || snapshot.wiki?.structure?.description || `A source-grounded public repository ${docs ? "documentation set" : "wiki"} generated with rlm-wiki.`,
       180,
     );
     const imageUrl = publicWikiOgImageUrl(baseUrl, snapshot);
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     }
 
     const shell = await loadPublicWikiShell(baseUrl);
-    const htmlTitle = `${title} · ${docs ? "Grok Docs" : "Grok-Wiki"}`;
+    const htmlTitle = `${title} · ${docs ? "Docs" : "rlm-wiki"}`;
     const tags = renderMetaTags({
       title,
       htmlTitle,
@@ -83,7 +83,7 @@ async function loadPublicWikiShell(baseUrl) {
 function renderMetaTags({ title, htmlTitle, description, pageUrl, imageUrl, markdownUrls, snapshot, privateLink }) {
   const docs = publicWikiSurfaceFromSnapshot(snapshot) === "docs";
   const artifact = docs ? "docs" : "wiki";
-  const siteName = docs ? "Grok Docs" : "Grok-Wiki";
+  const siteName = docs ? "Docs" : "rlm-wiki";
   const escapedTitle = escapeHtml(htmlTitle);
   const escapedDescription = escapeHtml(description);
   const escapedPageUrl = escapeHtml(pageUrl);
@@ -164,7 +164,7 @@ function publicWikiStructuredData({ title, description, pageUrl, imageUrl, snaps
     },
     publisher: {
       "@type": "Organization",
-      name: "Grok-Wiki",
+      name: "rlm-wiki",
       url: publicWikiBaseUrlFromUrl(pageUrl),
     },
   };
@@ -179,6 +179,6 @@ function publicWikiBaseUrlFromUrl(url) {
     const parsed = new URL(url);
     return parsed.origin;
   } catch {
-    return "https://grok-wiki.com";
+    return "https://rlmwiki.deepascii.com";
   }
 }

@@ -168,7 +168,7 @@ export function productDatabaseUrlForRuntime(): string | undefined {
 
 export function productSqlitePathForRuntime(): string | undefined {
   const sqlitePath =
-    process.env.GROK_WIKI_SQLITE_PATH?.trim() || process.env.RLM_WIKI_SQLITE_PATH?.trim();
+    process.env.RLM_WIKI_SQLITE_PATH?.trim() || process.env.RLM_WIKI_SQLITE_PATH?.trim();
   if (!sqlitePath || productDatabaseUrlForRuntime()) return undefined;
   return sqlitePath;
 }

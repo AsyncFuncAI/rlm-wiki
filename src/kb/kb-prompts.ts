@@ -55,7 +55,7 @@ export function buildDistillPrompt(
   existingCards: SeededExistingCard[],
 ): string {
   return [
-    "You are the distillation brain for Grok-Wiki's repo Knowledge Base.",
+    "You are the distillation brain for rlm-wiki's repo Knowledge Base.",
     "Read a finished conversation and distill its DURABLE, CONCLUSIVE knowledge into cards.",
     "Return the cards as JSON.",
     "",
@@ -112,7 +112,7 @@ export function buildMergePrompt(
   existingCards: SeededExistingCard[],
 ): string {
   return [
-    "You are the merge/contradiction brain for Grok-Wiki's repo Knowledge Base.",
+    "You are the merge/contradiction brain for rlm-wiki's repo Knowledge Base.",
     "Reconcile ONE new card against the existing cards and return the merge decision as JSON.",
     "This decision is load-bearing: a wrong 'apply' silently overwrites ground truth. Be conservative.",
     "",

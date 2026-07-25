@@ -151,7 +151,7 @@ describe("freshness metadata renders in published markdown", () => {
   });
 
   test("llms-full.txt renders per-card status + corroboration + contradiction banner, self-contained", () => {
-    const full = publicWikiMarkdownFull(snapshot, "https://grok-wiki.com");
+    const full = publicWikiMarkdownFull(snapshot, "https://rlmwiki.deepascii.com");
     // Per-card status block.
     expect(full).toContain("### Card status");
     expect(full).toContain("Status: Corroborated");
@@ -168,14 +168,14 @@ describe("freshness metadata renders in published markdown", () => {
 
   test("per-page .md renders the card's own freshness block", () => {
     const installPageId = kbCardPageId(card({ id: "card-install" }));
-    const installPage = publicWikiMarkdownPage(snapshot, "https://grok-wiki.com", installPageId);
+    const installPage = publicWikiMarkdownPage(snapshot, "https://rlmwiki.deepascii.com", installPageId);
     expect(installPage).toContain("### Card status");
     expect(installPage).toContain("Status: Corroborated");
     expect(installPage).toContain("Run the installer with the documented flags.");
   });
 
   test("index surfaces per-card status inline", () => {
-    const index = publicWikiMarkdownIndex(snapshot, "https://grok-wiki.com");
+    const index = publicWikiMarkdownIndex(snapshot, "https://rlmwiki.deepascii.com");
     expect(index).toContain("[corroborated]");
     expect(index).toContain("[provisional, contradiction flagged]");
   });

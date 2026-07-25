@@ -6,7 +6,7 @@ describe("public wiki gallery page SEO", () => {
   test("renders indexable collection metadata and item list schema", async () => {
     const shell = await Bun.file(new URL("../../public/public-wiki-gallery.html", import.meta.url)).text();
     const html = renderGalleryPageHtml({
-      baseUrl: "https://grok-wiki.com",
+      baseUrl: "https://rlmwiki.deepascii.com",
       shell,
       surface: "docs",
       items: [
@@ -25,8 +25,8 @@ describe("public wiki gallery page SEO", () => {
       ],
     });
 
-    expect(html).toContain("<title>Public docs - Grok-Wiki</title>");
-    expect(html).toContain('<link rel="canonical" href="https://grok-wiki.com/public/docs" />');
+    expect(html).toContain("<title>Public docs - rlm-wiki</title>");
+    expect(html).toContain('<link rel="canonical" href="https://rlmwiki.deepascii.com/public/docs" />');
     expect(html).toContain('<meta name="robots" content="index,follow,max-image-preview:large" />');
     expect(html).toContain('href="/public/docs/owner-repo-docs12345"');
 
@@ -37,8 +37,8 @@ describe("public wiki gallery page SEO", () => {
     expect(jsonLd).toMatchObject({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: "Public docs - Grok-Wiki",
-      url: "https://grok-wiki.com/public/docs",
+      name: "Public docs - rlm-wiki",
+      url: "https://rlmwiki.deepascii.com/public/docs",
       mainEntity: {
         "@type": "ItemList",
         numberOfItems: 1,
@@ -46,7 +46,7 @@ describe("public wiki gallery page SEO", () => {
           {
             "@type": "ListItem",
             position: 1,
-            url: "https://grok-wiki.com/public/docs/owner-repo-docs12345",
+            url: "https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345",
             name: "Repo Documentation",
             description: "Source-grounded technical docs for the repo.",
           },
@@ -67,7 +67,7 @@ describe("public wiki gallery page SEO", () => {
         method: "GET",
         query: {},
         headers: {
-          host: "grok-wiki.com",
+          host: "rlmwiki.deepascii.com",
           "x-forwarded-proto": "https",
         },
       };
@@ -90,7 +90,7 @@ describe("public wiki gallery page SEO", () => {
 
       expect(statusCode).toBe(200);
       expect(headers["content-type"]).toBe("text/html; charset=utf-8");
-      expect(body).toContain('<link rel="canonical" href="https://grok-wiki.com/public/wikis" />');
+      expect(body).toContain('<link rel="canonical" href="https://rlmwiki.deepascii.com/public/wikis" />');
       expect(body).toContain('"@type":"CollectionPage"');
       expect(body).toContain('data-public-gallery-fallback');
     } finally {

@@ -86,7 +86,7 @@ document.addEventListener("click", (event) => {
   if (modeButton) {
     event.preventDefault();
     readerMode = modeButton.dataset.wikiReaderMode === "paged" ? "paged" : "continuous";
-    localStorage.setItem("grok-wiki-public:reader-mode", readerMode);
+    localStorage.setItem("rlm-wiki-public:reader-mode", readerMode);
     render();
     return;
   }
@@ -176,7 +176,7 @@ async function loadPublicWiki(): Promise<void> {
     currentPublication = data.publication || null;
     activePageId = wikiPages(currentWiki)[0]?.id || "";
     const docs = isDocumentationWiki(currentWiki) || publicSurfaceFromPath() === "docs";
-    document.title = `${currentWiki.structure?.title || (docs ? "Public Docs" : "Public Wiki")} · ${docs ? "Grok Docs" : "Grok-Wiki"}`;
+    document.title = `${currentWiki.structure?.title || (docs ? "Public Docs" : "Public Wiki")} · ${docs ? "Docs" : "rlm-wiki"}`;
     render();
   } catch (error) {
     if (!root) return;
@@ -213,7 +213,7 @@ function render(): void {
   root.innerHTML = `
     <header class="public-wiki-topbar ${docs ? "public-docs-topbar" : ""}">
       <a class="public-wiki-brand" href="/">
-        <strong>${docs ? "Grok Docs" : "Grok-Wiki"}</strong>
+        <strong>${docs ? "Docs" : "rlm-wiki"}</strong>
         <span>${escapeHtml(currentWiki.structure?.title || (docs ? "Public docs" : "Public wiki"))}</span>
       </a>
       <nav class="public-wiki-actions" aria-label="${docs ? "Public docs" : "Public wiki"} links">
@@ -291,7 +291,7 @@ function renderPublicThemeToggle(): string {
 
 function togglePublicTheme(): void {
   publicTheme = publicTheme === "light" ? "dark" : "light";
-  localStorage.setItem("grok-wiki-public:theme", publicTheme);
+  localStorage.setItem("rlm-wiki-public:theme", publicTheme);
   applyPublicTheme(publicTheme);
   syncPublicThemeToggle();
 }
@@ -402,7 +402,7 @@ function publicAgentPromptInput(): Parameters<typeof publicAgentPrompt>[0] {
   const repoUrl = wiki ? githubRepoUrl(wiki) : "";
   return {
     artifactLabel: surface,
-    title: wiki?.structure?.title || (surface === "docs" ? "Grok Docs" : "Grok-Wiki"),
+    title: wiki?.structure?.title || (surface === "docs" ? "Docs" : "rlm-wiki"),
     description: wiki?.structure?.description || "",
     pageUrl,
     llmsUrl: `${pageUrl}/llms.txt`,
@@ -790,11 +790,11 @@ function currentPublicSurface(): "wiki" | "docs" {
 }
 
 function readReaderMode(): "continuous" | "paged" {
-  return localStorage.getItem("grok-wiki-public:reader-mode") === "paged" ? "paged" : "continuous";
+  return localStorage.getItem("rlm-wiki-public:reader-mode") === "paged" ? "paged" : "continuous";
 }
 
 function readPublicTheme(): "dark" | "light" {
-  return localStorage.getItem("grok-wiki-public:theme") === "light" ? "light" : "dark";
+  return localStorage.getItem("rlm-wiki-public:theme") === "light" ? "light" : "dark";
 }
 
 function renderMermaidBlock(code: string): string {

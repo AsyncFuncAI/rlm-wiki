@@ -1918,7 +1918,7 @@ export async function runHtmlPipeline(opts: RunHtmlPipelineOptions): Promise<Htm
   const codeKb = String(opts.codeKbContext || "").trim();
   const theme = opts.dress?.theme === "dark" ? "dark" : "light";
   // Match Docs/wiki local-CLI page agents: default 8, hard cap 10 (all 10 L-levels fit in ~2 waves).
-  const envConc = Number(process.env.GROK_WIKI_HTML_BLOCK_CONCURRENCY || process.env.RLM_WIKI_LOCAL_CLI_PAGE_CONCURRENCY || "");
+  const envConc = Number(process.env.RLM_WIKI_HTML_BLOCK_CONCURRENCY || process.env.RLM_WIKI_LOCAL_CLI_PAGE_CONCURRENCY || "");
   const defaultConc = Number.isFinite(envConc) && envConc > 0 ? Math.floor(envConc) : 8;
   const concurrency = Math.max(
     1,
@@ -1927,7 +1927,7 @@ export async function runHtmlPipeline(opts: RunHtmlPipelineOptions): Promise<Htm
   const blockTimeoutMs = Math.max(
     60_000,
     Number(opts.blockTimeoutMs) ||
-      Number(process.env.GROK_WIKI_HTML_BLOCK_TIMEOUT_MS || 360_000),
+      Number(process.env.RLM_WIKI_HTML_BLOCK_TIMEOUT_MS || 360_000),
   );
   const retryFailed = opts.retryFailedBlocks !== false;
   const emitPhase = (phase: HtmlPipelinePhase, label: string, detail: string) => {

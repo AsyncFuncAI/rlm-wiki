@@ -10,13 +10,13 @@ type Episode = {
 
 const episodes: Episode[] = [
   {
-    title: "What's Grok-Wiki?",
-    shortTitle: "What's Grok-Wiki?",
+    title: "What's rlm-wiki?",
+    shortTitle: "What's rlm-wiki?",
     copy: "A short product film for the desktop loop: source-grounded repository context, local CLI agents, and model access that stays with you.",
     number: "Episode 01",
     meta: "10 sec / Desktop film",
-    video: "/episodes/grok-wiki-ep1.mp4",
-    poster: "/episodes/grok-wiki-ep1-poster.jpg",
+    video: "/episodes/rlm-wiki-ep1.mp4",
+    poster: "/episodes/rlm-wiki-ep1-poster.jpg",
   },
   {
     title: "The Hot Key (⌘ ⇧ ␣)",
@@ -24,8 +24,8 @@ const episodes: Episode[] = [
     copy: "Jump from work to repository context without changing your agent, provider, or credentials.",
     number: "Episode 02",
     meta: "15 sec / Desktop gesture",
-    video: "/episodes/grok-wiki-ep2.mp4",
-    poster: "/episodes/grok-wiki-ep2-poster.jpg",
+    video: "/episodes/rlm-wiki-ep2.mp4",
+    poster: "/episodes/rlm-wiki-ep2-poster.jpg",
   },
   {
     title: "Agent Context",
@@ -33,8 +33,8 @@ const episodes: Episode[] = [
     copy: "Point local agents at source-backed wikis and keep the evidence close to the work.",
     number: "Episode 03",
     meta: "15 sec / Agent handoff",
-    video: "/episodes/grok-wiki-ep3.mp4",
-    poster: "/episodes/grok-wiki-ep3-poster.jpg",
+    video: "/episodes/rlm-wiki-ep3.mp4",
+    poster: "/episodes/rlm-wiki-ep3-poster.jpg",
   },
   {
     title: "The Midnight Push",
@@ -42,8 +42,8 @@ const episodes: Episode[] = [
     copy: "A late-night release pass where repository memory, public wiki handoff, and local agents stay in the same working rhythm.",
     number: "Episode 04",
     meta: "15 sec / Shipping room",
-    video: "/episodes/grok-wiki-ep4.mp4",
-    poster: "/episodes/grok-wiki-ep4-poster.jpg",
+    video: "/episodes/rlm-wiki-ep4.mp4",
+    poster: "/episodes/rlm-wiki-ep4-poster.jpg",
   },
   {
     title: "The Language Mix-Up",
@@ -51,17 +51,17 @@ const episodes: Episode[] = [
     copy: "A funny localization cut for Japanese and Mandarin support, keeping generated repository context readable across the team.",
     number: "Episode 05",
     meta: "15 sec / Language bit",
-    video: "/episodes/grok-wiki-ep5.mp4",
-    poster: "/episodes/grok-wiki-ep5-poster.jpg",
+    video: "/episodes/rlm-wiki-ep5.mp4",
+    poster: "/episodes/rlm-wiki-ep5-poster.jpg",
   },
   {
     title: "Jealousy-Driven Development",
     shortTitle: "Jealousy-Driven Dev",
-    copy: "A promotion-party wound becomes a late-night Ask session: research multiple repositories at once and turn Grok-Wiki into a source-backed study partner for the next hard thing.",
+    copy: "A promotion-party wound becomes a late-night Ask session: research multiple repositories at once and turn rlm-wiki into a source-backed study partner for the next hard thing.",
     number: "Episode 06",
     meta: "15 sec / Ask feature",
-    video: "/episodes/grok-wiki-ep6.mp4",
-    poster: "/episodes/grok-wiki-ep6-poster.jpg",
+    video: "/episodes/rlm-wiki-ep6.mp4",
+    poster: "/episodes/rlm-wiki-ep6-poster.jpg",
   },
 ];
 

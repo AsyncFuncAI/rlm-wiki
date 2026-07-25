@@ -28,7 +28,7 @@ import type { GeneratedPage, WikiPage, WikiRecord, WikiSection } from "../types.
 import type { KnowledgeBaseData, KnowledgeCard } from "./knowledge-base-store.ts";
 
 /** Model label stamped on a KB-derived WikiRecord (no LLM ran to build the record). */
-const KB_RECORD_MODEL = "Grok-Wiki Knowledge Base" as const;
+const KB_RECORD_MODEL = "rlm-wiki Knowledge Base" as const;
 
 /** Section ids for the three KB layers (decision 2: wiki backbone, ask cards, docs). */
 const KB_SECTION_CARDS = "kb-section-cards" as const;

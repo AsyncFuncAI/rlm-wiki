@@ -14,9 +14,9 @@ function defaultFile(): ProviderAccountsFile {
 export function providerAccountsRoot(appDataDir?: string | null): string {
   const base =
     (appDataDir && appDataDir.trim()) ||
-    process.env.GROK_WIKI_DESKTOP_APP_DATA?.trim() ||
     process.env.RLM_WIKI_DESKTOP_APP_DATA?.trim() ||
-    join(homedir(), ".grok-wiki");
+    process.env.RLM_WIKI_DESKTOP_APP_DATA?.trim() ||
+    join(homedir(), ".rlm-wiki");
   return join(base, "provider-accounts");
 }
 

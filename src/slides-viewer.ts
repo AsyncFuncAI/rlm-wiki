@@ -30,7 +30,7 @@ export type BuildOpenSlideViewerOptions = {
 
 const BUILD_TIMEOUT_MS = 120_000;
 const VIEWER_ROUTE_PREFIX = "/api/wiki/slides/viewer";
-const TYPECHECK_MARKER = ".grok-wiki-open-slide-typecheck-ok";
+const TYPECHECK_MARKER = ".rlm-wiki-open-slide-typecheck-ok";
 const CONTROLLED_PACKAGE_JSON = `${JSON.stringify({
   private: true,
   type: "module",
@@ -254,7 +254,7 @@ function escapeRegExp(value: string): string {
 
 function normalizeViewerAssetPaths(source: string, viewerId: string): string {
   const prefix = `${VIEWER_ROUTE_PREFIX}/${viewerId}`;
-  const protectedToken = `__GROK_WIKI_OPEN_SLIDE_ASSET_PREFIX_${viewerId.replace(/[^a-z0-9]/gi, "_")}__`;
+  const protectedToken = `__RLM_WIKI_OPEN_SLIDE_ASSET_PREFIX_${viewerId.replace(/[^a-z0-9]/gi, "_")}__`;
   const repeatedPrefix = new RegExp(`(?:${escapeRegExp(prefix)}){2,}/assets/`, "g");
   return source
     .replace(repeatedPrefix, `${prefix}/assets/`)
@@ -278,11 +278,11 @@ async function rewriteViewerAssetPaths(distDir: string, viewerId: string): Promi
 async function rewriteViewerEntryHtml(distDir: string, viewerId: string, slideId: string): Promise<void> {
   const indexPath = join(distDir, "index.html");
   if (!existsSync(indexPath)) return;
-  const marker = "data-grok-wiki-open-slide-router-fix";
+  const marker = "data-rlm-wiki-open-slide-router-fix";
   const source = await readFile(indexPath, "utf8");
   const prefix = `${VIEWER_ROUTE_PREFIX}/${viewerId}`;
   const targetPath = `/s/${encodeURIComponent(slideId)}`;
-  const bootScript = `<script ${marker}>(()=>{const p=${JSON.stringify(prefix)};const t=${JSON.stringify(targetPath)};const q=new URLSearchParams(location.search);const m=q.get("grokWikiTheme");const h=m==="light"||m==="dark"?m:"";if(h){try{localStorage.setItem("theme",h)}catch{}document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(h);document.documentElement.style.colorScheme=h}if(location.pathname===p||location.pathname.startsWith(p+"/"))history.replaceState(null,"",t+location.search+location.hash);})();</script>`;
+  const bootScript = `<script ${marker}>(()=>{const p=${JSON.stringify(prefix)};const t=${JSON.stringify(targetPath)};const q=new URLSearchParams(location.search);const m=q.get("rlmWikiTheme");const h=m==="light"||m==="dark"?m:"";if(h){try{localStorage.setItem("theme",h)}catch{}document.documentElement.classList.remove("light","dark");document.documentElement.classList.add(h);document.documentElement.style.colorScheme=h}if(location.pathname===p||location.pathname.startsWith(p+"/"))history.replaceState(null,"",t+location.search+location.hash);})();</script>`;
   const withoutOldFix = source.replace(new RegExp(`<script ${marker}>[\\s\\S]*?<\\/script>`, "g"), "");
   let rewritten = `${bootScript}${withoutOldFix}`;
   if (/<head[^>]*>/i.test(withoutOldFix)) {

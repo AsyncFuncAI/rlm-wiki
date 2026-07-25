@@ -189,7 +189,7 @@ function Footer({ label }: { label: string }) {
 
 const Cover: Page = () => (
   <section style={{ ...pageStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-    <p style={{ margin: '0 0 28px', color: palette.accent, fontSize: 30, fontWeight: 700, letterSpacing: 0 }}>Generated from Grok-Wiki</p>
+    <p style={{ margin: '0 0 28px', color: palette.accent, fontSize: 30, fontWeight: 700, letterSpacing: 0 }}>Generated from rlm-wiki</p>
     <h1 style={{ margin: 0, maxWidth: 1320, fontSize: 104, lineHeight: 0.94, letterSpacing: 0 }}>{deck.title}</h1>
     <p style={{ margin: '34px 0 0', maxWidth: 1040, color: palette.muted, fontSize: 34, lineHeight: 1.28 }}>{deck.description}</p>
     <Footer label="Open Slide deck" />
@@ -247,7 +247,7 @@ export const meta: SlideMeta = {
 };
 
 export const notes: Record<number, string> = {
-  0: 'Open by naming that this deck was generated from a Grok-Wiki artifact and is meant to explain the implementation clearly.',
+  0: 'Open by naming that this deck was generated from a rlm-wiki artifact and is meant to explain the implementation clearly.',
   1: 'Use this page as the talk track map; skip pages that are not relevant to the audience.',
 };
 
@@ -312,7 +312,7 @@ export default config;
   };
   const theme = `# Wiki Report
 
-Source-grounded technical report deck generated from Grok-Wiki.
+Source-grounded technical report deck generated from rlm-wiki.
 
 - Canvas: 1920x1080
 - Tone: concise, claim-grounded, suitable for engineering review
@@ -320,7 +320,7 @@ Source-grounded technical report deck generated from Grok-Wiki.
 `;
   const readme = `# ${record.structure?.title || `${record.owner}/${record.repo}`} Slides
 
-This is an Open Slide workspace generated from a Grok-Wiki artifact.
+This is an Open Slide workspace generated from a rlm-wiki artifact.
 ${options.readmeNote ? `\n${options.readmeNote.trim()}\n` : ""}
 
 ## Run locally
