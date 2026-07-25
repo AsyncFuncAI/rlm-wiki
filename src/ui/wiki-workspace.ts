@@ -133,7 +133,7 @@ type WikiReaderCopy = {
   generatedFrom: string;
   model: string;
   format: string;
-  getrlm-wiki: string;
+  getRlmWiki: string;
   openSlide: string;
   openSlideDeck: string;
   slidesTitle: (title: string) => string;
@@ -334,7 +334,7 @@ const DEFAULT_WIKI_READER_COPY: WikiReaderCopy = {
   generatedFrom: "Generated from",
   model: "Model",
   format: "Format",
-  getrlm-wiki: "Get rlm-wiki",
+  getRlmWiki: "Get rlm-wiki",
   openSlide: "Open Slide",
   openSlideDeck: "Open Slide deck",
   slidesTitle: (title) => `${title} slides`,
@@ -2369,7 +2369,7 @@ export function renderWikiReader(wiki: WikiRecord, state: WikiWorkspaceState, de
                 <dl><dt>${deps.escape(copy.model)}</dt><dd>${deps.escape(wiki.runtimeModelLabel || wiki.pageModel || wiki.structureModel || wiki.model || "runtime")}</dd><dt>${deps.escape(copy.format)}</dt><dd>${deps.escape(generatorCopy.formatLabel(wiki.wikiStyle || "technical"))}</dd><dt>${deps.escape(copy.pages)}</dt><dd>${recovery.recoverablePageIds.length ? `${recovery.savedPageCount}/${recovery.plannedPageCount}` : Object.keys(wiki.pages || {}).length}</dd></dl>
               </div>
               ${readOnly ? `<div class="wiki-rail-actions wiki-public-rail-actions">
-                <a class="wiki-ask-button wiki-ask-primary" href="/" data-public-home>${deps.icon("download")}<span>${deps.escape(copy.getrlm-wiki)}</span></a>
+                <a class="wiki-ask-button wiki-ask-primary" href="/" data-public-home>${deps.icon("download")}<span>${deps.escape(copy.getRlmWiki)}</span></a>
               </div>` : `<div class="wiki-rail-actions">
                 <button class="wiki-ask-button wiki-slides-button" type="button" ${latestSlides ? "data-wiki-view-slides" : "data-wiki-generate-slides"} data-wiki-slides-url="${deps.escape(wikiSlidesUrl(wiki, deps))}" title="${deps.escape(latestSlides ? copy.openLatestSlideDeck : copy.generateOpenSlideDeck)}">${deps.icon("slides")}<span>${deps.escape(latestSlides ? copy.viewSlides : copy.generateSlides)}</span></button>
                 <button class="wiki-ask-button wiki-regenerate-button" type="button" data-wiki-regenerate-open title="${deps.escape(copy.regenerateWikiPage)}">${deps.icon("statusCheck")}<span>${deps.escape(copy.regeneratePage)}</span></button>

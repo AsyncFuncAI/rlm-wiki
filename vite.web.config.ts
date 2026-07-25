@@ -78,7 +78,7 @@ function withoutInjectedAppStyles(html: string): string {
   );
 }
 
-function publishrlm-wikiLanding(): Plugin {
+function publishLanding(): Plugin {
   return {
     name: "rlm-wiki-publish-landing",
     writeBundle() {
@@ -95,7 +95,7 @@ function publishrlm-wikiLanding(): Plugin {
 export default defineConfig({
   root: publicRoot,
   publicDir: false,
-  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishrlm-wikiLanding()],
+  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishLanding()],
   // Public pages import shared reader UI from ../src/ui (outside public/).
   server: {
     fs: {
