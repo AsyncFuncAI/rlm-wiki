@@ -7,7 +7,7 @@ dist/
 !.env.example
 storage/
 .rlm-sessions/
-.rlm-wiki-*
+.grok-wiki-*
 .graphify-venv/
 graphify-out/
 .agents/

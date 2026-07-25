@@ -8,8 +8,6 @@ import type { AgentRuntime } from "../agent-runtime.ts";
 import { normalizeWikiLanguages, wikiLanguagePrompt, wikiSourceScaffold, type WikiDepth, type WikiLanguage, type WikiStyle } from "../wiki-options.ts";
 import { knowledgeProfilePrompt, type KnowledgeProfile } from "../knowledge-profile.ts";
 
-export const DOCS_MIN_BODY_CHARS = 1200;
-
 export function buildPagePrompt(args: {
     owner: string;
     repo: string;
@@ -38,13 +36,6 @@ export function buildPagePrompt(args: {
   directEvidence?: string;
 }): string {
   const { owner, repo, page, depth = "deep", style = "basic" } = args;
-  const minimumBodyChars = style === "documentation"
-    ? DOCS_MIN_BODY_CHARS
-    : depth === "fast"
-      ? 600
-      : depth === "regular"
-        ? 700
-        : 900;
   const repos = args.repos?.length && args.repos.length > 1 ? args.repos : [];
   const isWorkspace = repos.length > 1;
   const sourcePath = String(args.sourcePath || "").trim();
@@ -58,10 +49,9 @@ export function buildPagePrompt(args: {
   const languageGuidance = wikiLanguagePrompt(languages);
   const sourceScaffold = wikiSourceScaffold(languages);
   const formatRequirements = wikiPageFormatRequirements(style);
-  const docsOverviewGuidance = style === "documentation" ? docsOverviewPageGuidance(page, args.allPages || [page]) : "";
   const docsPageLinkManifest = style === "documentation" ? docsAvailablePageLinks(args.allPages || [page]) : "";
   const requiredPageShape = wikiPageRequiredShape(style, page, sourceScaffold);
-  const diagramGuidance = wikiPageDiagramGuidance(style);
+  const diagramGuidance = wikiPageDiagramGuidance();
   const knowledgeGuidance = knowledgeProfilePrompt(args.knowledgeProfile, "wiki");
   const depthGuidance = directEvidence
     ? depth === "fast"
@@ -123,9 +113,6 @@ Use only these planned pages for cross-page MDX links, especially \`<Card href="
 ${docsPageLinkManifest}
 
 Do not invent future docs routes. If a useful follow-on topic is not listed above, omit that card instead of linking to a placeholder route.
-` : ""}${docsOverviewGuidance ? `
-## Overview Orientation Requirements
-${docsOverviewGuidance}
 ` : ""}
 
 ${sourceInstructions}
@@ -173,7 +160,7 @@ ${languageGuidance}
 - ${style === "documentation" ? "Start directly with YAML frontmatter. The desktop docs reader renders the frontmatter as the visible page header." : "Start directly with the `<details>` block."}
 ${style === "documentation" ? "- Do not add a `<details>` source list, `Source evidence`, `Relevant source files`, or visible `Sources:` section." : "- Translate user-visible labels in the `<details>` block exactly as shown in the required shape."}
 - Do not wrap the whole page in a markdown fence.
-- The page body should contain at least ${minimumBodyChars} characters of real, useful ${style === "documentation" ? "MDX" : "markdown"} content unless the source material is genuinely tiny. Length is a floor, not permission to repeat facts or add decorative components.
+- The page body should be at least ${depth === "fast" ? "600" : depth === "regular" ? "700" : "900"} characters of real markdown content unless the source material is genuinely tiny.
 
 ## Final Output
 ${finalContract}
@@ -197,15 +184,15 @@ function wikiPageRequiredShape(
       "   ```",
       "2. Do not add a duplicate top-level `#` heading. The docs reader renders the frontmatter title. Start body content with one fact-first technical paragraph about the actual implementation surface, behavior, command, API, config area, or runtime path, then `##` sections.",
       "3. Do not include a collapsible source-file list, `Source evidence`, `Sources:`, or line-number citation links in the body.",
-      "4. Use only the `##` and `###` sections the page archetype needs. Follow a progressive reading order: orientation, primary behavior or task, concrete details, constraints/failures, then optional deeper reference.",
-      "5. Prefer exact technical facts over teaching prose: commands, signatures, module/file paths, roles, config keys, environment variables, data shapes, lifecycle states, defaults, constraints, error cases, and expected outputs. Define a local identifier briefly on first mention.",
-      "6. Diagrams are optional. Use Mermaid or compact fenced `text` ASCII only when ownership, state, sequence, or dependency direction is materially clearer than prose. Introduce the question before the diagram and explain the takeaway after it.",
-      "7. Plain Markdown and MDX are the default. Use a Docs component only when its structure communicates a relationship more clearly than prose, a list, a table, or a code block.",
-      "   Do not place a rich component before the first `##` section. Do not stack different rich component families without explanatory prose between them. Keep the primary explanation outside tabs and accordions.",
-      "   Endpoint frames must be closed before the next endpoint starts. Never nest `:::endpoint` blocks. Do not put `<ParamField>` or `<ResponseField>` inside Markdown table cells.",
-      "8. Use short, focused code excerpts when they help. Include the file path or command context in the prose or code title.",
-      "9. Do not teach generic concepts, add analogies, write inventory-only path lists, or explain background material the repository does not require.",
-      "10. End with a short `## Next` or `## Related pages` section only when a useful planned page genuinely advances the reader. Prefer a short ordered list; use Cards only for parallel route choices.",
+      "4. Use detailed `##` and `###` sections that match the page type: guide, concept, reference, example, troubleshooting, migration, operations, or contribution page.",
+      "5. Prefer exact technical facts over teaching prose: commands, signatures, paths, config keys, environment variables, data shapes, lifecycle states, defaults, constraints, error cases, and expected outputs.",
+      "6. Mermaid or fenced text/ASCII diagrams only when they clarify architecture, lifecycle, data flow, API shape, or file layout. Do not diagram ordinary prose.",
+      "7. Use Grok Docs MDX components when they improve scanability: callouts, cards, steps, tabs, code groups, fields, request/response examples, endpoint frames, accordions, frames, updates, and file trees.",
+      "   Endpoint frames must be closed before the next endpoint starts. Never nest `:::endpoint` blocks. Use tables for short endpoint inventories and endpoint frames only when an endpoint needs behavior, params, request/response, errors, or persistence details.",
+      "   Do not put `<ParamField>` or `<ResponseField>` inside Markdown table cells; table cells should use inline code names only.",
+      "8. Short, focused code excerpts when they help. Include the file path or command context in the prose or code title.",
+      "9. Do not teach generic concepts, add analogies, or explain background material the repository does not require.",
+      "10. End with a short `## Next` or `## Related pages` section only when there are useful follow-on docs pages. Every cross-page `<Card href=\"...\">` must target one of the available docs page links listed in this prompt; never link to pages that were not planned.",
     ].join("\n");
   }
 
@@ -240,44 +227,11 @@ function docsAvailablePageLinks(pages: Array<{ id: string; title: string; descri
     .join("\n");
 }
 
-function isDocsOverviewPage(page: { id?: string; title?: string }): boolean {
-  const id = String(page.id || "").toLowerCase();
-  const title = String(page.title || "").toLowerCase();
-  return id === "page-overview" || /\boverview\b/.test(id) || /^(overview|introduction)$/i.test(title.trim());
-}
-
-function docsOverviewPageGuidance(
-  page: { id?: string; title?: string },
-  allPages: Array<{ id: string; title: string; description?: string }>,
-): string {
-  if (!isDocsOverviewPage(page)) return "";
-  const followOns = allPages
-    .filter((candidate) => candidate.id && candidate.id !== page.id)
-    .slice(0, 6)
-    .map((candidate) => `- \`${candidate.id}\` (${candidate.title})`)
-    .join("\n");
-  return [
-    "This is an orientation page, not a dashboard, persona matrix, second README, or reference dump.",
-    "Begin with one or two short paragraphs: what the project exposes, who the shortest source-backed successful path serves, and what success looks like.",
-    "Explain that first path before presenting deeper navigation.",
-    "Use a short ordered list by default. Use Cards only for genuinely parallel choices, after explanatory prose, with no more than four initial choices.",
-    "Do not open with a Card grid, table, diagram, file tree, or reference frame.",
-    followOns ? `Planned follow-on pages:\n${followOns}` : "If no other pages are planned, keep the overview short and do not invent routes.",
-  ].join("\n");
-}
-
 function escapePromptYaml(value: string): string {
   return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
-function wikiPageDiagramGuidance(style: WikiStyle): string {
-  if (style === "documentation") {
-    return [
-      "- Diagrams are optional. Add one only when ownership, state, sequence, or dependency direction is materially clearer than prose, a list, or a table.",
-      "- Introduce the question before the diagram, use real repository labels, and explain the takeaway after it.",
-      "- Omit decorative or linear diagrams that only restate prose, and never invent architecture the evidence does not establish.",
-    ].join("\n");
-  }
+function wikiPageDiagramGuidance(): string {
   return [
     "- Before adding a Mermaid block, ask what spatial model the diagram teaches that prose cannot: boundaries, ownership, dependency direction, lifecycle, data shape, or reusable pattern.",
     "- Prefer system architecture diagrams for architecture/runtime/integration pages: use `flowchart`/`graph` with named subgraphs for layers or ownership boundaries such as UI, API/runtime, worker/agent, storage, external services, and source/code. Include real module or file-backed names, not generic `Step 1` boxes.",
@@ -315,21 +269,14 @@ function wikiPageFormatRequirements(style: WikiStyle): string {
       ].join("\n");
     case "documentation":
       return [
-        "Write as functional, product-quality technical MDX repository documentation, not as an essay, source audit, generic wiki page, tutorial, inventory dump, or explainer.",
+        "Write as functional, product-quality technical MDX repository documentation, not as an essay, source audit, generic wiki page, tutorial, or explainer.",
         "Make the opening fact-first: name the technical surface, operation, reference area, or behavior as it exists in the repository. Do not describe the document, the reader's learning outcome, or why someone should read it.",
         "Use second person only for procedural steps. Otherwise prefer direct, neutral technical prose. Use active voice, sentence-case headings, exact identifiers, and no marketing language.",
         "Do not over-explain or teach. Avoid generic introductions, analogies, broad background, conceptual filler, and concluding summaries that restate the page.",
         "Never open with reader-outcome framing such as `After reading this page`, `By the end`, `You will learn`, `You can now`, `This page explains`, or `This page covers`.",
         "Reflect what is in the repository or folder. If a surface is not present in source evidence, omit it rather than documenting an expected product shape.",
-        "Progressive reading order:",
-        "Pacing matters: move from a small orientation to the primary path, then implementation detail, constraints, and optional reference. Do not front-load every fact the evidence contains.",
-        "Plain Markdown and MDX are the default. Components support the narrative; they do not become the narrative.",
-        "Use Cards for parallel navigation, Steps for real user procedures, Tabs or CodeGroup for genuine alternatives, fields/endpoints for reference metadata, and accordions only for optional detail.",
-        "Introduce every rich block with the context needed to read it. Do not place different rich block families back-to-back without an ordinary explanatory paragraph between them.",
-        "Keep the primary explanation, required setup, and required warnings visible outside tabs and accordions.",
-        "Diagrams are optional and limited to a real ownership, lifecycle, state, sequence, or dependency question that prose cannot show as clearly.",
         "Agent-friendly output matters: use stable headings, compact paragraphs, explicit field names, command blocks, tables, parameter lists, request/response examples, and predictable section titles.",
-        "Use Docs MDX components when they clarify the page. This is our own renderer-supported component language inspired by common MDX docs systems; do not import anything and do not depend on Mintlify, Fumadocs, or a hosted docs platform.",
+        "Use Grok Docs MDX components when they clarify the page. This is our own renderer-supported component language inspired by common MDX docs systems; do not import anything and do not depend on Mintlify, Fumadocs, or a hosted docs platform.",
         "Preferred MDX components:",
         "- Callouts: `<Note>`, `<Info>`, `<Tip>`, `<Warning>`, and `<Check>` for concise contextual information.",
         "- Cards: `<CardGroup>` with child `<Card title=\"...\" href=\"/...\">...</Card>` for route choices, next actions, or related concepts. Cross-page card hrefs must point only to planned docs pages from `Available Docs Page Links`; do not create placeholder routes.",
@@ -345,10 +292,9 @@ function wikiPageFormatRequirements(style: WikiStyle): string {
         "- `:::updates` with `@update Label - description` sections for changelogs, migrations, release notes, or versioned behavior.",
         "- `:::files` with an ASCII file tree for repository layout or generated output layout.",
         "Keep field components out of Markdown table cells. In tables, use normal inline code for names; use `<ParamField>` / `<ResponseField>` as standalone field lists when parameter metadata matters.",
+        "Use normal tables for comparison data and Mermaid only for real architecture, sequence, state, or data diagrams. Do not generate diagrams by default.",
         "For API/component/reference pages, include practical names, signatures, props/options, request/response fields, defaults, constraints, error cases, and small realistic examples when source evidence supports them.",
-        "For guide and subsystem pages, include prerequisites, steps or internal loop, commands/paths, verification, expected output, and troubleshooting notes when the repository contains enough evidence.",
-        "For Overview pages, explain the product surface and shortest successful path first; place deeper navigation after that orientation and prefer a short ordered list over a Card grid.",
-        "Do not write inventory-only bodies that are mostly bare path bullets without explaining behavior, ownership, or usage.",
+        "For guide pages, include prerequisites, steps, commands, verification, expected output, and troubleshooting notes when the repository contains enough evidence.",
         "Do not include visible `Sources:` lines, line-number citations, source evidence sections, or source-file details. The saved docs record already carries evidence separately.",
         "End with a short `## Related pages` or `## Next` section only when the page has useful follow-on topics, and only link to planned pages listed in `Available Docs Page Links`.",
       ].join("\n");

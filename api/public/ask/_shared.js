@@ -36,7 +36,7 @@ export function publicAskPath(publicId, visibility) {
 }
 
 export function publicAskOgImageUrl(baseUrl) {
-  return `${String(baseUrl || "").replace(/\/+$/, "")}/rlm-wiki-preview.png`;
+  return `${String(baseUrl || "").replace(/\/+$/, "")}/grok-wiki-preview.png`;
 }
 
 export function makePublicAskId(title) {
@@ -220,7 +220,7 @@ export function publicAskMarkdownIndex(snapshot, baseUrl) {
     "",
     context.description ? `> ${context.description}` : "",
     "",
-    "This is a shared rlm-wiki Ask conversation: a question and answer session grounded in repository evidence. Use the complete Markdown link when an agent needs the full transcript.",
+    "This is a shared Grok-Wiki Ask conversation: a question and answer session grounded in repository evidence. Use the complete Markdown link when an agent needs the full transcript.",
     "",
     "## Context Links",
     "",
@@ -343,7 +343,7 @@ export function publicAskAgentHtmlFallback(snapshot, baseUrl) {
   const fullMarkdown = publicAskMarkdownFull(snapshot, baseUrl);
   const visibleTurns = context.turns.slice(0, 12);
   return `
-      <article class="public-wiki-agent-fallback" data-agent-readable="true" aria-label="Agent-readable rlm-wiki Ask conversation fallback">
+      <article class="public-wiki-agent-fallback" data-agent-readable="true" aria-label="Agent-readable Grok-Wiki Ask conversation fallback">
         <header class="public-wiki-agent-head">
           <p class="public-wiki-agent-kicker">Agent-readable conversation</p>
           <h1>${escapeHtml(context.title)}</h1>

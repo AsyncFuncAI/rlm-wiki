@@ -101,17 +101,17 @@ function fakeExec(options: { archiveBytes?: number; head?: () => string; branch?
 const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
-  savedEnv.RLM_WIKI_CODE_KB = process.env.RLM_WIKI_CODE_KB;
-  savedEnv.RLM_WIKI_CODE_KB_BASE_URL = process.env.RLM_WIKI_CODE_KB_BASE_URL;
-  savedEnv.RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS = process.env.RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS;
-  delete process.env.RLM_WIKI_CODE_KB;
-  delete process.env.RLM_WIKI_CODE_KB_BASE_URL;
-  delete process.env.RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS;
+  savedEnv.GROK_WIKI_CODE_KB = process.env.GROK_WIKI_CODE_KB;
+  savedEnv.GROK_WIKI_CODE_KB_BASE_URL = process.env.GROK_WIKI_CODE_KB_BASE_URL;
+  savedEnv.GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS = process.env.GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS;
+  delete process.env.GROK_WIKI_CODE_KB;
+  delete process.env.GROK_WIKI_CODE_KB_BASE_URL;
+  delete process.env.GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS;
   __resetCodeKbClientForTests();
 });
 
 afterEach(() => {
-  for (const key of ["RLM_WIKI_CODE_KB", "RLM_WIKI_CODE_KB_BASE_URL", "RLM_WIKI_CODE_KB_PROVISION_BUDGET_MS"] as const) {
+  for (const key of ["GROK_WIKI_CODE_KB", "GROK_WIKI_CODE_KB_BASE_URL", "GROK_WIKI_CODE_KB_PROVISION_BUDGET_MS"] as const) {
     if (savedEnv[key] === undefined) delete process.env[key];
     else process.env[key] = savedEnv[key];
   }
@@ -121,15 +121,15 @@ afterEach(() => {
 describe("code kb config", () => {
   test("enabled by default, disabled only by the explicit zero flag", () => {
     expect(codeKbEnabled()).toBe(true);
-    process.env.RLM_WIKI_CODE_KB = "0";
+    process.env.GROK_WIKI_CODE_KB = "0";
     expect(codeKbEnabled()).toBe(false);
-    process.env.RLM_WIKI_CODE_KB = "1";
+    process.env.GROK_WIKI_CODE_KB = "1";
     expect(codeKbEnabled()).toBe(true);
   });
 
   test("base URL defaults to sharenow.today and trims trailing slashes on override", () => {
     expect(codeKbBaseUrl()).toBe("https://sharenow.today");
-    process.env.RLM_WIKI_CODE_KB_BASE_URL = "http://localhost:9999/";
+    process.env.GROK_WIKI_CODE_KB_BASE_URL = "http://localhost:9999/";
     expect(codeKbBaseUrl()).toBe("http://localhost:9999");
   });
 });
@@ -435,7 +435,7 @@ describe("ensureCodeKbSession local route", () => {
 
 describe("ensureCodeKbSession failure paths (fallback invariant)", () => {
   test("disabled flag returns null immediately with zero fetches", async () => {
-    process.env.RLM_WIKI_CODE_KB = "0";
+    process.env.GROK_WIKI_CODE_KB = "0";
     const { impl, calls } = fakeFetch(() => {
       throw new Error("must not fetch when disabled");
     });
@@ -536,7 +536,7 @@ describe("prewarmCodeKbSession", () => {
   });
 
   test("disabled flag is a no-op with zero fetches", async () => {
-    process.env.RLM_WIKI_CODE_KB = "0";
+    process.env.GROK_WIKI_CODE_KB = "0";
     const { impl, calls } = fakeFetch(() => {
       throw new Error("must not fetch when disabled");
     });
@@ -601,7 +601,7 @@ describe("peekCodeKbSession", () => {
     const { exec } = fakeExec({ archiveBytes: 64, head: () => "f".repeat(40), branch: () => "main" });
     expect(await peekCodeKbSession({ ...localRef, branch: "feature-x" }, { exec })).toBe(null);
 
-    process.env.RLM_WIKI_CODE_KB = "0";
+    process.env.GROK_WIKI_CODE_KB = "0";
     expect(await peekCodeKbSession(githubRef)).toBe(null);
   });
 });
@@ -705,7 +705,7 @@ describe("queryCodeKb / readCodeKbFile", () => {
   });
 
   test("disabled flag short-circuits queries with zero fetches", async () => {
-    process.env.RLM_WIKI_CODE_KB = "0";
+    process.env.GROK_WIKI_CODE_KB = "0";
     const { impl, calls } = fakeFetch(() => {
       throw new Error("must not fetch when disabled");
     });

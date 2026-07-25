@@ -40,13 +40,13 @@ describe("rlm-bun local source loading", () => {
       branch: "main",
       sourcePath: "codex-rs/app-server",
     });
-    expect(parseGitHubURL("https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey?tab=readme")).toEqual({
-      cloneURL: "https://github.com/AsyncFuncAI/rlm-wiki.git",
+    expect(parseGitHubURL("https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey?tab=readme")).toEqual({
+      cloneURL: "https://github.com/AsyncFuncAI/grok-wiki.git",
       branch: "feature/hotkey",
       sourcePath: null,
     });
-    expect(parseGitHubURL("https://github.com/AsyncFuncAI/rlm-wiki/tree/feature/hotkey/apps/desktop")).toEqual({
-      cloneURL: "https://github.com/AsyncFuncAI/rlm-wiki.git",
+    expect(parseGitHubURL("https://github.com/AsyncFuncAI/grok-wiki/tree/feature/hotkey/apps/desktop")).toEqual({
+      cloneURL: "https://github.com/AsyncFuncAI/grok-wiki.git",
       branch: "feature/hotkey",
       sourcePath: "apps/desktop",
     });
@@ -127,7 +127,7 @@ describe("rlm-bun local source loading", () => {
     const workspace = RLMOptionsSchema.parse({
       sources: [{
         id: "desktop",
-        source: "https://github.com/AsyncFuncAI/rlm-wiki",
+        source: "https://github.com/AsyncFuncAI/grok-wiki",
         branch: "feature/hotkey",
         sourcePath: "apps/desktop",
       }],

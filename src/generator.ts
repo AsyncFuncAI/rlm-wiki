@@ -1,8 +1,7 @@
 import { LocalCliAgent } from "./local-cli-runtime.ts";
 import type { RLMEvent } from "./jcode-runtime.ts";
 import { buildStructurePrompt } from "./prompts/structure.ts";
-import { buildPagePrompt, DOCS_MIN_BODY_CHARS } from "./prompts/page.ts";
-import { documentationPresentationQualityIssue } from "./docs-presentation-quality.ts";
+import { buildPagePrompt } from "./prompts/page.ts";
 import { preludeForRuntime } from "./prompts/prelude.ts";
 import { parseWikiStructureXml } from "./xml-parser.ts";
 import type {
@@ -63,7 +62,7 @@ const USER_STOP_MESSAGE = "Stopped by user.";
 // Generation runs minutes, so a cold sharenow kb provision (~5-20s) is worth
 // waiting for; anything slower degrades to the instruction-only blocks when a
 // provisioning session is already cached (pre-warm), else to the no-kb prompts.
-const WIKI_CODE_KB_BUDGET_MS = envPositiveInt("RLM_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000);
+const WIKI_CODE_KB_BUDGET_MS = envPositiveInt("GROK_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000);
 // U2 evidence pre-fetch (KTD-4): bounded fan-out so a burst of kb reads never
 // swamps the session sandbox, plus deterministic head sizes for cache-stable
 // prompts. All fetches are best-effort; a failed item is silently omitted.
@@ -478,13 +477,13 @@ export async function fetchWikiDirectPageEvidencePacks(
   }
 }
 
-/** B7 gate: default ON for fast depth; opt out with RLM_WIKI_CODE_KB_FAST_STRUCTURE=0. */
+/** B7 gate: default ON for fast depth; opt out with GROK_WIKI_CODE_KB_FAST_STRUCTURE=0. */
 function fastStructureEnabled(): boolean {
-  return process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE !== "0";
+  return process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE !== "0";
 }
 
 function fastPagesEnabled(): boolean {
-  return process.env.RLM_WIKI_CODE_KB_FAST_PAGES !== "0";
+  return process.env.GROK_WIKI_CODE_KB_FAST_PAGES !== "0";
 }
 
 export function fastPageTimeoutDefaultMs(style: WikiStyle | string): number {
@@ -496,7 +495,7 @@ export function fastPageTimeoutDefaultMs(style: WikiStyle | string): number {
 /**
  * Default budget (ms) for the B7 direct structure call, scaled by the requested
  * page count: FAST_STRUCTURE_TIMEOUT_BASE_MS plus FAST_STRUCTURE_TIMEOUT_PER_PAGE_MS
- * per page, clamped to FAST_STRUCTURE_TIMEOUT_MAX_MS. RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS
+ * per page, clamped to FAST_STRUCTURE_TIMEOUT_MAX_MS. GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS
  * overrides this. A deeper plan is a longer single completion, so the flat 60s
  * default timed out every deep (Docs, up to 30 pages) run.
  */
@@ -623,9 +622,6 @@ function validateFastStructure(
       page.filePaths = filePaths.slice(0, FAST_STRUCTURE_MAX_FILES_PER_PAGE);
     }
   }
-  if (style === "documentation") {
-    if (documentationStructureQualityIssue(structure, { pageCount, pageCountMode })) return false;
-  }
   return true;
 }
 
@@ -736,7 +732,7 @@ export async function structureFromCodeKb(
 
     if (opts.signal?.aborted) return null;
     const timeoutMs = envPositiveInt(
-      "RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS",
+      "GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS",
       fastStructureTimeoutDefaultMs(opts.pageCount),
     );
     const timer = setTimeout(() => controller.abort("fast structure direct call timed out"), timeoutMs);
@@ -840,10 +836,10 @@ function envPositiveInt(name: string, fallback: number): number {
 /**
  * Per-page evidence packs are off by default: the A/B benchmark showed the
  * per-iteration token tax of the injected file heads outweighed the tool-call
- * savings on a local checkout. Opt in with RLM_WIKI_CODE_KB_PAGE_EVIDENCE=1.
+ * savings on a local checkout. Opt in with GROK_WIKI_CODE_KB_PAGE_EVIDENCE=1.
  */
 function pageEvidenceEnabled(): boolean {
-  return process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE === "1";
+  return process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE === "1";
 }
 
 function maxPageConcurrencyForLocalCli(localCli?: LocalCliConfig | unknown): number {
@@ -910,16 +906,6 @@ const LEAKED_REASONING_PATTERNS = [
   /\bcode block in (?:assistant|final|commentary)\b/i,
   /\bSUBMIT\(\{?\s*sources\b/i,
 ];
-const DOCS_INVENTORY_TITLE_PATTERN =
-  /\b(?:module|package|directory|folder|source)\s+inventory\b|\bsource\s+tree\b|\bfile\s+list\b|\bpackage\s+list\b|\bcodebase\s+inventory\b/i;
-const DOCS_PATH_LIKE_TITLE_PATTERN =
-  /^(?:src|apps?|packages?|crates?|lib|cmd|internal|codegen)(?:\/[\w.-]+)+\/?$/i;
-const DOCS_PATH_LIKE_SECTION_PATTERN =
-  /^(?:src|apps?|packages?|crates?|lib|cmd|internal|codegen)(?:\/[\w.-]+)*\/?$/i;
-const DOCS_INVENTORY_BODY_PATH_BULLET =
-  /^\s*(?:[-*]|\d+\.)\s+(?:`[^`]+`|(?:[\w.-]+\/)+[\w.-]+)\s*$/gm;
-const DOCS_PATH_OR_COMMAND_TOKEN =
-  /`[^`\n]*(?:\/|\.(?:[A-Za-z0-9]{1,8})\b|::)[^`\n]*`|^\s*(?:\$\s+)?(?:npm|pnpm|bun|yarn|cargo|go|pip|uv|curl|docker|kubectl|grok|claude)\b/im;
 
 function looksLikeJunk(text: string): boolean {
   const t = text.trim();
@@ -928,138 +914,6 @@ function looksLikeJunk(text: string): boolean {
     if (pat.test(t)) return true;
   }
   return false;
-}
-
-function stripDocsFrontmatter(text: string): string {
-  return text.trim().replace(/^---\s*\n[\s\S]*?\n---\s*/, "");
-}
-
-function docsBodyLooksLikeInventoryOnly(body: string): boolean {
-  const lines = body.split(/\n/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length < 4) return false;
-  const pathBullets = body.match(DOCS_INVENTORY_BODY_PATH_BULLET) || [];
-  if (pathBullets.length < 4) return false;
-  const nonBullet = lines.filter((line) => !/^(?:[-*]|\d+\.)\s+/.test(line) && !/^#+\s/.test(line));
-  // List intros ("Important files:") do not count as explanatory prose.
-  const explanatory = nonBullet.filter((line) =>
-    line.length > 40 &&
-    !/`[^`]+`\s*$/.test(line) &&
-    !/:\s*$/.test(line) &&
-    !/\b(?:files?|paths?|modules?|packages?|directories|folders)\b/i.test(line)
-  );
-  return pathBullets.length >= Math.max(4, Math.floor(lines.length * 0.45)) && explanatory.length < 2;
-}
-
-function docsTitleLooksLikeInventory(title: string): boolean {
-  const t = String(title || "").trim();
-  if (!t) return true;
-  if (DOCS_INVENTORY_TITLE_PATTERN.test(t)) return true;
-  if (DOCS_PATH_LIKE_TITLE_PATTERN.test(t)) return true;
-  if (/^(?:src|apps?|packages?|crates?)\/[\w./-]+$/i.test(t)) return true;
-  return false;
-}
-
-function docsSectionLooksLikeInventory(title: string): boolean {
-  const t = String(title || "").trim();
-  if (!t) return true;
-  if (DOCS_INVENTORY_TITLE_PATTERN.test(t)) return true;
-  if (DOCS_PATH_LIKE_SECTION_PATTERN.test(t)) return true;
-  if (/^(?:src|apps?|packages?|crates?)\/[\w./-]*$/i.test(t)) return true;
-  return false;
-}
-
-function normalizeDocsComparableText(value: unknown): string {
-  return String(value || "")
-    .trim()
-    .replace(/^["']|["']$/g, "")
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-}
-
-function parseDocsFrontmatterField(frontmatter: string, field: "title" | "description"): string {
-  const match = frontmatter.match(new RegExp(`^\\s*${field}\\s*:\\s*(.*)$`, "im"));
-  if (!match) return "";
-  let raw = String(match[1] || "").trim();
-  if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
-    raw = raw.slice(1, -1);
-  }
-  return raw.replace(/\\"/g, '"').replace(/\\'/g, "'").trim();
-}
-
-/**
- * Pure documentation-structure quality helper. Returns a human-readable issue
- * string when the planned manifest is inventory-like or not journey-capable.
- * Used by tests and by fast-structure acceptance; non-docs styles ignore it.
- */
-export function documentationStructureQualityIssue(
-  structure: WikiStructure,
-  options: { pageCount?: number; pageCountMode?: WikiPageCountMode | string } = {},
-): string | null {
-  const pages = Array.isArray(structure.pages) ? structure.pages : [];
-  const sections = Array.isArray(structure.sections) ? structure.sections : [];
-  if (!pages.length) return "the docs structure has no pages";
-
-  for (const page of pages) {
-    if (docsTitleLooksLikeInventory(page.title)) {
-      return `the docs structure uses an inventory-like page title (${page.title}); prefer one-concern capability or route titles`;
-    }
-  }
-  for (const section of sections) {
-    if (docsSectionLooksLikeInventory(section.title)) {
-      return `the docs structure uses an inventory-like navigation group (${section.title}); prefer themed journey groups`;
-    }
-  }
-
-  // Multi-page docs should group routes. Use the actual planned page count only
-  // (never the desktop auto ceiling). Tiny/compact manifests may stay in one group.
-  if (pages.length >= 8 && sections.length < 2) {
-    return "the docs structure needs themed navigation groups (at least 2) for multi-page manifests";
-  }
-
-  // Require a real planned overview — never treat an arbitrary pages[0] as the hub.
-  // Normalization can still force page-overview id later, which would contaminate
-  // hub prompt guidance if the planned page was not an overview.
-  const overview =
-    pages.find((page) => page.id === OVERVIEW_PAGE_ID) ||
-    pages.find((page) => isOverviewPage(page));
-  if (!overview) {
-    return "the docs structure must include a planned overview/hub page (id page-overview or Overview title)";
-  }
-  if (pages.length >= 3) {
-    const desc = String(overview.description || "").trim();
-    if (!desc) {
-      return "the docs overview description must orient the reader and name the first planned follow-on path";
-    }
-    const looksLikeHub =
-      /\b(?:route|reader|follow|start|next|path|entry|first|begin|quickstart|install|use|workflow)\b/i.test(desc) ||
-      (Array.isArray(overview.relatedPages) && overview.relatedPages.length > 0);
-    if (!looksLikeHub) {
-      return "the docs overview description must orient the reader and name the first planned follow-on path";
-    }
-  }
-
-  const seenTitles = new Map<string, string>();
-  const seenDescriptions = new Map<string, string>();
-  for (const page of pages) {
-    const titleKey = normalizeDocsComparableText(page.title);
-    if (titleKey) {
-      const prior = seenTitles.get(titleKey);
-      if (prior) {
-        return `the docs structure reuses the page title (${page.title}) on ${prior} and ${page.id}; each route needs a unique one-concern title`;
-      }
-      seenTitles.set(titleKey, page.id);
-    }
-    const descKey = normalizeDocsComparableText(page.description);
-    if (descKey && descKey.length >= 12) {
-      const prior = seenDescriptions.get(descKey);
-      if (prior) {
-        return `the docs structure reuses the same page description on ${prior} and ${page.id}; give each route a distinct description`;
-      }
-      seenDescriptions.set(descKey, page.id);
-    }
-  }
-
-  return null;
 }
 
 function escapeRegExp(value: string): string {
@@ -1077,23 +931,11 @@ function countPreciseSourceCitations(text: string): number {
 function docsOrphanCardHref(text: string, pages: WikiStructure["pages"]): string | null {
   if (!pages.length) return null;
   const allowed = docsAllowedLinkKeys(pages);
-  const patterns = [
-    /<Card\b[^>]*\bhref=(["'])(.*?)\1[^>]*>/gi,
-    /<a\b[^>]*\bhref=(["'])(.*?)\1[^>]*>/gi,
-    /\[[^\]]+\]\(([^)\s]+)\)/gi,
-  ];
-  for (const pattern of patterns) {
-    for (const match of text.matchAll(pattern)) {
-      const href = String(match[2] ?? match[1] ?? "").trim();
-      if (!href || isExternalDocsHref(href) || href.startsWith("#")) continue;
-      // Ignore pure source-path markdown links that are not docs routes.
-      if (!href.startsWith("/") && !/^page-/i.test(href) && !/\.(?:mdx?|html?)(?:#|$)/i.test(href) && !allowed.has(normalizeDocsLinkKey(href))) {
-        if (/[./]/.test(href) && !href.includes("page-")) continue;
-      }
-      const key = normalizeDocsLinkKey(href);
-      if (!key) continue;
-      if (!allowed.has(key)) return href;
-    }
+  const cardPattern = /<Card\b[^>]*\bhref=(["'])(.*?)\1[^>]*>/gi;
+  for (const match of text.matchAll(cardPattern)) {
+    const href = String(match[2] || "").trim();
+    if (!href || isExternalDocsHref(href) || href.startsWith("#")) continue;
+    if (!allowed.has(normalizeDocsLinkKey(href))) return href;
   }
   return null;
 }
@@ -1161,22 +1003,7 @@ export function wikiPageQualityIssue(
     if (!/^\s*title\s*:/m.test(frontmatter) || !/^\s*description\s*:/m.test(frontmatter)) {
       return "the docs page frontmatter must include title and description";
     }
-    const fmTitle = parseDocsFrontmatterField(frontmatter, "title");
-    const fmDescription = parseDocsFrontmatterField(frontmatter, "description");
-    if (normalizeDocsComparableText(fmTitle) !== normalizeDocsComparableText(page.title)) {
-      return `the docs page frontmatter title must match the planned page title (${page.title})`;
-    }
-    if (normalizeDocsComparableText(fmDescription) !== normalizeDocsComparableText(page.description)) {
-      return `the docs page frontmatter description must match the planned page description (${page.description})`;
-    }
-    const body = stripDocsFrontmatter(t);
-    // Inventory-only is a structure defect even when short, so flag it before the body floor.
-    if (docsBodyLooksLikeInventoryOnly(body)) {
-      return "the docs page looks like a path inventory; explain behavior, ownership, and usage instead of listing files";
-    }
-    if (body.trim().length < DOCS_MIN_BODY_CHARS) {
-      return "the docs page body was too thin; add substantive source-backed explanation without padding or decorative components";
-    }
+    const body = t.replace(/^---\s*\n[\s\S]*?\n---\s*/, "");
     if (/^\s*#\s+\S/m.test(body.slice(0, 2000))) {
       return "the docs page included a duplicate level-1 heading; frontmatter supplies the visible title";
     }
@@ -1189,14 +1016,6 @@ export function wikiPageQualityIssue(
     const openingSection = body.trimStart().split(/\n##\s+/)[0]?.slice(0, 1400) || "";
     if (DOCS_READER_OUTCOME_OPENING_PATTERN.test(openingSection)) {
       return "the docs page opened with reader-outcome or tutorial framing; start with implementation facts instead";
-    }
-    const presentationIssue = documentationPresentationQualityIssue(body);
-    if (presentationIssue) return presentationIssue;
-    const headingCount = (body.match(/^\s*##\s+\S/gm) || []).length;
-    const hasConcreteSurface =
-      DOCS_PATH_OR_COMMAND_TOKEN.test(body) || /```/.test(body) || /^\s*\|.+\|/m.test(body);
-    if (headingCount < 2 || !hasConcreteSurface) {
-      return "the docs page lacks a usable reading path (need at least two ## sections and a concrete path, command, code fence, or table)";
     }
     const orphanCardHref = docsOrphanCardHref(body, allPages);
     if (orphanCardHref) {
@@ -1250,9 +1069,6 @@ export function friendlyWikiGenerationError(value: unknown): string {
   if (/thread .*not found|session .*not found|failed to record rollout/i.test(message)) {
     return "The local agent lost its session state. Recover this page to continue from the saved wiki outline.";
   }
-  if (/\bunknown model(?: id)?\b|\bmodel(?: id)?\b[^.]{0,120}\b(?:not found|not available|unavailable|unsupported|does not exist)\b/i.test(message)) {
-    return "The selected local model is unavailable. Choose another model, then recover this page.";
-  }
   if (/local CLI runtime failed|exited with \d+|reading prompt from stdin/i.test(message)) {
     return "The local agent stopped before returning a wiki page. Recover this page when the runtime is ready.";
   }
@@ -1266,8 +1082,7 @@ function friendlyWikiGenerationIssue(issue: string): string {
     : issue;
 }
 
-/** Exported for HTML artifact quality gates (format-agnostic leak detection). */
-export function looksLikeLeakedReasoning(text: string): boolean {
+function looksLikeLeakedReasoning(text: string): boolean {
   const firstChunk = text.slice(0, 3000);
   if (LEAKED_REASONING_PATTERNS.some((pattern) => pattern.test(firstChunk))) return true;
 
@@ -1596,14 +1411,9 @@ async function runStructureAgent(args: {
   localCli?: LocalCliConfig | unknown;
   codeKb?: string;
   signal?: AbortSignal;
-  /** Prior docs-structure quality rejection to feed into a replan attempt. */
-  qualityIssue?: string;
 }): Promise<WikiStructure> {
-  const { ref, refs, channel, sessionDir, maxIterations, onEvent, runtime, depth, pageCount, pageCountMode, style, stylePrompt, languages, knowledgeProfile, localCli, codeKb, signal, qualityIssue } = args;
-  const basePrompt = preludeForRuntime(channel.id, depth, runtime) + buildStructurePrompt({ owner: ref.owner, repo: ref.repo, sourcePath: ref.sourcePath, repos: refs, runtime, depth, pageCount, pageCountMode, style, stylePrompt, languages, knowledgeProfile, codeKb });
-  const prompt = qualityIssue
-    ? `${basePrompt}\n\n---\n⚠️ A previous docs structure plan was rejected because ${qualityIssue}.\n\nEmit a complete replacement <wiki_structure> that fixes that defect. Keep adaptive journey-ordered themed groups, one-concern titles, a real page-overview orientation that names the first useful path, and no inventory titles or duplicate route titles/descriptions.\n`
-    : basePrompt;
+  const { ref, refs, channel, sessionDir, maxIterations, onEvent, runtime, depth, pageCount, pageCountMode, style, stylePrompt, languages, knowledgeProfile, localCli, codeKb, signal } = args;
+  const prompt = preludeForRuntime(channel.id, depth, runtime) + buildStructurePrompt({ owner: ref.owner, repo: ref.repo, sourcePath: ref.sourcePath, repos: refs, runtime, depth, pageCount, pageCountMode, style, stylePrompt, languages, knowledgeProfile, codeKb });
 
   // Accumulate every event's text so we can recover the XML even if the agent
   // omitted the <ANSWER> tag.
@@ -1818,7 +1628,7 @@ async function runPageAgent(args: {
   const retryPrompt =
     prompt +
     (style === "documentation"
-      ? `\n\n---\n⚠️ A previous attempt was rejected because ${firstIssue}.\n\nThis is a critical docs-page contract failure. Your next final answer MUST contain a complete replacement MDX page, not analysis about how to answer.\n\nOutput language requirement:\n${languageGuidance}\n\nRequired final shape:\n<ANSWER>\n---\ntitle: "${page.title.replace(/"/g, '\\"')}"\ndescription: "${page.description.replace(/"/g, '\\"')}"\n---\n\nStart with plain orientation prose, then use focused ## sections in a progressive reading order. Keep core information visible, place components beside the prose they support, and do not stack different rich component families without an explanatory paragraph.\n</ANSWER>\n\nDo not open with reader-outcome or tutorial framing such as \"After reading this page\", \"By the end\", \"You will learn\", \"This page explains\", or \"This page covers\". Do not add a duplicate # heading, source-file details block, Source evidence section, visible Sources: lines, line-number citations, JavaScript, SUBMIT calls, private reasoning, planning notes, sandbox instructions, \"Need see output\", \"Wait assistant\", or discussion about final/code/commentary channels. Do not submit until the <ANSWER> block contains at least ${DOCS_MIN_BODY_CHARS} characters of real docs MDX.`
+      ? `\n\n---\n⚠️ A previous attempt was rejected because ${firstIssue}.\n\nThis is a critical docs-page contract failure. Your next final answer MUST contain a complete replacement MDX page, not analysis about how to answer.\n\nOutput language requirement:\n${languageGuidance}\n\nRequired final shape:\n<ANSWER>\n---\ntitle: "${page.title.replace(/"/g, '\\"')}"\ndescription: "${page.description.replace(/"/g, '\\"')}"\n---\n\nStart with one fact-first technical paragraph about the actual implementation surface. Use focused ## sections and renderer-supported Grok Docs MDX components when they help.\n</ANSWER>\n\nDo not open with reader-outcome or tutorial framing such as \"After reading this page\", \"By the end\", \"You will learn\", \"This page explains\", or \"This page covers\". Do not add a duplicate # heading, source-file details block, Source evidence section, visible Sources: lines, line-number citations, JavaScript, SUBMIT calls, private reasoning, planning notes, sandbox instructions, \"Need see output\", \"Wait assistant\", or discussion about final/code/commentary channels. Do not submit until the <ANSWER> block contains at least ${MIN_PAGE_CHARS} characters of real docs MDX.`
       : `\n\n---\n⚠️ A previous attempt was rejected because ${firstIssue}.\n\nThis is a critical wiki-page contract failure. Your next final answer MUST contain a complete replacement page, not analysis about how to answer.\n\nOutput language requirement:\n${languageGuidance}\n\nRequired final shape:\n<ANSWER>\n<details>\n<summary>${sourceScaffold.summary}</summary>\n${sourceScaffold.intro}\n- [path/to/file.ext](path/to/file.ext)\n</details>\n\n# ${page.title}\n\nTranslate the heading above if it is not already in the selected output language, then write the complete grounded wiki page in the selected output language. Include at least ${expectedCitations} precise body citations like Sources: [path/to/file.ts:12-40](). The opening source-file list does not count. Verify cited line ranges before using them.\n</ANSWER>\n\nDo not emit JavaScript, SUBMIT calls, or any legacy sandbox wrapper. Do not include private reasoning, planning notes, sandbox instructions, \"Need see output\", \"Wait assistant\", or discussion about final/code/commentary channels in the page. Do not submit until the <ANSWER> block contains at least ${MIN_PAGE_CHARS} characters of real wiki markdown.`);
   throwIfAborted(signal);
   let retry: QueryAgentResult | null = null;
@@ -1931,7 +1741,7 @@ async function runDirectPageWriter(args: {
   };
   args.signal?.addEventListener("abort", onParentAbort, { once: true });
   const timeoutMs = envPositiveInt(
-    "RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS",
+    "GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS",
     fastPageTimeoutDefaultMs(args.style),
   );
   let timedOut = false;
@@ -2118,7 +1928,7 @@ export async function generateWiki(
   // the structure phase, retry once with the basic profile instead of failing
   // the whole generation; the rest of the run then stays basic for coherence.
   let effectiveKnowledgeProfile = knowledgeProfile;
-  const runStructurePhase = (profile: KnowledgeProfile, qualityIssue?: string) => withAgentTimeout(
+  const runStructurePhase = (profile: KnowledgeProfile) => withAgentTimeout(
     (signal, bumpActivity) => runStructureAgent({
       ref,
       refs,
@@ -2136,7 +1946,6 @@ export async function generateWiki(
       knowledgeProfile: profile,
       codeKb: structureCodeKb,
       signal,
-      qualityIssue,
       onEvent: (ev: RLMEvent) => {
         bumpActivity();
         emit({ type: "structure-agent", event: ev });
@@ -2213,30 +2022,6 @@ export async function generateWiki(
     }
   }
   throwIfAborted(opts.signal);
-  // Docs quality on the raw agent/direct structure before overview normalization
-  // can invent a hub from the first arbitrary page.
-  if (style === "documentation") {
-    const docsStructureIssue = documentationStructureQualityIssue(structure, {
-      pageCount: requestedPageCount,
-      pageCountMode,
-    });
-    if (docsStructureIssue) {
-      emit({
-        type: "phase",
-        phase: "structure",
-        message: `Docs structure quality issue (${docsStructureIssue}). Replanning structure once.`,
-      });
-      emit({ type: "structure-start" });
-      structure = await runStructurePhase(effectiveKnowledgeProfile, docsStructureIssue);
-      const retryIssue = documentationStructureQualityIssue(structure, {
-        pageCount: requestedPageCount,
-        pageCountMode,
-      });
-      if (retryIssue) {
-        throw new Error(`Documentation structure rejected after retry: ${retryIssue}`);
-      }
-    }
-  }
   const cappedStructure = capWikiStructurePages(
     ensureOpeningPageFirstWikiStructure(structure, { style }),
     requestedPageCount,
@@ -2274,7 +2059,7 @@ export async function generateWiki(
   // U2 (R4): pre-fetch the per-page evidence packs from the same snapshot
   // before spawning page agents. Off by default (the A/B benchmark showed the
   // token tax lost to free tool calls on the checkout); opt in with
-  // RLM_WIKI_CODE_KB_PAGE_EVIDENCE=1. Best-effort: an empty map leaves every
+  // GROK_WIKI_CODE_KB_PAGE_EVIDENCE=1. Best-effort: an empty map leaves every
   // page prompt byte-identical to the pre-evidence output (R8).
   let pageEvidencePacks = new Map<string, string>();
   if (pageEvidenceEnabled() && codeKbPrompts?.session && codeKbPrompts.pageCodeKb) {

@@ -51,12 +51,13 @@ WORKDIR /app
 # Node deps — copy lockfiles and local file dependencies first for layer caching.
 COPY package.json bun.lock ./
 COPY vendor/rlm-bun ./vendor/rlm-bun
+COPY apps/desktop/package.json ./apps/desktop/package.json
 RUN bun install --frozen-lockfile
 
 FROM deps AS web-build
 
 # Build the browser package inside Docker so production serves the Vite output,
-# not the raw public HTML/CSS/JS sources. Public pages import shared UI from src/ui.
+# not the raw public HTML/CSS/JS sources.
 COPY public ./public
 COPY src/ui ./src/ui
 COPY src/public-agent-prompt.ts ./src/public-agent-prompt.ts
@@ -71,12 +72,12 @@ WORKDIR /app
 # Runtime deps only. Dev tooling such as Vite is only needed in web-build.
 COPY package.json bun.lock ./
 COPY vendor/rlm-bun ./vendor/rlm-bun
+COPY apps/desktop/package.json ./apps/desktop/package.json
 RUN bun install --frozen-lockfile --production
 
 # Application code — the part that changes most often, so last.
 COPY bin ./bin
 COPY src ./src
-COPY api ./api
 COPY --from=web-build /app/dist ./dist
 COPY tsconfig.json ./tsconfig.json
 COPY README.md ./README.md

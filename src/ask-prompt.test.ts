@@ -170,7 +170,7 @@ describe("ask prompts", () => {
     expect(prompt).toContain("Do not claim sub-agents ran");
     expect(prompt).toContain("do not describe work as simulated sub-agents");
     expect(prompt).not.toContain("# Local CLI Runtime");
-    expect(prompt).not.toContain("You are Codex CLI running from rlm-wiki Agent mode.");
+    expect(prompt).not.toContain("You are Codex CLI running from Grok-Wiki Agent mode.");
   });
 });
 

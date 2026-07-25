@@ -2,11 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { documentationStructureQualityIssue, ensureOpeningPageFirstWikiStructure, ensureOverviewFirstWikiPage, fastPageTimeoutDefaultMs, fastStructureTimeoutDefaultMs, fetchWikiDirectPageEvidencePacks, fetchWikiPageEvidencePacks, fetchWikiStructureEvidence, friendlyWikiGenerationError, generateWiki, normalizeWikiGenerationRuntime, prefetchWikiCodeKbPrompts, resolveWikiConcurrency, structureFromCodeKb, wikiPageQualityIssue, type GenerationEvent, type WikiCodeKbOptions } from "./generator.ts";
+import { ensureOpeningPageFirstWikiStructure, ensureOverviewFirstWikiPage, fastPageTimeoutDefaultMs, fastStructureTimeoutDefaultMs, fetchWikiDirectPageEvidencePacks, fetchWikiPageEvidencePacks, fetchWikiStructureEvidence, friendlyWikiGenerationError, generateWiki, normalizeWikiGenerationRuntime, prefetchWikiCodeKbPrompts, resolveWikiConcurrency, structureFromCodeKb, wikiPageQualityIssue, type GenerationEvent, type WikiCodeKbOptions } from "./generator.ts";
 import { knowledgeProfilePrompt, normalizeKnowledgeProfile } from "./knowledge-profile.ts";
 import { __resetLocalCliSidecarForTests, __setLocalCliSidecarStarterForTests } from "./local-cli-sidecar-client.ts";
 import { renderCodeKbBlock } from "./prompts/code-kb.ts";
-import { buildPagePrompt, DOCS_MIN_BODY_CHARS } from "./prompts/page.ts";
+import { buildPagePrompt } from "./prompts/page.ts";
 import { buildStructurePrompt } from "./prompts/structure.ts";
 import type { CodeKbSession } from "./sharenow-kb-client.ts";
 import { WikiStore } from "./storage.ts";
@@ -91,23 +91,13 @@ describe("wiki generation errors", () => {
     expect(message).not.toContain("codex exited");
     expect(message).not.toContain("Reading prompt");
   });
-
-  test("keeps an unavailable local model actionable", () => {
-    const message = friendlyWikiGenerationError(
-      "the local CLI runtime failed: Grok CLI exited with 1: Couldn't set model 'composer-2.5': Invalid params: \"unknown model id\".",
-    );
-
-    expect(message).toBe(
-      "The selected local model is unavailable. Choose another model, then recover this page.",
-    );
-  });
 });
 
 describe("wiki prompts", () => {
   test("auto page-count prompts ask the structure agent to choose under the ceiling", () => {
     const prompt = buildStructurePrompt({
       owner: "AsyncFuncAI",
-      repo: "rlm-wiki",
+      repo: "grok-wiki",
       pageCount: 12,
       pageCountMode: "auto",
     });
@@ -121,7 +111,7 @@ describe("wiki prompts", () => {
   test("fixed page-count prompts preserve exact-count API behavior", () => {
     const prompt = buildStructurePrompt({
       owner: "AsyncFuncAI",
-      repo: "rlm-wiki",
+      repo: "grok-wiki",
       pageCount: 12,
       pageCountMode: "fixed",
     });
@@ -374,14 +364,7 @@ describe("wiki prompts", () => {
     expect(structurePrompt).toContain("sections are docs navigation groups and pages are docs routes");
     expect(structurePrompt).toContain("agent- and human-friendly");
     expect(structurePrompt).toContain("Prefer functional technical coverage over explanation");
-    expect(structurePrompt).toContain("Orient → Use → Understand → Deepen");
-    expect(structurePrompt).toContain("Small repositories may collapse these stages");
-    expect(structurePrompt).toContain("one-concern");
-    expect(structurePrompt).toContain("themed navigation");
-    expect(structurePrompt).not.toContain("persona routes");
-    expect(structurePrompt).not.toContain("Prefer component tags for content pages");
-    expect(structurePrompt).not.toContain("Prefer diagrams when architecture");
-    expect(pagePrompt).toContain("Docs MDX components");
+    expect(pagePrompt).toContain("Grok Docs MDX components");
     expect(pagePrompt).toContain("The very first element must be YAML frontmatter");
     expect(pagePrompt).toContain('title: "Configuration reference"');
     expect(pagePrompt).toContain("Agent-friendly output matters");
@@ -390,39 +373,6 @@ describe("wiki prompts", () => {
     expect(pagePrompt).toContain("Never open with reader-outcome framing");
     expect(pagePrompt).not.toContain("Start with an outcome paragraph");
     expect(pagePrompt).toContain("Reflect what is in the repository or folder");
-    expect(pagePrompt).toContain("Plain Markdown and MDX are the default");
-    expect(pagePrompt).toContain("Progressive reading order");
-    expect(pagePrompt).toContain("Do not place a rich component before the first `##` section");
-    expect(pagePrompt).toContain("Keep the primary explanation outside tabs and accordions");
-    expect(pagePrompt).toContain("Diagrams are optional");
-    expect(pagePrompt).toContain(`at least ${DOCS_MIN_BODY_CHARS} characters`);
-    expect(pagePrompt).not.toContain("Density matters");
-    expect(pagePrompt).not.toContain("include a spatial Mermaid");
-    expect(pagePrompt).not.toContain("Prefer system architecture diagrams");
-    expect(pagePrompt).not.toContain("a compact fenced `text` ASCII diagram is a strong candidate");
-    expect(pagePrompt).toContain("inventory-only");
-    const overviewPrompt = buildPagePrompt({
-      owner: "EveryInc",
-      repo: "compound-engineering-plugin",
-      style: "documentation",
-      page: {
-        id: "page-overview",
-        title: "Overview",
-        description: "Project surfaces.",
-        filePaths: ["README.md", "src/index.ts"],
-      },
-      allPages: [
-        { id: "page-overview", title: "Overview", description: "Project surfaces." },
-        { id: "page-quickstart", title: "Quickstart", description: "First run." },
-        { id: "page-reference", title: "Configuration reference", description: "Options." },
-      ],
-    });
-    expect(overviewPrompt).toContain("Overview Orientation Requirements");
-    expect(overviewPrompt).toContain("shortest source-backed successful path");
-    expect(overviewPrompt).toContain("Use a short ordered list by default");
-    expect(overviewPrompt).toContain("Cards only for genuinely parallel choices");
-    expect(overviewPrompt).not.toContain("Operator / end user");
-    expect(overviewPrompt).toContain("page-quickstart");
     expect(pagePrompt).toContain("<CardGroup>");
     expect(pagePrompt).toContain("<RequestExample>");
     expect(pagePrompt).toContain("`:::endpoint METHOD /path short summary`");
@@ -459,12 +409,6 @@ describe("wiki prompts", () => {
       "",
       "DatabaseManager clones the target repository into the AdalFlow repository directory, transforms matching files into chunked documents, embeds those chunks, and persists the resulting LocalDB object as a `.pkl` file. The saved database lets later runs reuse the vector index instead of re-cloning and re-embedding the same repository. The implementation also keeps repository acquisition, document reading, splitting, embedding, and persistence in separate methods so failures are easier to isolate.",
     ].join("\n");
-    const denseTail = [
-      "",
-      "Chunking defaults, overlap values, and embedding model selection all come from the configuration object passed into DatabaseManager. Retrieval later loads the same LocalDB path so the query path never re-embeds an unchanged repository fingerprint.",
-      "",
-      "Operators should treat a missing `.pkl` as a rebuild signal and treat an existing file as a warm cache unless the source revision changed. That keeps indexing cost bounded while still grounding retrieval in the real checkout under the AdalFlow data directory.",
-    ].join("\n");
     const good = [
       "---",
       'title: "Indexing and persistence"',
@@ -476,11 +420,6 @@ describe("wiki prompts", () => {
       "## Index location",
       "",
       "The saved `.pkl` database is the cache boundary between first-run indexing and later retrieval. A missing database triggers clone, read, split, embed, and save work; an existing database is loaded directly so the retriever can be prepared without rebuilding every vector. Configuration values define the splitter chunk size, overlap, embedding model, and retrieval count.",
-      "",
-      "## Entry points",
-      "",
-      "`src/data_pipeline.py` exposes the clone, split, embed, and save methods used by the retriever bootstrap path. Failures stay isolated per stage so a bad embedding request does not leave a half-written database file on disk.",
-      denseTail,
     ].join("\n");
     const delayedBad = [
       "---",
@@ -488,74 +427,18 @@ describe("wiki prompts", () => {
       'description: "Document indexing behavior."',
       "---",
       "",
-      "DatabaseManager owns GithubChat's indexing layer and persists a LocalDB object for retrieval under the AdalFlow data directory using the repository checkout plus embedding pipeline.",
+      "DatabaseManager owns GithubChat's indexing layer and persists a LocalDB object for retrieval.",
       "",
       "After reading this page you will be able to explain when the index rebuilds and how the persisted database is reused.",
       "",
       "## Index location",
       "",
-      "The saved `.pkl` database is the cache boundary between first-run indexing and later retrieval. A missing database triggers clone, read, split, embed, and save work; an existing database is loaded directly so the retriever can be prepared without rebuilding every vector. Configuration values define the splitter chunk size, overlap, embedding model, and retrieval count used by `src/data_pipeline.py`.",
-      "",
-      "## Persistence boundary",
-      "",
-      "The LocalDB object is the durable handoff between indexing and later retrieval. Rebuilds only run when that file is missing or the repository fingerprint changes.",
-      denseTail,
-    ].join("\n");
-    const badDense = [
-      "---",
-      'title: "Indexing and persistence"',
-      'description: "Document indexing behavior."',
-      "---",
-      "",
-      "After reading this page you can explain and operate GithubChat's indexing layer: how a repository becomes a searchable vector index, where that index is written on disk, when it is rebuilt versus reused, and which configuration values control chunking and embeddings.",
-      "",
-      "## Index location",
-      "",
-      "DatabaseManager clones the target repository into the AdalFlow repository directory, transforms matching files into chunked documents, embeds those chunks, and persists the resulting LocalDB object as a `.pkl` file. The saved database lets later runs reuse the vector index instead of re-cloning and re-embedding the same repository. The implementation also keeps repository acquisition, document reading, splitting, embedding, and persistence in separate methods so failures are easier to isolate.",
-      "",
-      "## Configuration",
-      "",
-      "Chunk size, overlap, embedding model, and retrieval count are configuration fields on DatabaseManager. They decide when `src/data_pipeline.py` rebuilds versus reuses the persisted LocalDB under the AdalFlow data directory.",
-      denseTail,
+      "The saved `.pkl` database is the cache boundary between first-run indexing and later retrieval. A missing database triggers clone, read, split, embed, and save work; an existing database is loaded directly so the retriever can be prepared without rebuilding every vector.",
     ].join("\n");
 
-    expect(wikiPageQualityIssue(badDense, page, ["en"], "documentation")).toContain("reader-outcome");
+    expect(wikiPageQualityIssue(bad, page, ["en"], "documentation")).toContain("reader-outcome");
     expect(wikiPageQualityIssue(delayedBad, page, ["en"], "documentation")).toContain("reader-outcome");
     expect(wikiPageQualityIssue(good, page, ["en"], "documentation")).toBeNull();
-  });
-
-  test("documentation page quality rejects frontmatter that does not match the planned page", () => {
-    const page = {
-      id: "page-runtime",
-      title: "Runtime",
-      description: "Runtime surfaces.",
-      importance: "high" as const,
-      filePaths: ["src/runtime.ts"],
-      relatedPages: [],
-    };
-    const mismatched = [
-      "---",
-      'title: "Generated reference"',
-      'description: "Source-grounded repository documentation."',
-      "---",
-      "",
-      "`src/runtime.ts` owns the foreground generate loop and fans out page writers against bounded evidence packs.",
-      "",
-      "## Ownership",
-      "",
-      "Structure planning uses the documentation style contract while page writers share the desktop direct-page quality gate. Cancellation aborts writers without saving inventory stubs.",
-      "",
-      "## Commands",
-      "",
-      "```bash",
-      "bun test src/generator.test.ts",
-      "```",
-      "",
-      "That suite exercises the documentation quality helpers on accept and reject fixtures for planned frontmatter titles.",
-      "",
-      "Additional detail keeps the body above the density floor while proving the frontmatter match is independent of body length. The runtime still owns generate orchestration, progress events, and recovery of failed pages after one auto-recovery round.",
-    ].join("\n");
-    expect(wikiPageQualityIssue(mismatched, page, ["en"], "documentation")).toContain("frontmatter title must match");
   });
 
   test("documentation page quality rejects cards linked to unplanned routes", () => {
@@ -584,23 +467,12 @@ describe("wiki prompts", () => {
       'description: "Overview."',
       "---",
       "",
-      "Odysseus exposes its runtime surfaces through app routes, configuration keys, and provider-neutral model endpoints in `src/server.ts`.",
+      "Odysseus exposes its runtime surfaces through app routes, configuration keys, and provider-neutral model endpoints.",
       "The overview page keeps navigation focused on generated docs routes that already exist in the manifest. It names implementation surfaces, points to the supported reference page, and avoids presenting future API pages as clickable docs when the structure agent did not plan them.",
       "",
       "## Runtime surfaces",
       "",
-      "The app route, configuration, and model surfaces are documented in the generated page set. Cross-page cards are navigation controls, so their href values must resolve to planned page ids instead of aspirational slugs. Operators start with configuration; integrators read the reference page next.",
-      "",
-      "| Surface | Location | Role |",
-      "| --- | --- | --- |",
-      "| HTTP routes | `src/server.ts` | Accept generate and ask traffic |",
-      "| Config keys | `src/config.ts` | Provider-neutral runtime options |",
-      "",
-      "## Reader routes",
-      "",
-      "Contributors open architecture pages after this hub, while operators stay on configuration and recovery routes. The hub never invents future API pages as clickable docs when the structure agent did not plan them.",
-      "",
-      "The desktop docs reader renders this frontmatter title as the page header, so the planned Overview route and the visible metadata stay aligned for navigation and search.",
+      "The app route, configuration, and model surfaces are documented in the generated page set. Cross-page cards are navigation controls, so their href values must resolve to planned page ids instead of aspirational slugs.",
       "",
       "## Next",
       "",
@@ -614,348 +486,6 @@ describe("wiki prompts", () => {
 
     expect(wikiPageQualityIssue(valid, page, ["en"], "documentation", pages)).toBeNull();
     expect(wikiPageQualityIssue(invalid, page, ["en"], "documentation", pages)).toContain("unplanned page route");
-  });
-
-  test("documentation page quality rejects thin and inventory-only bodies", () => {
-    const page = {
-      id: "page-runtime",
-      title: "Runtime",
-      description: "Runtime surfaces.",
-      importance: "high" as const,
-      filePaths: ["src/runtime.ts"],
-      relatedPages: [],
-    };
-    const thin = [
-      "---",
-      'title: "Runtime"',
-      'description: "Runtime surfaces."',
-      "---",
-      "",
-      "Runtime coordinates generation work.",
-      "",
-      "## Notes",
-      "",
-      "It is important for generation.",
-    ].join("\n");
-    const inventory = [
-      "---",
-      'title: "Runtime"',
-      'description: "Runtime surfaces."',
-      "---",
-      "",
-      "Important files in this repository area for the runtime and generation stack:",
-      "",
-      "- `src/runtime.ts`",
-      "- `src/generator.ts`",
-      "- `src/server.ts`",
-      "- `src/storage.ts`",
-      "- `src/cli.ts`",
-      "- `apps/desktop/src/main.ts`",
-      "- `apps/desktop/src/desktop-runtime.ts`",
-      "- `src/prompts/structure.ts`",
-      "- `src/prompts/page.ts`",
-      "- `src/wiki-options.ts`",
-      "- `src/local-cli-runtime.ts`",
-      "- `src/sharenow-kb-client.ts`",
-      "- `src/xml-parser.ts`",
-      "- `src/types.ts`",
-      "- `src/llm.ts`",
-      "- `src/chat.ts`",
-      "- `src/persistence.ts`",
-      "",
-      "Also note these related paths for desktop generation orchestration:",
-      "",
-      "- `apps/desktop/src/runtime/wiki-generation-runtime.ts`",
-      "- `apps/desktop/src/runtime/wiki-composer-runtime.ts`",
-      "- `src/prompts/chat.ts`",
-      "- `src/prompts/code-kb.ts`",
-      "- `src/prompts/prelude.ts`",
-      "- `apps/desktop/src/controllers/wiki-stream-controller.ts`",
-    ].join("\n");
-    const dense = [
-      "---",
-      'title: "Runtime"',
-      'description: "Runtime surfaces."',
-      "---",
-      "",
-      "`src/runtime.ts` owns the foreground generate loop: it accepts a local-CLI runtime, plans structure, then fans out page writers against bounded evidence packs from the code graph.",
-      "",
-      "## Ownership",
-      "",
-      "Structure planning uses the documentation style contract, while page writers share the same quality gate used by desktop direct pages. Cancellation aborts in-flight writers without marking inventory-only stubs as saved pages. Progress events stay scoped to the docs surface so a wiki run never paints the docs panel.",
-      "",
-      "| Phase | Module | Responsibility |",
-      "| --- | --- | --- |",
-      "| Structure | `src/generator.ts` | Manifest + journey groups |",
-      "| Pages | `src/prompts/page.ts` | MDX body contract |",
-      "",
-      "## Commands",
-      "",
-      "```bash",
-      "bun test src/generator.test.ts",
-      "```",
-      "",
-      "That suite exercises the documentation quality helpers on accept and reject fixtures for thin, inventory, and dense pages.",
-      "",
-      "Recovery rounds re-run only failed pages, preserving successful MDX already checkpointed to the wiki store under the documentation style.",
-      "",
-      "When the code graph is ready, direct pages consume bounded evidence packs and fall back once if the MDX fails the same quality contract. That keeps CodeGraph as an accelerator without weakening the documentation reader experience.",
-    ].join("\n");
-    const inventoryDense = [
-      inventory,
-      "",
-      "- `src/html-generate.ts`",
-      "- `src/html-pipeline.ts`",
-      "- `src/open-slide-export.ts`",
-      "- `src/public-wiki.ts`",
-      "- `src/run-worker.ts`",
-      "- `src/slides-generator.ts`",
-      "- `src/agent-runtime.ts`",
-      "- `src/jcode-runtime.ts`",
-      "- `src/codex-runtime.ts`",
-      "- `src/llm-core.ts`",
-      "- `src/model-control.ts`",
-      "- `src/provider-secrets.ts`",
-      "- `src/wiki-identity.ts`",
-      "- `src/wiki-options.ts`",
-      "- `src/wiki-page-status.ts`",
-      "- `src/storage.ts`",
-    ].join("\n");
-
-    expect(wikiPageQualityIssue(thin, page, ["en"], "documentation")).toMatch(/too thin|placeholder|short|dense craft/i);
-    expect(wikiPageQualityIssue(inventoryDense, page, ["en"], "documentation")).toContain("path inventory");
-    expect(wikiPageQualityIssue(dense, page, ["en"], "documentation")).toBeNull();
-  });
-
-  test("documentation page quality rejects a rich component in the opening", () => {
-    const page = {
-      id: "page-runtime",
-      title: "Runtime",
-      description: "Runtime surfaces.",
-      importance: "high" as const,
-      filePaths: ["src/runtime.ts"],
-      relatedPages: [],
-    };
-    const explanation =
-      "The provider-neutral runtime keeps structure planning, page writing, validation, persistence, and recovery in distinct stages so each transition has one owner and one observable completion signal. ";
-    const frontLoaded = [
-      "---",
-      'title: "Runtime"',
-      'description: "Runtime surfaces."',
-      "---",
-      "",
-      "`src/runtime.ts` owns the generation path and persists pages only after the shared quality gate accepts them.",
-      "",
-      "<CardGroup>",
-      '<Card title="Runtime" href="/runtime">Open the runtime route.</Card>',
-      "</CardGroup>",
-      "",
-      "## Primary path",
-      "",
-      explanation.repeat(4),
-      "",
-      "## Verification",
-      "",
-      "Run `bun test src/generator.test.ts` and verify that failed direct pages fall back once without bypassing the same validator.",
-      "",
-      explanation.repeat(4),
-    ].join("\n");
-
-    expect(frontLoaded.length).toBeGreaterThan(DOCS_MIN_BODY_CHARS);
-    expect(wikiPageQualityIssue(frontLoaded, page, ["en"], "documentation", [page])).toContain(
-      "before the first section",
-    );
-  });
-
-  test("documentation page quality uses the shared floor and paced retry contract", () => {
-    const generatorSource = readFileSync(new URL("./generator.ts", import.meta.url), "utf8");
-
-    expect(generatorSource).toContain(
-      'import { buildPagePrompt, DOCS_MIN_BODY_CHARS } from "./prompts/page.ts"',
-    );
-    expect(generatorSource).toContain("body.trim().length < DOCS_MIN_BODY_CHARS");
-    expect(generatorSource).toContain(
-      "at least ${DOCS_MIN_BODY_CHARS} characters of real docs MDX",
-    );
-    expect(generatorSource).not.toContain("const DOCS_MIN_BODY_CHARS = 1200");
-    expect(generatorSource).toContain(
-      "Start with plain orientation prose, then use focused ## sections in a progressive reading order. Keep core information visible, place components beside the prose they support, and do not stack different rich component families without an explanatory paragraph.",
-    );
-    expect(generatorSource).toContain(
-      "the docs page body was too thin; add substantive source-backed explanation without padding or decorative components",
-    );
-    expect(generatorSource).toContain(
-      "the docs page lacks a usable reading path (need at least two ## sections and a concrete path, command, code fence, or table)",
-    );
-    expect(generatorSource).toContain(
-      "a real page-overview orientation that names the first useful path",
-    );
-    expect(generatorSource).not.toContain("a real page-overview hub that routes readers by job");
-  });
-
-  test("documentation structure quality rejects inventory manifests and accepts journey hubs", () => {
-    const inventory = {
-      title: "Repo Docs",
-      description: "Package listing.",
-      sections: [
-        { id: "section-src", title: "src/", pages: ["page-a", "page-b"], subsections: [] },
-      ],
-      pages: [
-        {
-          id: "page-a",
-          title: "src/runtime package",
-          description: "Files in runtime.",
-          importance: "high" as const,
-          filePaths: ["src/runtime.ts"],
-          relatedPages: [],
-        },
-        {
-          id: "page-b",
-          title: "Module inventory",
-          description: "All modules.",
-          importance: "medium" as const,
-          filePaths: ["src/index.ts"],
-          relatedPages: [],
-        },
-        {
-          id: "page-c",
-          title: "Source tree",
-          description: "Tree.",
-          importance: "low" as const,
-          filePaths: ["README.md"],
-          relatedPages: [],
-        },
-        {
-          id: "page-d",
-          title: "packages/foo",
-          description: "Package.",
-          importance: "low" as const,
-          filePaths: ["packages/foo/index.ts"],
-          relatedPages: [],
-        },
-      ],
-    };
-    const good = {
-      title: "Repo Documentation",
-      description: "Source-grounded technical docs.",
-      sections: [
-        {
-          id: "section-get-started",
-          title: "Get started",
-          pages: ["page-overview", "page-quickstart"],
-          subsections: [],
-        },
-        {
-          id: "section-core",
-          title: "Core architecture",
-          pages: ["page-system-layers", "page-one-request"],
-          subsections: [],
-        },
-        {
-          id: "section-reference",
-          title: "Reference",
-          pages: ["page-cli-reference"],
-          subsections: [],
-        },
-      ],
-      pages: [
-        {
-          id: "page-overview",
-          title: "Overview",
-          description: "What the product exposes and which routes operators, integrators, and contributors should open next.",
-          importance: "high" as const,
-          filePaths: ["README.md", "src/index.ts"],
-          relatedPages: ["page-quickstart", "page-system-layers"],
-          parentSection: "section-get-started",
-        },
-        {
-          id: "page-quickstart",
-          title: "Quickstart",
-          description: "Install and first successful run.",
-          importance: "high" as const,
-          filePaths: ["README.md"],
-          relatedPages: ["page-overview"],
-          parentSection: "section-get-started",
-        },
-        {
-          id: "page-system-layers",
-          title: "System layers",
-          description: "UI, runtime, and tool boundaries.",
-          importance: "high" as const,
-          filePaths: ["src/server.ts"],
-          relatedPages: ["page-one-request"],
-          parentSection: "section-core",
-        },
-        {
-          id: "page-one-request",
-          title: "One request end-to-end",
-          description: "Trace one generate call across layers.",
-          importance: "high" as const,
-          filePaths: ["src/generator.ts"],
-          relatedPages: ["page-cli-reference"],
-          parentSection: "section-core",
-        },
-        {
-          id: "page-cli-reference",
-          title: "CLI reference",
-          description: "Commands and flags.",
-          importance: "medium" as const,
-          filePaths: ["src/cli.ts"],
-          relatedPages: [],
-          parentSection: "section-reference",
-        },
-      ],
-    };
-
-    expect(documentationStructureQualityIssue(inventory)).toMatch(/inventory-like|planned overview/i);
-    expect(documentationStructureQualityIssue(good)).toBeNull();
-    expect(
-      documentationStructureQualityIssue({
-        ...good,
-        pages: good.pages.map((page, index) =>
-          index === 0
-            ? { ...page, id: "page-install", title: "Installation", description: "How to install the tool." }
-            : page,
-        ),
-      }),
-    ).toContain("planned overview");
-    expect(
-      documentationStructureQualityIssue({
-        ...good,
-        pages: good.pages.map((page, index) =>
-          index === 1 ? { ...page, title: "Overview" } : page,
-        ),
-      }),
-    ).toMatch(/reuses the page title/i);
-    const flatLarge = {
-      ...good,
-      sections: [{ id: "section-all", title: "All pages", pages: [] as string[], subsections: [] as string[] }],
-      pages: Array.from({ length: 8 }, (_, index) => ({
-        id: index === 0 ? "page-overview" : `page-${index + 1}`,
-        title: index === 0 ? "Overview" : `Capability ${index + 1}`,
-        description: index === 0
-          ? "What the product exposes and which routes operators should open next."
-          : `Source-grounded documentation for capability ${index + 1}.`,
-        importance: "medium" as const,
-        filePaths: ["src/index.ts"],
-        relatedPages: [] as string[],
-      })),
-    };
-    flatLarge.sections[0]!.pages = flatLarge.pages.map((page) => page.id);
-    expect(documentationStructureQualityIssue(flatLarge)).toContain("themed navigation groups");
-    const orientationWithoutPersonas = {
-      ...good,
-      pages: good.pages.map((page, index) =>
-        index === 0
-          ? {
-              ...page,
-              description: "Installation is the first planned workflow.",
-              relatedPages: [],
-            }
-          : page,
-      ),
-    };
-    expect(documentationStructureQualityIssue(orientationWithoutPersonas)).toBeNull();
   });
 
   test("custom wiki format prompt is inherited by structure and page writers", () => {
@@ -1092,12 +622,12 @@ describe("wiki prompts", () => {
 describe("wiki code-kb wiring", () => {
   const structureArgs = {
     owner: "AsyncFuncAI",
-    repo: "rlm-wiki",
+    repo: "grok-wiki",
     pageCount: 6,
   };
   const pageArgs = {
     owner: "AsyncFuncAI",
-    repo: "rlm-wiki",
+    repo: "grok-wiki",
     page: {
       id: "page-overview",
       title: "Overview",
@@ -1107,14 +637,14 @@ describe("wiki code-kb wiring", () => {
   };
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "rlm-wiki",
-    url: "https://github.com/AsyncFuncAI/rlm-wiki",
+    repo: "grok-wiki",
+    url: "https://github.com/AsyncFuncAI/grok-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-test-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/rlm-wiki@default",
+    cacheKey: "github:asyncfuncai/grok-wiki@default",
     ref: kbRef,
   };
 
@@ -1375,33 +905,33 @@ describe("wiki code-kb wiring", () => {
   });
 
   test("disabled flag: prefetch with the default client resolves null with no network (Covers R8)", async () => {
-    const previous = process.env.RLM_WIKI_CODE_KB;
-    process.env.RLM_WIKI_CODE_KB = "0";
+    const previous = process.env.GROK_WIKI_CODE_KB;
+    process.env.GROK_WIKI_CODE_KB = "0";
     try {
       expect(await prefetchWikiCodeKbPrompts(kbRef)).toBeNull();
     } finally {
-      if (previous === undefined) delete process.env.RLM_WIKI_CODE_KB;
-      else process.env.RLM_WIKI_CODE_KB = previous;
+      if (previous === undefined) delete process.env.GROK_WIKI_CODE_KB;
+      else process.env.GROK_WIKI_CODE_KB = previous;
     }
   });
 
   test("primary budget defaults to 20s and stays env-tunable (source pin)", () => {
     const generator = readFileSync(new URL("./generator.ts", import.meta.url), "utf8");
-    expect(generator).toContain('envPositiveInt("RLM_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000)');
+    expect(generator).toContain('envPositiveInt("GROK_WIKI_CODE_KB_WIKI_BUDGET_MS", 20_000)');
   });
 });
 
 describe("wiki code-kb evidence pre-fetch (U2)", () => {
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "rlm-wiki",
-    url: "https://github.com/AsyncFuncAI/rlm-wiki",
+    repo: "grok-wiki",
+    url: "https://github.com/AsyncFuncAI/grok-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-evidence-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/rlm-wiki@default",
+    cacheKey: "github:asyncfuncai/grok-wiki@default",
     ref: kbRef,
   };
   const makeKbPage = (id: string, filePaths: string[]): WikiPage => ({
@@ -1425,7 +955,7 @@ describe("wiki code-kb evidence pre-fetch (U2)", () => {
       },
       readFile: async (_session, path) => {
         reads.push(path);
-        return { path, content: "# rlm-wiki\nGenerates grounded wikis.", truncated: false };
+        return { path, content: "# Grok Wiki\nGenerates grounded wikis.", truncated: false };
       },
     });
 
@@ -1678,21 +1208,21 @@ describe("wiki code-kb evidence pre-fetch (U2)", () => {
 describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)", () => {
   const kbRef: RepoRef = {
     owner: "AsyncFuncAI",
-    repo: "rlm-wiki",
-    url: "https://github.com/AsyncFuncAI/rlm-wiki",
+    repo: "grok-wiki",
+    url: "https://github.com/AsyncFuncAI/grok-wiki",
     branch: null,
   };
   const kbSession: CodeKbSession = {
     sessionId: "kb-generate-session",
     baseUrl: "https://sharenow.today",
-    cacheKey: "github:asyncfuncai/rlm-wiki@default",
+    cacheKey: "github:asyncfuncai/grok-wiki@default",
     ref: kbRef,
   };
 
   const structureAnswer = [
     "<ANSWER>",
     "<wiki_structure>",
-    "  <title>rlm-wiki</title>",
+    "  <title>Grok Wiki</title>",
     "  <description>Test wiki for the code-kb seam.</description>",
     "  <sections>",
     '    <section id="section-overview">',
@@ -1741,16 +1271,16 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     answers?: { structure?: string; pageAnswerFor?: (prompt: string) => string },
   ): Promise<{ result: T; prompts: Array<{ contextLabel: string; prompt: string }> }> {
     const previousFetch = globalThis.fetch;
-    const previousLocalCli = process.env.RLM_WIKI_LOCAL_CLI;
+    const previousLocalCli = process.env.GROK_WIKI_LOCAL_CLI;
     const prompts: Array<{ contextLabel: string; prompt: string }> = [];
     const runs = new Map<string, { contextLabel: string; prompt: string }>();
     let runCounter = 0;
 
-    process.env.RLM_WIKI_LOCAL_CLI = "1";
+    process.env.GROK_WIKI_LOCAL_CLI = "1";
     __setLocalCliSidecarStarterForTests(async () => ({
       baseUrl: "http://127.0.0.1:1",
       token: "token",
-      stampPath: join(tmpdir(), "rlm-wiki-generate-test-sidecar.json"),
+      stampPath: join(tmpdir(), "grok-wiki-generate-test-sidecar.json"),
     }));
     globalThis.fetch = (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
       const url = String(input);
@@ -1779,13 +1309,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       .finally(() => {
         globalThis.fetch = previousFetch;
         __resetLocalCliSidecarForTests();
-        if (previousLocalCli === undefined) delete process.env.RLM_WIKI_LOCAL_CLI;
-        else process.env.RLM_WIKI_LOCAL_CLI = previousLocalCli;
+        if (previousLocalCli === undefined) delete process.env.GROK_WIKI_LOCAL_CLI;
+        else process.env.GROK_WIKI_LOCAL_CLI = previousLocalCli;
       });
   }
 
   test("throwing or never-resolving kb clients still complete generation with no <code-kb> block (Covers R4)", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-fallback-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-fallback-"));
     try {
       const store = new WikiStore(storeRoot);
       const { result, prompts } = await withFakeSidecar(async () => {
@@ -1825,13 +1355,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
   });
 
   test("a ready kb session puts the code map in the structure prompt and instructions-only in page prompts", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-ready-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-ready-"));
     // This test pins the structure-AGENT prompt wiring; keep the B7 direct
     // path (own suite below) out of the way.
-    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
     try {
       const store = new WikiStore(storeRoot);
       const ensuredRefs: RepoRef[] = [];
@@ -1872,17 +1402,17 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       }
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
   const twoPageStructureAnswer = [
     "<ANSWER>",
     "<wiki_structure>",
-    "  <title>rlm-wiki</title>",
+    "  <title>Grok Wiki</title>",
     "  <description>Test wiki for the code-kb evidence seam.</description>",
     "  <sections>",
     '    <section id="section-overview">',
@@ -1919,13 +1449,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     // Page packs are off by default (token-tax trim); this test exercises the
     // wiring, so opt in via the env flag and restore it afterward. The B7
     // direct path (own suite below) is disabled to pin the agent path.
-    const previousPageEvidence = process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
-    process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = "1";
-    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
-    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-evidence-"));
+    const previousPageEvidence = process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
+    process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = "1";
+    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-evidence-"));
     try {
       const store = new WikiStore(storeRoot);
       const { result, prompts } = await withFakeSidecar(
@@ -1986,17 +1516,17 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       expect(runtimePrompt).not.toContain("# Code graph evidence (pre-fetched)");
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousPageEvidence === undefined) delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
-      else process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
-      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousPageEvidence === undefined) delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
+      else process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
+      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
   test("all evidence fetches failing leaves prompts byte-identical to the pre-evidence blocks (Covers R8)", async () => {
-    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-evidence-r8-"));
+    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-evidence-r8-"));
     try {
       const store = new WikiStore(storeRoot);
       const architecture = { nodes: [{ id: "src/index.ts" }], edges: [] };
@@ -2049,13 +1579,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     // it; save and restore so the assertion is deterministic. The B7 direct path
     // (own suite below) is disabled because its evidence gather issues README and
     // manifest reads that would confound the zero-page-head-reads assertion.
-    const previousPageEvidence = process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
-    delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
-    const previousFastStructure = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-    process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
-    const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-    process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
-    const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-kb-page-off-"));
+    const previousPageEvidence = process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
+    delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
+    const previousFastStructure = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+    process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+    const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+    process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
+    const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-kb-page-off-"));
     try {
       const store = new WikiStore(storeRoot);
       let pageHeadReads = 0;
@@ -2096,12 +1626,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       expect(pageHeadReads).toBe(0);
     } finally {
       rmSync(storeRoot, { recursive: true, force: true });
-      if (previousPageEvidence === undefined) delete process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE;
-      else process.env.RLM_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
-      if (previousFastStructure === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-      else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
-      if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+      if (previousPageEvidence === undefined) delete process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE;
+      else process.env.GROK_WIKI_CODE_KB_PAGE_EVIDENCE = previousPageEvidence;
+      if (previousFastStructure === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+      else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFastStructure;
+      if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
     }
   });
 
@@ -2109,7 +1639,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     const directStructureAnswer = [
       "<ANSWER>",
       "<wiki_structure>",
-      "  <title>rlm-wiki</title>",
+      "  <title>Grok Wiki</title>",
       "  <description>Fast structure via the code-kb direct call.</description>",
       "  <sections>",
       '    <section id="section-overview">',
@@ -2138,41 +1668,24 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         id: index === 0 ? "page-overview" : `page-${index + 1}`,
         title: index === 0 ? "Overview" : `Page ${index + 1}`,
       }));
-      const splitAt = pageCount >= 8 ? Math.ceil(pageCount / 2) : pageCount;
-      const firstGroup = pages.slice(0, splitAt);
-      const secondGroup = pages.slice(splitAt);
       return [
         "<ANSWER>",
         "<wiki_structure>",
-        "  <title>rlm-wiki</title>",
+        "  <title>Grok Wiki</title>",
         "  <description>Manifest-sized direct structure.</description>",
         "  <sections>",
-        '    <section id="section-get-started">',
-        "      <title>Get started</title>",
+        '    <section id="section-overview">',
+        "      <title>Overview</title>",
         "      <pages>",
-        ...firstGroup.map((page) => `        <page_ref>${page.id}</page_ref>`),
+        ...pages.map((page) => `        <page_ref>${page.id}</page_ref>`),
         "      </pages>",
         "    </section>",
-        ...(secondGroup.length
-          ? [
-              '    <section id="section-reference">',
-              "      <title>Reference</title>",
-              "      <pages>",
-              ...secondGroup.map((page) => `        <page_ref>${page.id}</page_ref>`),
-              "      </pages>",
-              "    </section>",
-            ]
-          : []),
         "  </sections>",
         "  <pages>",
         ...pages.flatMap((page) => [
           `    <page id="${page.id}">`,
           `      <title>${page.title}</title>`,
-          `      <description>${
-            page.id === "page-overview"
-              ? "What the project exposes and which planned routes operators and contributors should open next."
-              : `Source-grounded documentation for ${page.title}.`
-          }</description>`,
+          `      <description>Source-grounded documentation for ${page.title}.</description>`,
           "      <importance>high</importance>",
           "      <relevant_files>",
           "        <file_path>src/index.ts</file_path>",
@@ -2185,41 +1698,18 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
       ].join("\n");
     };
 
-    const documentationPageAnswerFor = (title: string, description: string) => [
+    const documentationPageAnswer = [
       "---",
-      `title: "${title.replace(/"/g, '\\"')}"`,
-      `description: "${description.replace(/"/g, '\\"')}"`,
+      'title: "Generated reference"',
+      'description: "Source-grounded repository documentation."',
       "---",
       "",
-      "The generator in `src/generator.ts` coordinates repository analysis, structure planning, and page writing through provider-neutral local CLI configuration. The accepted manifest determines how much context each page writer receives while persisted request fields continue to identify the original generation request. Direct evidence is bounded to selected source files and normal repository agents remain the quality fallback when that evidence is incomplete or a direct response fails validation.",
+      "The generator coordinates repository analysis, structure planning, and page writing through provider-neutral local CLI configuration. The accepted manifest determines how much context each page writer receives while persisted request fields continue to identify the original generation request. Direct evidence is bounded to selected source files and normal repository agents remain the quality fallback when that evidence is incomplete or a direct response fails validation.",
       "",
       "## Generation flow",
       "",
       "A ready code-graph session supplies verified file paths and source contents. Each page is validated against the same documentation contract before it is checkpointed, emitted through page lifecycle events, and stored in the final record. Cancellation propagates from the parent run, while direct-call failures return to the existing repository page agent without creating a failed page or consuming an auto-recovery round.",
-      "",
-      "| Stage | Owner | Output |",
-      "| --- | --- | --- |",
-      "| Structure | `src/prompts/structure.ts` | Journey-ordered docs manifest |",
-      "| Pages | `src/prompts/page.ts` | MDX with frontmatter |",
-      "",
-      "## Quality contract",
-      "",
-      "Documentation pages keep YAML frontmatter titles aligned with the planned route, avoid body source citations, and reject inventory-only filler. Desktop direct pages share this gate so failed thin pages fall back to the repository page agent once without burning recovery rounds.",
-      "",
-      "```bash",
-      "bun test src/generator.test.ts",
-      "```",
     ].join("\n");
-    const documentationPageAnswerFromPrompt = (prompt: string) => {
-      const title = prompt.match(/\*\*Title:\*\*\s*(.+)/)?.[1]?.trim() || "Overview";
-      const description =
-        prompt.match(/\*\*Description:\*\*\s*(.+)/)?.[1]?.trim() || "What this repository does.";
-      return documentationPageAnswerFor(title, description);
-    };
-    const documentationPageAnswer = documentationPageAnswerFor(
-      "Overview",
-      "What this repository does.",
-    );
 
     // Ready session + full evidence set; the inventory path carries a leading
     // "./" so the happy path also covers path normalization.
@@ -2232,12 +1722,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         return null;
       },
       readFile: async (_session, path) =>
-        path === "README.md" ? { path, content: "# rlm-wiki\nGenerates grounded wikis.", truncated: false } : null,
+        path === "README.md" ? { path, content: "# Grok Wiki\nGenerates grounded wikis.", truncated: false } : null,
       ...overrides,
     });
 
     test("fast depth plans the structure from ONE direct call and never spawns the structure agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-happy-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-happy-"));
       try {
         const store = new WikiStore(storeRoot);
         const directPrompts: string[] = [];
@@ -2266,7 +1756,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         // The direct prompt carries the agent's exact structure contract plus
         // the evidence block, with the exploration instructions swapped out.
         const directPrompt = directPrompts[0]!;
-        expect(directPrompt).toContain("Repository: **AsyncFuncAI/rlm-wiki**");
+        expect(directPrompt).toContain("Repository: **AsyncFuncAI/grok-wiki**");
         expect(directPrompt).toContain("## Required shape of the output");
         expect(directPrompt).toContain("exactly 1 total page");
         expect(directPrompt).toContain("# Repository evidence (code graph snapshot)");
@@ -2291,9 +1781,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("writes a page from one direct call", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-happy-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-happy-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const directPagePrompts: string[] = [];
@@ -2315,7 +1805,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
                 path,
                 content: path === "src/index.ts"
                   ? "export function generateWiki() { return 'grounded'; }"
-                  : "# rlm-wiki\nGenerates grounded wikis.",
+                  : "# Grok Wiki\nGenerates grounded wikis.",
                 truncated: false,
               }),
               directPageCall: async (prompt, receivedLocalCli) => {
@@ -2354,15 +1844,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(directPageResults[0]?.reason).toBeUndefined();
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("writes and saves a direct page through the default chat runner", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-default-runner-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-default-runner-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const { result, prompts } = await withFakeSidecar(() =>
@@ -2386,15 +1876,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(saved?.pages["page-overview"]?.content).toBe(pageAnswer);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("does not direct-call pages when the per-run opt-in is omitted or false", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-default-off-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-default-off-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         let directPageCalls = 0;
@@ -2432,14 +1922,14 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes.every((outcome) => outcome.attempted === false)).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("reports disabled, workspace, and missing-evidence pages as one-agent fallbacks", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-gates-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-gates-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ scenario: string; state: string; attempted: boolean; reason?: string }> = [];
@@ -2449,7 +1939,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           return `<ANSWER>\n${pageAnswer}\n</ANSWER>`;
         };
 
-        process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+        process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
         const { prompts: disabledPrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, {
             store,
@@ -2465,10 +1955,10 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           }),
         );
 
-        delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+        delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
         const workspaceRefs = [
           { ...kbRef, id: "primary", label: "primary" },
-          { ...kbRef, id: "extra", repo: "rlm-wiki-extra", url: "https://github.com/expressjs/multer", label: "extra" },
+          { ...kbRef, id: "extra", repo: "grok-wiki-extra", url: "https://github.com/AsyncFuncAI/grok-wiki-extra", label: "extra" },
         ];
         const { prompts: workspacePrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, {
@@ -2494,7 +1984,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
               directCall: async () => directStructureAnswer,
               readFile: async (_session, path) =>
                 path === "README.md"
-                  ? { path, content: "# rlm-wiki", truncated: false }
+                  ? { path, content: "# Grok Wiki", truncated: false }
                   : null,
               directPageCall,
               onDirectPageResult: (result) => {
@@ -2517,13 +2007,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes.every((outcome) => outcome.attempted === false)).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("falls back once without page errors when a direct call throws or fails quality", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-invalid-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-invalid-"));
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ scenario: string; state: string; attempted: boolean; reason?: string }> = [];
@@ -2577,7 +2067,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("does not repeat a direct miss when the repository page succeeds during outer recovery", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-outer-recovery-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-outer-recovery-"));
       try {
         const store = new WikiStore(storeRoot);
         const outcomes: Array<{ state: string; reason?: string }> = [];
@@ -2604,9 +2094,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
             }),
           }),
           {
-            pageAnswerFor: (prompt) => {
+            pageAnswerFor: () => {
               repositoryPageCalls++;
-              return repositoryPageCalls <= 2 ? "too short" : documentationPageAnswerFromPrompt(prompt);
+              return repositoryPageCalls <= 2 ? "too short" : documentationPageAnswer;
             },
           },
         );
@@ -2626,9 +2116,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("times out a direct page below agent latency and falls back exactly once", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-timeout-"));
-      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-      process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "20";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-timeout-"));
+      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+      process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "20";
       try {
         const store = new WikiStore(storeRoot);
         let directSignal: AbortSignal | undefined;
@@ -2667,8 +2157,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes[0]?.reason).toContain("timed out");
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
       }
     });
 
@@ -2681,7 +2171,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("parent cancellation aborts the direct page and never starts fallback", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-cancel-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-cancel-"));
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2716,9 +2206,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("parent cancellation settles even when the direct page runner ignores abort", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-noncooperative-cancel-"));
-      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-      process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "250";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-noncooperative-cancel-"));
+      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+      process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = "250";
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2755,13 +2245,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(outcomes).toEqual([]);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGE_TIMEOUT_MS = previousTimeout;
       }
     });
 
     test("ignores direct-page metric callback failures", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-"));
       try {
         const store = new WikiStore(storeRoot);
         let directPageCalls = 0;
@@ -2799,7 +2289,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("does not wait for a delayed direct-page metric callback", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-delay-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-delay-"));
       try {
         const store = new WikiStore(storeRoot);
         let callbackSettled = false;
@@ -2835,7 +2325,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("a never-settling direct-page metric callback cannot block parent cancellation", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-metric-cancel-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-metric-cancel-"));
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -2884,9 +2374,9 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("accepts compact documentation auto manifests while preserving basic auto and fixed bounds", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-structure-doc-bounds-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-structure-doc-bounds-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
       try {
         const store = new WikiStore(storeRoot);
         const run = (style: "basic" | "documentation", pageCount: number, pageCountMode: "auto" | "fixed") =>
@@ -2898,7 +2388,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
               pageCountMode,
               codeKb: fastKbClient({ directCall: async () => directStructureAnswerForPages(3) }),
             }),
-            { pageAnswerFor: (prompt) => style === "documentation" ? documentationPageAnswerFromPrompt(prompt) : pageAnswer },
+            { pageAnswerFor: () => style === "documentation" ? documentationPageAnswer : pageAnswer },
           );
 
         const docsAuto = await run("documentation", 30, "auto");
@@ -2914,15 +2404,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(fixedMismatch.prompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("uses accepted auto manifest size for repository page-agent depth without changing request identity", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-page-agent-manifest-depth-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      process.env.RLM_WIKI_CODE_KB_FAST_PAGES = "0";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-page-agent-manifest-depth-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      process.env.GROK_WIKI_CODE_KB_FAST_PAGES = "0";
       try {
         const store = new WikiStore(storeRoot);
         const run = (actualPages: number, pageCount: number, pageCountMode: "auto" | "fixed") =>
@@ -2934,7 +2424,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
               pageCountMode,
               codeKb: fastKbClient({ directCall: async () => directStructureAnswerForPages(actualPages) }),
             }),
-            { pageAnswerFor: (prompt) => documentationPageAnswerFromPrompt(prompt) },
+            { pageAnswerFor: () => documentationPageAnswer },
           );
 
         const compactAuto = await run(3, 30, "auto");
@@ -2959,15 +2449,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(fixed.result.wikiPageCount).toBe(13);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("uses accepted auto manifest size for direct page prompt depth without changing request identity", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-page-manifest-depth-"));
-      const previousFastPages = process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-      delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-page-manifest-depth-"));
+      const previousFastPages = process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+      delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
       try {
         const store = new WikiStore(storeRoot);
         const run = (actualPages: number) => {
@@ -2983,7 +2473,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
               readFile: async (_session, path) => ({ path, content: `complete ${path}`, truncated: false }),
               directPageCall: async (prompt) => {
                 directPagePrompts.push(prompt);
-                return `<ANSWER>\n${documentationPageAnswerFromPrompt(prompt)}\n</ANSWER>`;
+                return `<ANSWER>\n${documentationPageAnswer}\n</ANSWER>`;
               },
             }),
           })).then((runResult) => ({ ...runResult, directPagePrompts }));
@@ -3005,13 +2495,13 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(compactAuto.result.variantKey).toBe(regularAuto.result.variantKey);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFastPages === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_PAGES;
-        else process.env.RLM_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
+        if (previousFastPages === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_PAGES;
+        else process.env.GROK_WIKI_CODE_KB_FAST_PAGES = previousFastPages;
       }
     });
 
     test("an unparseable direct reply falls back to the structure agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-badxml-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-badxml-"));
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3041,7 +2531,7 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("a page path missing from the inventory or an out-of-bounds page count falls back", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-validate-"));
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-validate-"));
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3138,8 +2628,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
     });
 
     test("flag off and no ready session take the agent path with zero direct-call attempts; non-fast depths now attempt the direct path (Covers R8)", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-gates-"));
-      const previousFlag = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-gates-"));
+      const previousFlag = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
       try {
         const store = new WikiStore(storeRoot);
         let directCalls = 0;
@@ -3148,12 +2638,12 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
           return directStructureAnswer;
         };
 
-        process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = "0";
+        process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = "0";
         const { prompts: flagOffPrompts } = await withFakeSidecar(() =>
           generateWiki(kbRef, { store, pageCount: 1, codeKb: fastKbClient({ directCall }) }),
         );
-        if (previousFlag === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
+        if (previousFlag === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
         expect(directCalls).toBe(0);
         expect(flagOffPrompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
 
@@ -3186,15 +2676,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(provisioningPrompts.filter((entry) => entry.contextLabel === "wiki-structure").length).toBe(1);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousFlag === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE;
-        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
+        if (previousFlag === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE;
+        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE = previousFlag;
       }
     });
 
     test("a direct call hanging past the env-tunable budget or throwing falls back to the agent", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-b7-hang-"));
-      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-      process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "40";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-b7-hang-"));
+      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+      process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "40";
       try {
         const store = new WikiStore(storeRoot);
         let hangingSignal: AbortSignal | undefined;
@@ -3229,15 +2719,15 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         expect(hangingSignal?.aborted).toBe(true);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
       }
     });
 
     test("parent cancellation settles when the direct structure runner ignores abort", async () => {
-      const storeRoot = mkdtempSync(join(tmpdir(), "rlm-wiki-generate-direct-structure-parent-abort-"));
-      const previousTimeout = process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-      process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "500";
+      const storeRoot = mkdtempSync(join(tmpdir(), "grok-wiki-generate-direct-structure-parent-abort-"));
+      const previousTimeout = process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+      process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = "500";
       try {
         const store = new WikiStore(storeRoot);
         const controller = new AbortController();
@@ -3276,8 +2766,8 @@ describe("generateWiki code-kb wiring (through the GenerateOptions.codeKb seam)"
         await run.catch(() => undefined);
       } finally {
         rmSync(storeRoot, { recursive: true, force: true });
-        if (previousTimeout === undefined) delete process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
-        else process.env.RLM_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
+        if (previousTimeout === undefined) delete process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS;
+        else process.env.GROK_WIKI_CODE_KB_FAST_STRUCTURE_TIMEOUT_MS = previousTimeout;
       }
     });
 

@@ -92,12 +92,12 @@ describe("public wiki snapshots", () => {
       record: docsRecord,
       publishedAt: "2026-05-21T01:00:00.000Z",
     });
-    const publication = publicWikiPublicationFromSnapshot(snapshot, "https://rlmwiki.deepascii.com");
+    const publication = publicWikiPublicationFromSnapshot(snapshot, "https://grok-wiki.com");
 
     expect(snapshot.surface).toBe("docs");
     expect(publicWikiPathForSurface(snapshot.publicId, snapshot.visibility, snapshot.surface)).toBe("/public/docs/local-repo-docs12345");
     expect(publication.publicPath).toBe("/public/docs/local-repo-docs12345");
-    expect(publication.publicUrl).toBe("https://rlmwiki.deepascii.com/public/docs/local-repo-docs12345");
+    expect(publication.publicUrl).toBe("https://grok-wiki.com/public/docs/local-repo-docs12345");
     expect(publication.surface).toBe("docs");
   });
 
@@ -112,7 +112,7 @@ describe("public wiki snapshots", () => {
     expect(publicId).toMatch(/^private-[a-f0-9]{32}$/);
     expect(snapshot.visibility).toBe("private");
     expect(publicWikiPath(publicId, snapshot.visibility)).toBe(`/share/wiki/${publicId}`);
-    expect(publicWikiPublicationFromSnapshot(snapshot, "https://rlmwiki.deepascii.com").publicUrl).toBe(`https://rlmwiki.deepascii.com/share/wiki/${publicId}`);
+    expect(publicWikiPublicationFromSnapshot(snapshot, "https://grok-wiki.com").publicUrl).toBe(`https://grok-wiki.com/share/wiki/${publicId}`);
     expect(normalizePublicWikiVisibility("anything else")).toBe("public");
   });
 });
@@ -167,7 +167,7 @@ describe("public wiki page shell", () => {
     expect(source).toContain('class="public-wiki-cta public-wiki-agent-button"');
     expect(source).toContain("type=\"button\"");
     expect(source).toContain("data-public-agent-open");
-    expect(source).not.toContain('href="/" title="Add rlm-wiki agent"');
+    expect(source).not.toContain('href="/" title="Add Grok-Wiki agent"');
     expect(source).toContain("publicAgentPopoverHost");
     expect(source).toContain("copyPublicAgentPrompt");
     expect(source).toContain("publicAgentPrompt(");
@@ -222,7 +222,7 @@ describe("public wiki page shell", () => {
     expect(pageSource).toContain('"vary", "Accept"');
     expect(pageSource).toContain("publicWikiAgentHtmlFallback");
     expect(pageSource).toContain("<title>${escapeHtml(htmlTitle)}</title>");
-    expect(pageSource).toContain("Docs");
+    expect(pageSource).toContain("Grok Docs");
     expect(pageSource).toContain("Markdown ${artifact}");
     expect(pageSource).toContain('application/ld+json');
     expect(pageSource).toContain('type="text/markdown"');
@@ -263,10 +263,10 @@ describe("public wiki agent handoff prompt", () => {
       artifactLabel: "wiki",
       title: "Owner Repo Wiki",
       description: "Source-grounded architecture notes.",
-      pageUrl: "https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345",
-      llmsUrl: "https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345/llms.txt",
-      llmsFullUrl: "https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345/llms-full.txt",
-      markdownUrl: "https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345.md",
+      pageUrl: "https://grok-wiki.com/public/wiki/owner-repo-abc12345",
+      llmsUrl: "https://grok-wiki.com/public/wiki/owner-repo-abc12345/llms.txt",
+      llmsFullUrl: "https://grok-wiki.com/public/wiki/owner-repo-abc12345/llms-full.txt",
+      markdownUrl: "https://grok-wiki.com/public/wiki/owner-repo-abc12345.md",
       repository: "owner/repo",
       repoUrl: "https://github.com/owner/repo",
       branch: "main",
@@ -274,7 +274,7 @@ describe("public wiki agent handoff prompt", () => {
       updatedAt: "2026-05-30T12:00:00.000Z",
     });
 
-    expect(prompt).toContain("Agent index (read first): https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345/llms.txt");
+    expect(prompt).toContain("Agent index (read first): https://grok-wiki.com/public/wiki/owner-repo-abc12345/llms.txt");
     expect(prompt).toContain("Fetch the smallest relevant page");
     expect(prompt).toContain("Keep provider-specific assumptions out of your plan");
     expect(prompt).toContain("read-only generated snapshot");
@@ -284,14 +284,14 @@ describe("public wiki agent handoff prompt", () => {
     const prompt = publicAgentPrompt({
       artifactLabel: "docs",
       title: "Owner Repo Documentation",
-      pageUrl: "https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345",
-      llmsUrl: "https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345/llms.txt",
-      llmsFullUrl: "https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345/llms-full.txt",
-      markdownUrl: "https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345.md",
+      pageUrl: "https://grok-wiki.com/public/docs/owner-repo-docs12345",
+      llmsUrl: "https://grok-wiki.com/public/docs/owner-repo-docs12345/llms.txt",
+      llmsFullUrl: "https://grok-wiki.com/public/docs/owner-repo-docs12345/llms-full.txt",
+      markdownUrl: "https://grok-wiki.com/public/docs/owner-repo-docs12345.md",
       repository: "owner/repo",
     });
 
-    expect(prompt).toContain("Use these rlm-wiki docs as source-grounded context");
+    expect(prompt).toContain("Use these Grok-Wiki docs as source-grounded context");
     expect(prompt).toContain("Docs: Owner Repo Documentation");
     expect(prompt).toContain("whole-docs context");
     expect(prompt).toContain("Treat these docs as a read-only generated snapshot");

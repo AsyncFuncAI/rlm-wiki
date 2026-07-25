@@ -81,13 +81,13 @@ describe("Open Slide viewer builder", () => {
     expect(indexPath).toBeTruthy();
     const indexHtml = await readFile(indexPath!, "utf8");
     expect(indexHtml).toContain(`/api/wiki/slides/viewer/${result.viewerId}/assets/app.js`);
-    expect(indexHtml).toContain("data-rlm-wiki-open-slide-router-fix");
-    expect(indexHtml).toContain("rlmWikiTheme");
+    expect(indexHtml).toContain("data-grok-wiki-open-slide-router-fix");
+    expect(indexHtml).toContain("grokWikiTheme");
     expect(indexHtml).toContain('localStorage.setItem("theme",h)');
     expect(indexHtml).toContain('classList.add(h)');
     expect(indexHtml).toContain(`"/api/wiki/slides/viewer/${result.viewerId}"`);
     expect(indexHtml).toContain('"/s/viewer-demo-slides"');
-    expect(indexHtml.indexOf("data-rlm-wiki-open-slide-router-fix")).toBeLessThan(indexHtml.indexOf(`src="/api/wiki/slides/viewer/${result.viewerId}/assets/app.js"`));
+    expect(indexHtml.indexOf("data-grok-wiki-open-slide-router-fix")).toBeLessThan(indexHtml.indexOf(`src="/api/wiki/slides/viewer/${result.viewerId}/assets/app.js"`));
     const appPath = await openSlideViewerFilePath(root, result.viewerId, "assets/app.js");
     expect(await readFile(appPath!, "utf8")).toContain(`/api/wiki/slides/viewer/${result.viewerId}/assets/font.woff2`);
 

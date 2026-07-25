@@ -21,8 +21,8 @@ let lastCaptureAt = 0;
 
 function telemetryDir(): string {
   return (
-    process.env.RLM_WIKI_DESKTOP_APP_DATA?.trim() ||
-    process.env.RLM_WIKI_ROOT?.trim() ||
+    process.env.GROK_WIKI_DESKTOP_APP_DATA?.trim() ||
+    process.env.GROK_WIKI_ROOT?.trim() ||
     ""
   );
 }

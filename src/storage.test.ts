@@ -40,7 +40,7 @@ function wikiRecord(id: string, sourcePath: string | null): WikiRecord {
 
 describe("WikiStore scoped refs", () => {
   test("loads a wiki by owner repo branch and source path", () => {
-    const root = mkdtempSync(join(tmpdir(), "rlm-wiki-storage-scope-"));
+    const root = mkdtempSync(join(tmpdir(), "grok-wiki-storage-scope-"));
     const store = new WikiStore(root);
 
     try {

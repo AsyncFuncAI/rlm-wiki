@@ -148,8 +148,8 @@ describe("public wiki Markdown artifacts", () => {
   };
 
   test("builds discoverable llms.txt links", () => {
-    const urls = publicWikiMarkdownUrls("https://rlmwiki.deepascii.com", snapshot);
-    const index = publicWikiMarkdownIndex(snapshot, "https://rlmwiki.deepascii.com");
+    const urls = publicWikiMarkdownUrls("https://grok-wiki.com", snapshot);
+    const index = publicWikiMarkdownIndex(snapshot, "https://grok-wiki.com");
 
     expect(urls.llmsPath).toBe("/public/wiki/owner-repo-abc12345/llms.txt");
     expect(urls.llmsFullPath).toBe("/public/wiki/owner-repo-abc12345/llms-full.txt");
@@ -168,19 +168,19 @@ describe("public wiki Markdown artifacts", () => {
         wikiStyle: "documentation",
       },
     };
-    const urls = publicWikiMarkdownUrls("https://rlmwiki.deepascii.com", docsSnapshot);
-    const index = publicWikiMarkdownIndex(docsSnapshot, "https://rlmwiki.deepascii.com");
-    const page = publicWikiMarkdownPage(docsSnapshot, "https://rlmwiki.deepascii.com", "01-overview.md");
+    const urls = publicWikiMarkdownUrls("https://grok-wiki.com", docsSnapshot);
+    const index = publicWikiMarkdownIndex(docsSnapshot, "https://grok-wiki.com");
+    const page = publicWikiMarkdownPage(docsSnapshot, "https://grok-wiki.com", "01-overview.md");
 
     expect(urls.canonicalPath).toBe("/public/docs/owner-repo-abc12345");
     expect(urls.llmsPath).toBe("/public/docs/owner-repo-abc12345/llms.txt");
     expect(index).toContain("Complete Markdown docs");
     expect(index).toContain("Human interactive docs");
-    expect(page).toContain("Human docs: https://rlmwiki.deepascii.com/public/docs/owner-repo-abc12345");
+    expect(page).toContain("Human docs: https://grok-wiki.com/public/docs/owner-repo-abc12345");
   });
 
   test("builds complete Markdown with page content and source files", () => {
-    const markdown = publicWikiMarkdownFull(snapshot, "https://rlmwiki.deepascii.com");
+    const markdown = publicWikiMarkdownFull(snapshot, "https://grok-wiki.com");
 
     expect(markdown).toContain("## 01. Overview");
     expect(markdown).toContain("Use this repo.");
@@ -189,14 +189,14 @@ describe("public wiki Markdown artifacts", () => {
   });
 
   test("builds per-page Markdown by page slug", () => {
-    const markdown = publicWikiMarkdownPage(snapshot, "https://rlmwiki.deepascii.com", "01-overview.md");
+    const markdown = publicWikiMarkdownPage(snapshot, "https://grok-wiki.com", "01-overview.md");
 
     expect(markdown).toContain("# Overview");
-    expect(markdown).toContain("Complete Markdown: https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345/llms-full.txt");
+    expect(markdown).toContain("Complete Markdown: https://grok-wiki.com/public/wiki/owner-repo-abc12345/llms-full.txt");
   });
 
   test("injects a real agent-readable HTML fallback", () => {
-    const html = publicWikiAgentHtmlFallback(snapshot, "https://rlmwiki.deepascii.com");
+    const html = publicWikiAgentHtmlFallback(snapshot, "https://grok-wiki.com");
 
     expect(html).toContain('data-agent-readable="true"');
     expect(html).toContain("Full Markdown");
@@ -222,7 +222,7 @@ describe("public wiki Markdown artifacts", () => {
           },
         },
       },
-    }, "https://rlmwiki.deepascii.com");
+    }, "https://grok-wiki.com");
 
     const fallbackStart = html.indexOf('<section class="public-wiki-agent-markdown"');
     const fallbackHtml = html.slice(fallbackStart);
@@ -268,7 +268,7 @@ describe("public wiki Markdown artifacts", () => {
         },
         pages,
       },
-    }, "https://rlmwiki.deepascii.com");
+    }, "https://grok-wiki.com");
 
     const pageLinks = [...html.matchAll(/href="\/public\/wiki\/owner-repo-abc12345\/pages\/[^"]+"/g)];
     expect(pageLinks).toHaveLength(14);
@@ -277,8 +277,8 @@ describe("public wiki Markdown artifacts", () => {
   });
 
   test("builds crawl discovery files for public artifact routes only", () => {
-    const robots = publicWikiRobotsTxt("https://rlmwiki.deepascii.com/");
-    const sitemap = publicWikiSitemapXml("https://rlmwiki.deepascii.com/", [
+    const robots = publicWikiRobotsTxt("https://grok-wiki.com/");
+    const sitemap = publicWikiSitemapXml("https://grok-wiki.com/", [
       publicWikiGalleryItemFromMeta(baseMeta),
       publicWikiGalleryItemFromMeta({
         ...baseMeta,
@@ -295,12 +295,12 @@ describe("public wiki Markdown artifacts", () => {
     expect(robots).not.toContain("Disallow: /share/wiki/");
     expect(robots).not.toContain("Disallow: /share/docs/");
     expect(robots).not.toContain("Disallow: /share/ask/");
-    expect(robots).toContain("Sitemap: https://rlmwiki.deepascii.com/sitemap.xml");
-    expect(sitemap).toContain("<loc>https://rlmwiki.deepascii.com/episodes</loc>");
-    expect(sitemap).toContain("<loc>https://rlmwiki.deepascii.com/public/wikis</loc>");
-    expect(sitemap).toContain("<loc>https://rlmwiki.deepascii.com/public/docs</loc>");
-    expect(sitemap).toContain("<loc>https://rlmwiki.deepascii.com/public/wiki/owner-repo-abc12345</loc>");
-    expect(sitemap).toContain("<loc>https://rlmwiki.deepascii.com/public/docs/owner-repo-docs12345</loc>");
+    expect(robots).toContain("Sitemap: https://grok-wiki.com/sitemap.xml");
+    expect(sitemap).toContain("<loc>https://grok-wiki.com/episodes</loc>");
+    expect(sitemap).toContain("<loc>https://grok-wiki.com/public/wikis</loc>");
+    expect(sitemap).toContain("<loc>https://grok-wiki.com/public/docs</loc>");
+    expect(sitemap).toContain("<loc>https://grok-wiki.com/public/wiki/owner-repo-abc12345</loc>");
+    expect(sitemap).toContain("<loc>https://grok-wiki.com/public/docs/owner-repo-docs12345</loc>");
     expect(sitemap).not.toContain("/share/wiki/");
     expect(sitemap).not.toContain("/share/docs/");
   });

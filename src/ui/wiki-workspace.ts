@@ -1649,7 +1649,7 @@ export function wikiStylePromptPreview(value: string, customPrompt = ""): string
       "Infer a docs manifest first: navigation groups, route pages, page archetypes, and the exact page count the repository deserves.",
       "Prioritize public entry points, exact commands, APIs, schemas, configuration, examples, errors, troubleshooting, changelog/migrations, and contributing where the repository supports them.",
       "Keep it functional, agent-friendly, and human-readable. Do not over-explain, teach generic concepts, or add product-shaped pages the repo does not support.",
-      "Use frontmatter and Docs MDX components where they clarify the page: callouts, cards, steps, tabs, code groups, fields, request/response examples, endpoint frames, accordions, frames, updates, file trees, tables, code fences, and Mermaid only when useful.",
+      "Use frontmatter and Grok Docs MDX components where they clarify the page: callouts, cards, steps, tabs, code groups, fields, request/response examples, endpoint frames, accordions, frames, updates, file trees, tables, code fences, and Mermaid only when useful.",
     ].join("\n"),
     custom: custom || [
       "Write your custom wiki format brief here.",
@@ -2308,7 +2308,7 @@ export function renderWikiReader(wiki: WikiRecord, state: WikiWorkspaceState, de
   const continuousLede = wiki.structure?.description || activePage?.description || "";
   const recovery = wikiRecoverySummary(wiki);
   const topBack = readOnly
-    ? `<a class="wiki-quiet-button" href="/" data-public-home>${deps.icon("arrowLeft")}<span>rlm-wiki</span></a>`
+    ? `<a class="wiki-quiet-button" href="/" data-public-home>${deps.icon("arrowLeft")}<span>Grok-Wiki</span></a>`
     : `<button class="wiki-quiet-button" type="button" data-wiki-back>${deps.icon("arrowLeft")}<span>${deps.escape(copy.back)}</span></button>`;
   const topShare = readOnly
     ? ""
@@ -2400,7 +2400,7 @@ export function renderDocsReader(wiki: WikiRecord, state: WikiWorkspaceState, de
   const title = wiki.structure?.title || wiki.title || wikiRepoLabel(wiki);
   const repoLabel = wikiRepoLabel(wiki);
   const topBack = readOnly
-    ? `<a class="wiki-quiet-button" href="/" data-public-home>${deps.icon("arrowLeft")}<span>rlm-wiki</span></a>`
+    ? `<a class="wiki-quiet-button" href="/" data-public-home>${deps.icon("arrowLeft")}<span>Grok-Wiki</span></a>`
     : `<button class="wiki-quiet-button" type="button" data-wiki-back>${deps.icon("arrowLeft")}<span>${deps.escape(copy.back)}</span></button>`;
   const topShare = readOnly
     ? ""

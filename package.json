@@ -13,7 +13,8 @@
   },
   "homepage": "https://github.com/AsyncFuncAI/rlm-wiki#readme",
   "bin": {
-    "rlm-wiki": "./bin/rlm-wiki.ts"
+    "rlm-wiki": "./bin/rlm-wiki.ts",
+    "grok-wiki": "./bin/grok-wiki.ts"
   },
   "scripts": {
     "build": "bun run build:web",

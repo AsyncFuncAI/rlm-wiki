@@ -23,7 +23,8 @@ export const WIKI_INTERVIEW_MAX_QUESTIONS = 3;
 export const WIKI_INTERVIEW_TIMEOUT_MS = Math.max(
   5_000,
   Number(
-    process.env.RLM_WIKI_INTERVIEW_TIMEOUT_MS ||
+    process.env.GROK_WIKI_INTERVIEW_TIMEOUT_MS ||
+      process.env.GROK_WIKI_ROUTE_TIMEOUT_MS ||
       process.env.RLM_WIKI_ROUTE_TIMEOUT_MS ||
       30_000,
   ),
@@ -31,7 +32,7 @@ export const WIKI_INTERVIEW_TIMEOUT_MS = Math.max(
 
 export function buildWikiInterviewPrompt(intent: string, source: string | null): string {
   return [
-    "You are the interview brain for rlm-wiki, a tool that generates explanatory wikis for code repositories.",
+    "You are the interview brain for Grok-Wiki, a tool that generates explanatory wikis for code repositories.",
     "The user has described, in their own words, the wiki they want generated.",
     `Produce 2 to ${WIKI_INTERVIEW_MAX_QUESTIONS} SHORT clarifying questions that lock the user's intent to`,
     "crystal clarity BEFORE generation begins. Each question must materially change how the wiki is",
@@ -160,7 +161,7 @@ export async function runWikiInterview(
 // normalizer + runner as the wiki interview (only the prompt differs).
 export function buildAskInterviewPrompt(question: string, source: string | null): string {
   return [
-    "You are the interview brain for rlm-wiki's Ask, a tool that answers questions about code repositories.",
+    "You are the interview brain for Grok-Wiki's Ask, a tool that answers questions about code repositories.",
     "The user has typed a question they want answered about the repository.",
     `Produce 2 to ${WIKI_INTERVIEW_MAX_QUESTIONS} SHORT clarifying questions that sharpen the user's intent to`,
     "crystal clarity BEFORE the question is sent to the answering agent. Each question must materially change",

@@ -907,7 +907,7 @@ describe("local CLI sidecar environment", () => {
       ANTHROPIC_API_KEY: "sk-ant-secret",
       OPENAI_API_KEY: "sk-openai-secret",
       DEEPSEEK_API_KEY_2: "deepseek-secret",
-      RLM_WIKI_SECRET_GRANT_KEY: "grant-secret",
+      GROK_WIKI_SECRET_GRANT_KEY: "grant-secret",
       RLM_WIKI_SECRET_GRANT_KEY: "grant-secret",
     });
 
@@ -917,7 +917,7 @@ describe("local CLI sidecar environment", () => {
     expect(env.ANTHROPIC_API_KEY).toBeUndefined();
     expect(env.OPENAI_API_KEY).toBeUndefined();
     expect(env.DEEPSEEK_API_KEY_2).toBeUndefined();
-    expect(env.RLM_WIKI_SECRET_GRANT_KEY).toBeUndefined();
+    expect(env.GROK_WIKI_SECRET_GRANT_KEY).toBeUndefined();
     expect(env.RLM_WIKI_SECRET_GRANT_KEY).toBeUndefined();
   });
 });

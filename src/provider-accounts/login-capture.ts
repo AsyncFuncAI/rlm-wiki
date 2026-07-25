@@ -61,7 +61,7 @@ function resolveBin(name: string): string {
 }
 
 function keychainUser(): string {
-  return process.env.USERNAME || "user";
+  return process.env.USER || process.env.USERNAME || "user";
 }
 
 function scopedClaudeKeychainService(configDir: string): string {
@@ -198,7 +198,7 @@ async function captureClaudeCredentials(
  */
 export async function captureClaudeLogin(): Promise<CapturedClaudeLogin> {
   const claudeBin = resolveBin("claude");
-  const tempConfig = mkdtempSync(join(tmpdir(), "rlm-wiki-claude-login-"));
+  const tempConfig = mkdtempSync(join(tmpdir(), "grok-wiki-claude-login-"));
   const previousLegacyKeychain = await readKeychain(ACTIVE_CLAUDE_SERVICE, keychainUser());
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -352,5 +352,5 @@ export function writeClaudeManagedHome(
       "utf8",
     );
   }
-  writeFileSync(join(homePath, ".rlm-wiki-managed-claude"), "1\n", "utf8");
+  writeFileSync(join(homePath, ".grok-wiki-managed-claude"), "1\n", "utf8");
 }

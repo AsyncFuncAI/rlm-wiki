@@ -49,8 +49,6 @@ import {
 } from "./provider-accounts/index.ts";
 import { runWikiInterview, runAskInterview } from "./wiki-interview.ts";
 import { runTaskExtract, runEpicExtract } from "./task-extract.ts";
-import { runHtmlGenerate, normalizeHtmlGenre, titleFromBrief } from "./html-generate.ts";
-import { fetchHtmlEvidencePack } from "./html-evidence.ts";
 import { extractDecision } from "./local-cli-parsers.ts";
 import { providerSetupInfo } from "./provider-setup.ts";
 import { ANTHROPIC_PROXY_PREFIX, configureAnthropicProxyEnvForServer, proxyAnthropicOpenAI } from "./anthropic-openai-proxy.ts";
@@ -180,8 +178,8 @@ import {
 } from "./agent-capabilities.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PUBLIC_DIR = resolveOptionalEnvPath("RLM_WIKI_PUBLIC_DIR") ?? join(__dirname, "..", "public");
-const DIST_PUBLIC_DIR = resolveOptionalEnvPath("RLM_WIKI_DIST_PUBLIC_DIR") ?? join(__dirname, "..", "dist", "public");
+const PUBLIC_DIR = resolveOptionalEnvPath("GROK_WIKI_PUBLIC_DIR") ?? join(__dirname, "..", "public");
+const DIST_PUBLIC_DIR = resolveOptionalEnvPath("GROK_WIKI_DIST_PUBLIC_DIR") ?? join(__dirname, "..", "dist", "public");
 const AI_ICON_PATH_PATTERN = /^\/ai-icons\/[a-z0-9-]+\.svg$/;
 const STYLE_HREF_PATTERN = /href="\/styles\.css(?:\?v=[^"]*)?"/;
 const BUILT_ASSET_EXTENSIONS = "css|js|png|ico|webmanifest";
@@ -212,9 +210,9 @@ const MAX_ASK_REPOS = parseInt(process.env.RLM_WIKI_MAX_ASK_REPOS || "6", 10);
 const MAX_DISTILL = parseInt(process.env.RLM_WIKI_MAX_DISTILL || process.env.RLM_WIKI_MAX_ASK || "3", 10);
 const MAX_BATCH_REGENERATE_PAGES = 50;
 // BRANCH gate (Phase 0 outcome). Phase 0 returned gate=PASS, branch=full-self-heal,
-// so the auto-apply resolver is wired on by default. Setting RLM_WIKI_KB_SELF_HEAL=0
+// so the auto-apply resolver is wired on by default. Setting GROK_WIKI_KB_SELF_HEAL=0
 // forces the Phase-0 PARTIAL fallback (provisional-marking-only) without a code change.
-const KB_SELF_HEAL_ENABLED = process.env.RLM_WIKI_KB_SELF_HEAL !== "0";
+const KB_SELF_HEAL_ENABLED = process.env.GROK_WIKI_KB_SELF_HEAL !== "0";
 const WORKSPACE_GOALS = new Set(["compare", "steal", "understand", "bridge", "audit"]);
 const ASK_MODES = new Set(["fast", "deep"]);
 const PROCESS_SNAPSHOT_EVENT_LIMIT = 240;
@@ -454,7 +452,7 @@ export interface ServerOptions {
 function desktopEnabled(opts?: ServerOptions): boolean {
   return Boolean(
     opts?.desktop?.enabled ||
-      process.env.RLM_WIKI_DESKTOP === "1" ||
+      process.env.GROK_WIKI_DESKTOP === "1" ||
       process.env.RLM_WIKI_DESKTOP === "1",
   );
 }
@@ -466,7 +464,7 @@ export function desktopDirectPagesEnabled(input: {
 } = {}): boolean {
   if (!desktopEnabled(input.server)) return false;
   const benchmarkMode = input.benchmarkMode
-    ?? process.env.RLM_WIKI_DESKTOP_BENCHMARK === "1";
+    ?? process.env.GROK_WIKI_DESKTOP_BENCHMARK === "1";
   if (benchmarkMode && typeof input.benchmarkFastPages === "boolean") {
     return input.benchmarkFastPages;
   }
@@ -474,15 +472,15 @@ export function desktopDirectPagesEnabled(input: {
 }
 
 function desktopBenchmarkEnabled(opts?: ServerOptions): boolean {
-  return desktopEnabled(opts) && process.env.RLM_WIKI_DESKTOP_BENCHMARK === "1";
+  return desktopEnabled(opts) && process.env.GROK_WIKI_DESKTOP_BENCHMARK === "1";
 }
 
 function desktopToken(opts?: ServerOptions): string {
-  return opts?.desktop?.token || process.env.RLM_WIKI_DESKTOP_TOKEN || "";
+  return opts?.desktop?.token || process.env.GROK_WIKI_DESKTOP_TOKEN || process.env.RLM_WIKI_DESKTOP_TOKEN || "";
 }
 
 function desktopAppDataDir(opts?: ServerOptions): string {
-  return opts?.desktop?.appDataDir || process.env.RLM_WIKI_DESKTOP_APP_DATA || "";
+  return opts?.desktop?.appDataDir || process.env.GROK_WIKI_DESKTOP_APP_DATA || process.env.RLM_WIKI_DESKTOP_APP_DATA || "";
 }
 
 function requestHostname(value: string): string {
@@ -546,7 +544,7 @@ function corsHeaders(req?: Request): Record<string, string> {
   const requestOrigin = req ? new URL(req.url).origin : "";
   const headers: Record<string, string> = {
     "access-control-allow-methods": "GET, POST, OPTIONS",
-    "access-control-allow-headers": "content-type, cf-access-jwt-assertion, cf-access-authenticated-user-email, x-rlm-wiki-dev-user, x-rlm-wiki-desktop-token",
+    "access-control-allow-headers": "content-type, cf-access-jwt-assertion, cf-access-authenticated-user-email, x-rlm-wiki-dev-user, x-grok-wiki-desktop-token",
   };
   if (authMode() === "off" && !allowed.length) {
     headers["access-control-allow-origin"] = "*";
@@ -902,7 +900,7 @@ async function localCliPreflightResponse(
       localCli,
       agent: null,
       enabled: false,
-      setupHint: "Open rlm-wiki Desktop or run rlm-wiki on localhost to use local CLI agents.",
+      setupHint: "Open Grok-Wiki Desktop or run Grok-Wiki on localhost to use local CLI agents.",
     }, 400, req);
   }
   const status = await getLocalCliAgents({ rescan: true });
@@ -988,12 +986,12 @@ const ROUTE_PAGE_COUNT_MAX = 30;
 
 const ROUTE_AGENT_TIMEOUT_MS = Math.max(
   5_000,
-  Number(process.env.RLM_WIKI_ROUTE_TIMEOUT_MS || 30_000),
+  Number(process.env.GROK_WIKI_ROUTE_TIMEOUT_MS || process.env.RLM_WIKI_ROUTE_TIMEOUT_MS || 30_000),
 );
 
 export function buildRouteSystemPrompt(query: string): string {
   return [
-    "You are the routing brain for rlm-wiki, a tool that explains and works with code repositories.",
+    "You are the routing brain for Grok-Wiki, a tool that explains and works with code repositories.",
     "Classify the user's request into exactly one action and return the decision as JSON.",
     "",
     "Actions:",
@@ -1486,7 +1484,7 @@ async function syncPublishedWikiRecord(
 }
 
 function publicSiteBaseUrl(): string {
-  return (process.env.RLM_WIKI_PUBLIC_URL || "https://rlmwiki.deepascii.com")
+  return (process.env.GROK_WIKI_PUBLIC_URL || process.env.RLM_WIKI_PUBLIC_URL || "https://grok-wiki.com")
     .trim()
     .replace(/\/+$/, "");
 }
@@ -1521,7 +1519,7 @@ async function publishWikiRecordToPublicSite(
     method: publicId ? "PUT" : "POST",
     headers: {
       "content-type": "application/json",
-      ...(managementToken ? { "x-rlm-wiki-publish-token": managementToken } : {}),
+      ...(managementToken ? { "x-grok-wiki-publish-token": managementToken } : {}),
     },
     body: JSON.stringify({
       wiki: sanitizePublicWikiRecord(record),
@@ -1561,7 +1559,7 @@ async function unpublishWikiRecordFromPublicSite(
     method: "DELETE",
     headers: {
       "content-type": "application/json",
-      "x-rlm-wiki-publish-token": managementToken,
+      "x-grok-wiki-publish-token": managementToken,
     },
     body: JSON.stringify({ managementToken }),
   });
@@ -1612,7 +1610,7 @@ async function publishAskRecordToPublicSite(
     method: publicId ? "PUT" : "POST",
     headers: {
       "content-type": "application/json",
-      ...(managementToken ? { "x-rlm-wiki-publish-token": managementToken } : {}),
+      ...(managementToken ? { "x-grok-wiki-publish-token": managementToken } : {}),
     },
     body: JSON.stringify({
       ask: record,
@@ -1652,7 +1650,7 @@ async function unpublishAskRecordFromPublicSite(
     method: "DELETE",
     headers: {
       "content-type": "application/json",
-      "x-rlm-wiki-publish-token": managementToken,
+      "x-grok-wiki-publish-token": managementToken,
     },
     body: JSON.stringify({ managementToken }),
   });
@@ -2285,7 +2283,7 @@ function wikiExportFiles(record: WikiRecord): Array<{ path: string; content: str
     .filter((pageId) => !generatedIds.has(pageId));
   const indexMarkdown = [
     "---",
-    "rlm_wiki: true",
+    "grok_wiki: true",
     `title: ${yamlString(record.structure.title)}`,
     `repository: ${yamlString(`${record.owner}/${record.repo}`)}`,
     `branch: ${yamlString(record.branch || "default")}`,
@@ -2334,7 +2332,7 @@ function wikiObsidianPageMarkdown(args: {
 }): string {
   const frontmatter = [
     "---",
-    "rlm_wiki: true",
+    "grok_wiki: true",
     `page_id: ${yamlString(args.pageId)}`,
     `title: ${yamlString(args.title)}`,
     `repository: ${yamlString(`${args.record.owner}/${args.record.repo}`)}`,
@@ -2373,7 +2371,7 @@ function wikiObsidianSourcesMarkdown(
   const rows = [...byFile.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   return [
     "---",
-    "rlm_wiki: true",
+    "grok_wiki: true",
     `title: ${yamlString(`${record.structure.title} sources`)}`,
     "---",
     "",
@@ -2447,18 +2445,18 @@ function wikiPrintExportHtml(record: WikiRecord): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${htmlEscape(title)} - rlm-wiki PDF Export</title>
+  <title>${htmlEscape(title)} - Grok-Wiki PDF Export</title>
   <style>${wikiPrintCss()}</style>
 </head>
 <body>
   <div class="wiki-print-toolbar no-print">
-    <strong>rlm-wiki PDF export</strong>
+    <strong>Grok-Wiki PDF export</strong>
     <span>This page stays local. Use Save as PDF in the print dialog.</span>
     <button type="button" onclick="window.print()">Print / Save PDF</button>
   </div>
   <main class="wiki-print-document">
     <section class="wiki-print-cover">
-      <p class="wiki-print-kicker">rlm-wiki</p>
+      <p class="wiki-print-kicker">Grok-Wiki</p>
       <h1>${htmlEscape(title)}</h1>
       ${record.structure.description ? `<p>${htmlEscape(record.structure.description)}</p>` : ""}
       <dl>
@@ -3831,7 +3829,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         if (!desktopEnabled(opts)) return jsonResponse({ error: "Desktop mode is not enabled." }, 404, req);
         const expectedToken = desktopToken(opts);
         const desktopTokenHeader =
-          req.headers.get("x-rlm-wiki-desktop-token") ||
+          req.headers.get("x-grok-wiki-desktop-token") ||
           req.headers.get("x-rlm-wiki-desktop-token");
         if (expectedToken && desktopTokenHeader !== expectedToken) {
           return jsonResponse({ error: "Desktop token required." }, 403, req);
@@ -4320,300 +4318,6 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         const extractedEpics = await runEpicExtract(taskExtractAnswer, taskExtractQuestion, taskExtractLocalCli);
         const flatTasks = extractedEpics.flatMap((epic) => epic.tasks);
         return jsonResponse({ epics: extractedEpics, tasks: flatTasks, localCli: taskExtractLocalCli }, 200, req);
-      }
-
-      if (method === "POST" && url.pathname === "/api/html/generate") {
-        // Greenfield HTML surface: one self-contained HTML artifact via LocalCliAgent
-        // (same spine as wiki page agents / Ask). Streams SSE; desktop stores the
-        // final HTML — not a Terminal PTY handoff.
-        if (!localCliRuntimeEnabled(req, opts)) {
-          return jsonResponse({
-            error: "Local CLI mode is only available in the desktop app or on localhost.",
-            code: "LOCAL_CLI_LOCAL_ONLY",
-          }, 400, req);
-        }
-        let htmlBody: {
-          source?: unknown;
-          url?: unknown;
-          brief?: unknown;
-          title?: unknown;
-          genre?: unknown;
-          dress?: unknown;
-          codeGraphHint?: unknown;
-          codeGraphEnabled?: unknown;
-          localCli?: unknown;
-          agentId?: unknown;
-        };
-        try {
-          htmlBody = (await req.json()) as typeof htmlBody;
-        } catch {
-          return jsonResponse({ error: "invalid JSON" }, 400, req);
-        }
-        const htmlBrief = typeof htmlBody.brief === "string" ? htmlBody.brief.trim() : "";
-        const htmlSourceRaw = String(htmlBody.source ?? htmlBody.url ?? "").trim();
-        if (!htmlBrief) return jsonResponse({ error: "brief is required" }, 400, req);
-        if (!htmlSourceRaw) return jsonResponse({ error: "source is required" }, 400, req);
-
-        // Desktop may send multi-line scopes (joined pills). Parse each line like Ask,
-        // not the whole blob as one URL (that fails sharenow KB create silently).
-        const htmlSourceCandidates = htmlSourceRaw
-          .split(/[\n,]+/)
-          .map((part) => part.trim())
-          .filter(Boolean);
-        let htmlSource = htmlSourceCandidates[0] || htmlSourceRaw;
-        let htmlPrimaryRef: RepoRef | null = null;
-        try {
-          const localAccess = localFolderAccessForReadOnlyRequest(req, host, opts);
-          const refs = parseAskRefsFromUrls(
-            htmlSourceCandidates.length ? htmlSourceCandidates : [htmlSourceRaw],
-            localAccess,
-          );
-          const primary = refs[0];
-          if (primary) {
-            htmlPrimaryRef = primary;
-            htmlSource =
-              primary.owner === "local"
-                ? String(primary.url || htmlSource)
-                : primary.url || `https://github.com/${primary.owner}/${primary.repo}`;
-          }
-        } catch (e) {
-          return jsonResponse({ error: e instanceof Error ? e.message : String(e) }, 400, req);
-        }
-
-        const htmlLocalCli = normalizeLocalCliConfig(
-          htmlBody.localCli ?? (htmlBody.agentId ? { agentId: htmlBody.agentId } : undefined),
-        );
-        const htmlGenre = normalizeHtmlGenre(htmlBody.genre);
-        const htmlTitle =
-          typeof htmlBody.title === "string" && htmlBody.title.trim()
-            ? htmlBody.title.trim()
-            : titleFromBrief(htmlBrief, htmlGenre, htmlSource);
-        const dressRaw = htmlBody.dress && typeof htmlBody.dress === "object" ? (htmlBody.dress as Record<string, unknown>) : null;
-        const htmlDress =
-          dressRaw &&
-          typeof dressRaw.id === "string" &&
-          typeof dressRaw.cssRoot === "string" &&
-          dressRaw.cssRoot.trim()
-            ? {
-                id: String(dressRaw.id),
-                label: String(dressRaw.label || dressRaw.id),
-                summary: String(dressRaw.summary || ""),
-                theme: dressRaw.theme === "light" ? ("light" as const) : ("dark" as const),
-                cssContract: String(dressRaw.cssContract || ""),
-                layoutRules: String(dressRaw.layoutRules || ""),
-                cssRoot: String(dressRaw.cssRoot),
-              }
-            : null;
-        const codeGraphHint =
-          typeof htmlBody.codeGraphHint === "string" && htmlBody.codeGraphHint.trim()
-            ? htmlBody.codeGraphHint.trim()
-            : undefined;
-        // Desktop opt-in + server gate (RLM_WIKI_CODE_KB). Same gate as Ask.
-        const htmlCodeGraphRequested = htmlBody.codeGraphEnabled === true;
-        const htmlCodeGraphEnabled = codeGraphEnabledForRequest(htmlBody.codeGraphEnabled);
-        // Kick shared provisioning only when the server gate is actually open.
-        if (htmlCodeGraphEnabled && htmlPrimaryRef) {
-          prewarmCodeKbSession(htmlPrimaryRef);
-        }
-
-        return sseResponse(async (send, _close, signal) => {
-          send("start", {
-            title: htmlTitle,
-            genre: htmlGenre,
-            source: htmlSource,
-            dress: htmlDress?.id || null,
-            localCli: htmlLocalCli,
-            // Client must trust this for the badge. false means no sharenow session.
-            codeGraphEnabled: htmlCodeGraphEnabled,
-            codeGraphRequested: htmlCodeGraphRequested,
-          });
-          send("phase", {
-            phase: "prepare",
-            label: "Prepare",
-            detail: "Opening repository workspace for the local agent.",
-          });
-
-          let codeKbContext: string | undefined;
-          // HTML waits longer than Ask: first-run indexing often exceeds the 12s ask budget.
-          // Do not start the local agent until the graph is ready or definitively skipped.
-          const HTML_CODE_KB_BUDGET_MS = Math.max(
-            20_000,
-            Number(process.env.RLM_WIKI_CODE_KB_HTML_BUDGET_MS || 45_000),
-          );
-
-          if (htmlCodeGraphRequested && !htmlCodeGraphEnabled) {
-            // Settings on in desktop, but server KB is disabled (RLM_WIKI_CODE_KB=0).
-            send("code-graph", {
-              state: "skipped",
-              message: "Code graph unavailable on server. Using checkout exploration.",
-            });
-          } else if (htmlCodeGraphEnabled && !htmlPrimaryRef) {
-            send("code-graph", {
-              state: "skipped",
-              message: "Code graph needs a parseable GitHub or local scope. Using checkout exploration.",
-            });
-          } else if (htmlCodeGraphEnabled && htmlPrimaryRef) {
-            // Real sharenow path: indexing badge only when ensure is actually running.
-            send("code-graph", {
-              state: "indexing",
-              message: "Code graph indexing (first run on this repository).",
-            });
-            send("phase", {
-              phase: "prepare",
-              label: "Code graph",
-              detail: `Provisioning code graph for ${htmlPrimaryRef.owner}/${htmlPrimaryRef.repo}.`,
-            });
-            try {
-              const codeKbEntry = await computeCodeKbAskEntry(htmlPrimaryRef, htmlBrief, {
-                // Gate already evaluated; force-enabled for this ensure call.
-                enabled: () => true,
-                budgetMs: HTML_CODE_KB_BUDGET_MS,
-                // I2: repo-shaped folio (inventory/hotspots/entry heads), not Ask brief mining.
-                evidence: async (session, _question, deadline, overrides) => {
-                  const remaining = Math.max(0, deadline - Date.now());
-                  return fetchHtmlEvidencePack(session, remaining, {
-                    query: overrides.query,
-                    readFile: overrides.readFile,
-                  });
-                },
-              });
-              if (codeKbEntry?.context) {
-                codeKbContext = codeKbEntry.context;
-                send("code-graph", {
-                  state: "ready",
-                  message: "Code graph ready with evidence pack.",
-                });
-              } else {
-                send("code-graph", {
-                  state: "skipped",
-                  message: "Code graph session not ready in time. Using checkout exploration.",
-                });
-              }
-            } catch (err) {
-              console.warn("[html/generate] code graph ensure failed", err);
-              send("code-graph", {
-                state: "skipped",
-                message: "Code graph failed to provision. Using checkout exploration.",
-              });
-            }
-          }
-
-          // After code-graph resolution: blueprint → parallel L1–L10 blocks → assemble.
-          send("phase", {
-            phase: "explore",
-            label: "Explore code",
-            detail: codeKbContext
-              ? `Grounding ${htmlSource} with code graph evidence pack for L1–L10 blueprint.`
-              : `Reading ${htmlSource} to ground the L1–L10 blueprint.`,
-          });
-          const result = await runHtmlGenerate({
-            source: htmlSource,
-            brief: htmlBrief,
-            title: htmlTitle,
-            genre: htmlGenre,
-            dress: htmlDress,
-            codeKbContext: codeKbContext || null,
-            codeGraphHint: codeKbContext
-              ? undefined
-              : codeGraphHint ||
-                (htmlCodeGraphRequested
-                  ? "Code graph was requested but not available. Prefer structural reads of real entry points and symbols."
-                  : undefined),
-            localCli: htmlLocalCli,
-            signal,
-            multiAgent: true,
-            onPhase: (phase, label, detail) => {
-              // Desktop progress steps are prepare|explore|write|finalize.
-              const uiPhase =
-                phase === "structure"
-                  ? "explore"
-                  : phase === "pages" || phase === "write"
-                    ? "write"
-                    : phase === "finalize"
-                      ? "finalize"
-                      : "prepare";
-              send("phase", { phase: uiPhase, label, detail });
-            },
-            onStructureDone: (blueprint) => {
-              send("structure-done", {
-                title: blueprint.title,
-                coreNoun: blueprint.coreNoun,
-                sections: (blueprint.sections || []).map((s) => ({
-                  id: s.id,
-                  title: s.title,
-                  kicker: s.kicker,
-                  intent: s.intent,
-                })),
-                plannedBlockCount: Array.isArray(blueprint.sections) ? blueprint.sections.length : 10,
-              });
-            },
-            onBlockDone: (event) => {
-              send("block-done", {
-                levelId: event.levelId,
-                index: event.index,
-                total: event.total,
-                title: event.title,
-                kicker: event.kicker,
-                failed: event.failed,
-                completed: event.completed,
-              });
-            },
-            onRepair: (issue) => {
-              send("phase", {
-                phase: "write",
-                label: "Repair HTML",
-                detail: `Quality gate: ${issue.slice(0, 160)}`,
-              });
-            },
-            onEvent: (event) => {
-              // Forward agent events; include htmlBlockId when present so UI can demux.
-              const blockId =
-                event && typeof event === "object"
-                  ? String((event as { htmlBlockId?: string }).htmlBlockId || "")
-                  : "";
-              send("agent", { event, htmlBlockId: blockId || null });
-            },
-          });
-          send("phase", {
-            phase: "finalize",
-            label: "Finalize",
-            detail: result.qualityIssue
-              ? `Saved with quality note: ${String(result.qualityIssue).slice(0, 120)}`
-              : "Validating and saving the HTML artifact.",
-          });
-          console.info(
-            "[html/generate]",
-            JSON.stringify({
-              event: "html_generate_metrics",
-              genre: result.genre,
-              evidenceChars: result.evidenceChars,
-              promptChars: result.promptChars,
-              outputChars: result.html.length,
-              rawTextChars: result.rawText.length,
-              qualityIssue: result.qualityIssue || null,
-              repaired: Boolean(result.repaired),
-              codeGraph: Boolean(codeKbContext),
-              failedBlockIds: result.failedBlockIds || [],
-              failedBlockCount: result.failedBlockIds?.length || 0,
-            }),
-          );
-          send("done", {
-            html: result.html,
-            title: result.title,
-            genre: result.genre,
-            dress: htmlDress?.id || null,
-            rawText: result.rawText.slice(0, 512_000),
-            qualityIssue: result.qualityIssue || null,
-            repaired: Boolean(result.repaired),
-            failedBlockIds: result.failedBlockIds || [],
-            metrics: {
-              evidenceChars: result.evidenceChars,
-              promptChars: result.promptChars,
-              outputChars: result.html.length,
-              failedBlockCount: result.failedBlockIds?.length || 0,
-            },
-          });
-        }, req);
       }
 
       if (method === "POST" && url.pathname === "/api/ask-interview") {
@@ -8192,7 +7896,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
     },
   });
 
-  const productName = desktopEnabled(opts) ? "rlm-wiki" : "rlm-wiki";
+  const productName = desktopEnabled(opts) ? "Grok-Wiki" : "rlm-wiki";
   console.log(`${productName} listening at http://${server.hostname}:${server.port}`);
   console.log(`  UI:        http://${server.hostname}:${server.port}/`);
   console.log(`  Health:    http://${server.hostname}:${server.port}/api/health`);
@@ -8935,7 +8639,7 @@ async function resolveAskWikiContexts(
  */
 export const ASK_CODE_KB_BUDGET_MS = Math.max(
   1_000,
-  Number(process.env.RLM_WIKI_CODE_KB_ASK_BUDGET_MS || 12_000),
+  Number(process.env.GROK_WIKI_CODE_KB_ASK_BUDGET_MS || 12_000),
 );
 
 export function codeGraphEnabledForRequest(requested: unknown): boolean {

@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     const pageUrl = `${baseUrl}${publicAskPath(publicId, snapshot.visibility)}`;
     const title = plainText(snapshot.title || "Shared Ask conversation");
     const description = plainText(
-      snapshot.description || "A shared rlm-wiki Ask conversation grounded in repository evidence.",
+      snapshot.description || "A shared Grok-Wiki Ask conversation grounded in repository evidence.",
       180,
     );
     const imageUrl = publicAskOgImageUrl(baseUrl);
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
     }
 
     const shell = await loadPublicAskShell(baseUrl);
-    const htmlTitle = `${title} · rlm-wiki Ask`;
+    const htmlTitle = `${title} · Grok-Wiki Ask`;
     const tags = renderMetaTags({
       htmlTitle,
       description,
@@ -106,7 +106,7 @@ function renderMetaTags({ htmlTitle, description, pageUrl, imageUrl, markdownUrl
     <meta name="description" content="${escapedDescription}" />
     ${privateLink ? '<meta name="robots" content="noindex,nofollow" />' : '<meta name="robots" content="index,follow,max-image-preview:large" />'}
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="rlm-wiki" />
+    <meta property="og:site_name" content="Grok-Wiki" />
     <meta property="og:title" content="${escapedTitle}" />
     <meta property="og:description" content="${escapedDescription}" />
     <meta property="og:url" content="${escapedPageUrl}" />

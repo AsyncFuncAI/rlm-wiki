@@ -113,7 +113,7 @@ export async function fetchCodexRateLimits(options?: {
     Authorization: `Bearer ${accessToken}`,
     "User-Agent": "codex-cli",
     "OpenAI-Beta": "codex-1",
-    originator: "rlm-wiki",
+    originator: "Grok Wiki Desktop",
   };
   if (auth?.tokens?.account_id) {
     headers["ChatGPT-Account-Id"] = auth.tokens.account_id;

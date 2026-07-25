@@ -27,10 +27,10 @@ function normalizeEntities(rec: WikiRecord): void {
 
 // Storage root resolution (first match wins):
 //   1. explicit constructor arg     — tests / scripts override everything
-//   2. RLM_WIKI_ROOT env var        — desktop/prod knob for mounting a persistent volume
+//   2. GROK_WIKI_ROOT env var        — desktop/prod knob for mounting a persistent volume
 //   3. ~/.rlm-wiki                   — local-dev default
 function defaultRoot(): string {
-  const fromEnv = process.env.RLM_WIKI_ROOT?.trim() || process.env.RLM_WIKI_ROOT?.trim();
+  const fromEnv = process.env.GROK_WIKI_ROOT?.trim() || process.env.RLM_WIKI_ROOT?.trim();
   if (fromEnv) return fromEnv;
   return join(homedir(), ".rlm-wiki");
 }

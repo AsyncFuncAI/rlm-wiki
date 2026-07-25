@@ -278,7 +278,7 @@ function wikiHierarchyGoal(style: WikiStyle): string {
     return "Your structural goal is a navigable learning wiki: a small number of broad sections that group focused, specific pages. Readers drill in; each page should help them reason from first principles about one flow, boundary, invariant, question, or tradeoff.";
   }
   if (style === "documentation") {
-    return "Your structural goal is a technical documentation-site artifact, not a wiki and not a tutorial. Infer a docs manifest first: adaptive themed navigation groups, one-concern route pages, page archetypes, and source-backed scope. The result must be agent- and human-friendly: themed groups (not directory inventories), stable route titles, exact identifiers, compact descriptions, and pages organized around public behavior, commands, APIs, schemas, configuration, constraints, and operational facts reflected by the repository. Use Orient → Use → Understand → Deepen when the evidence supports it, collapse stages the repository does not justify, and never substitute a module or package listing.";
+    return "Your structural goal is a technical documentation-site artifact, not a wiki and not a tutorial. Infer a docs manifest first: navigation groups, route-like pages, page archetypes, and source-backed scope. The result must be agent- and human-friendly: stable route titles, exact identifiers, compact descriptions, and pages organized around public behavior, commands, APIs, schemas, configuration, constraints, and operational facts reflected by the repository.";
   }
   return "Your goal is a **DeepWiki-style hierarchy** — a small number of broad *sections* that group a larger number of *focused, specific pages*. Readers drill in; each page is a deep-dive on a single concern, not a sprawling survey.";
 }
@@ -287,53 +287,32 @@ function docsDecomposeGuidance(): string {
   return [
     "## How to decompose documentation (this is the important part)",
     "",
-    "Do NOT produce a wiki-like code inventory or a directory map as the TOC. Build a docs manifest the way mature MDX docs systems and high-quality repository docs sites do: navigation first, journey order, then one-concern route pages.",
-    "",
-    "### Adaptive journey order",
-    "",
-    "Use this progression when the repository supports it: **Orient → Use → Understand → Deepen**.",
-    "",
-    "1. **Orient** — what the project exposes and the shortest source-backed successful path.",
-    "2. **Use** — primary workflows, commands, APIs, and subsystem behaviors.",
-    "3. **Understand** — architecture, lifecycle, ownership, and cross-cutting constraints needed to predict behavior.",
-    "4. **Deepen** — troubleshooting, operations, contribution, and reference material.",
-    "",
-    "Small repositories may collapse these stages into one or two themed navigation groups. Larger repositories may split Use and Understand into public capability themes. Never force empty stages or reverse the result into a package inventory.",
+    "Do NOT produce a wiki-like code inventory. Build a docs manifest the way mature MDX docs systems do: navigation first, then route pages.",
     "",
     "- Start with the technical surface: what is exposed, how it is invoked, what inputs/configuration it accepts, and what outputs or side effects it produces.",
     "- Add overview, installation, and quickstart pages only when the repo exposes enough setup and first-use evidence to make them concrete.",
-    "- The Overview page is an orientation: describe what the project exposes and the shortest source-backed successful path before pointing to deeper planned routes. Do not paste the README.",
     "- Add concept pages only for repo-specific models, protocols, lifecycle states, or constraints that users must know before using APIs, commands, configuration, or components. Do not teach generic programming concepts.",
     "- Add guide pages for technical operations a real user would perform: configure a provider, generate an artifact, embed a component, deploy, debug, migrate, extend, or contribute.",
-    "- Add one-concern subsystem pages for major runtime surfaces (one loop, one protocol, one subsystem behavior) instead of one page per package folder.",
     "- Add reference pages when the repository exposes a schema: CLI flags, config keys, environment variables, API routes, SDK methods, component props, events, or return values.",
     "- Add examples pages only when examples are concrete and copy-pasteable from repo-backed workflows. Do not create a generic examples bucket with no concrete code path.",
     "- Add troubleshooting, migration, changelog, or contributing pages only when source files, scripts, tests, or docs prove those workflows exist.",
     "",
     "### Docs archetypes",
     "",
-    "- **Overview / Introduction**: exposed surface, primary entry points, runtime assumptions, and the first useful source-backed path before deeper planned pages.",
+    "- **Overview / Introduction**: exposed surface, primary entry points, runtime assumptions, and links to the highest-value routes.",
     "- **Installation / Quickstart**: prerequisites, install command, first run, expected success signal, and one recovery note.",
-    "- **Architecture / core flow**: layered system shape or one end-to-end journey that later pages depend on.",
     "- **Concept**: one repo-specific model, protocol, state machine, or boundary. Keep it factual and compact.",
-    "- **Guide / subsystem**: prerequisites, steps or internal loop, verification, and troubleshooting for one technical operation or subsystem.",
+    "- **Guide**: prerequisites, steps, verification, and troubleshooting for a technical operation.",
     "- **Reference**: signatures, options, fields, defaults, required values, examples, error cases, and constraints.",
     "- **Examples / Recipes**: complete small workflows with realistic values and expected output.",
     "- **Operations / Maintenance**: build, test, release, deploy, observe, migrate, or contribute.",
-    "",
-    "### Title and grouping rules (cleanliness)",
-    "",
-    "- Each page title is one reader job: a capability, flow, protocol, command surface, or operational concern.",
-    "- Prefer titles like `Agent run loop`, `Configuration merge order`, `One request end-to-end` over `src/runtime package`, `Module inventory`, or `Source tree`.",
-    "- Navigation group titles are themes (Get started, Core architecture, Agent runtime, Tools, Cross-cutting, Reference), not bare paths (`src/`, `apps/desktop`, `packages/foo`).",
-    "- Prefer fewer deeper routes over many shallow folder summaries.",
     "",
     "### Anti-patterns",
     "",
     "- Bad: `Architecture`, `Maintainer appendix`, `Closing summary`, `Learn the basics`, or `Source evidence` as automatic pages.",
     "- Bad: pages named after directories unless the directory name is already the public concept.",
-    "- Bad: one page per file, one page per class, one page per package, or a TOC that is mostly inventory.",
-    "- Bad: flat ungrouped page dumps when the repo has multiple capability clusters.",
+    "- Bad: one page per file, one page per class, or one page per package manager.",
+    "- Bad: diagrams by default. Use diagrams only when a concept/reference/operations page needs spatial structure.",
     "- Bad: tutorial filler, analogies, broad teaching prose, or generic explanations not grounded in this repository.",
   ].join("\n");
 }
@@ -342,20 +321,15 @@ function docsSectionPatterns(): string {
   return [
     "## Typical docs navigation groups (pick what fits this repo — do NOT force every one)",
     "",
-    "Order groups as a reader journey when you include several of them:",
-    "",
-    "- **Get started** — overview orientation, the first useful source-backed path, installation, and quickstart when supported.",
-    "- **Core architecture** — system layers, one end-to-end turn/request/pipeline, session or lifecycle when that unlocks later pages.",
-    "- **Subsystem themes** — named capability clusters reflected by the repo (for example UI/rendering, agent runtime, tools/workspace, integrations). Use public concept names, not directory labels.",
+    "- **Get started** — overview/introduction, installation, quickstart, first successful invocation.",
     "- **Concepts** — only repo-specific models, terms, protocols, states, and boundaries users need before using the project.",
     "- **Guides** — technical workflows with prerequisites, steps, verification, and troubleshooting.",
-    "- **Cross-cutting** — configuration, telemetry, security/sandbox, memory, multi-instance coordination when source-backed.",
-    "- **Reference** — API routes, SDK methods, CLI commands, config keys, environment variables, component props, events, return values, schemas, defaults, glossaries.",
+    "- **Reference** — API routes, SDK methods, CLI commands, config keys, environment variables, component props, events, return values, schemas, and defaults.",
     "- **Examples** — complete, realistic recipes backed by example files, tests, or documented workflows.",
     "- **Troubleshooting** — errors, known failure modes, debugging probes, and recovery steps that source evidence supports.",
     "- **Operations / Contributing** — build, test, release, deploy, migrate, observe, or contribute, only when the repo exposes those workflows.",
     "",
-    "Ignore groups that do not fit. Do not create a page just to make a group feel complete. Never replace themed groups with a package or folder inventory.",
+    "Ignore groups that do not fit. Do not create a page just to make a group feel complete.",
   ].join("\n");
 }
 
@@ -418,16 +392,8 @@ function docsXmlExample(pageCountRecap: string): string {
       </pages>
       <subsections></subsections>
     </section>
-    <section id="section-core-architecture">
-      <title>Core architecture</title>
-      <pages>
-        <page_ref>page-system-layers</page_ref>
-        <page_ref>page-one-request-end-to-end</page_ref>
-      </pages>
-      <subsections></subsections>
-    </section>
-    <section id="section-runtime">
-      <title>Runtime</title>
+    <section id="section-guides">
+      <title>Guides</title>
       <pages>
         <page_ref>page-configure-runtime</page_ref>
         <page_ref>page-generate-docs</page_ref>
@@ -446,7 +412,7 @@ function docsXmlExample(pageCountRecap: string): string {
   <pages>
     <page id="page-overview">
       <title>Overview</title>
-      <description>What the project exposes, the shortest source-backed successful path, and which planned pages deepen that first path.</description>
+      <description>Public entry points, runtime assumptions, and the shortest source-backed usage path.</description>
       <relevant_files>
         <file_path>README.md</file_path>
         <file_path>package.json</file_path>
@@ -635,7 +601,7 @@ function wikiBookendGuidance(style: WikiStyle, pageCount: number): {
     case "documentation":
       return {
         openingTitle: "Overview",
-        openingDescription: "What the project exposes, the shortest source-backed successful path, and which deeper planned docs routes follow that orientation.",
+        openingDescription: "What the project does, who should use it, the shortest successful path, and the first docs routes a reader should follow.",
         closingRule: "",
       };
     case "custom":
@@ -803,15 +769,16 @@ function wikiStyleGuidance(style: WikiStyle, customPrompt = ""): { label: string
         label: "Documentation site",
         opening: "You are an expert technical documentation architect designing a source-grounded repository documentation set",
         structure: [
-          "Design the table of contents like a terse technical MDX documentation site with journey-ordered, themed navigation — not a tutorial, code inventory, marketing page, package listing, or DeepWiki chapter list.",
-          "First infer a docs manifest in your head: project name, root description, adaptive themed navigation groups, one-concern page paths, page archetypes, overview orientation plus the first useful path, and the exact number of route pages this repository deserves. The final XML still uses the rlm-wiki storage schema, but sections are docs navigation groups and pages are docs routes.",
+          "Design the table of contents like a terse technical MDX documentation site, not a tutorial, code inventory, marketing page, or DeepWiki chapter list.",
+          "First infer a docs manifest in your head: project name, root description, navigation groups, ordered page paths, page archetypes, and the exact number of route pages this repository deserves. The final XML still uses the Grok-Wiki storage schema, but sections are docs navigation groups and pages are docs routes.",
           "Use the same durable pattern mature docs systems use: a root manifest like Mintlify `docs.json` or Fumadocs `meta.json`, then frontmatter-bearing MDX pages. Do not output those files directly; encode the manifest into the XML and let the page agents write the MDX pages.",
-          "A strong medium-size technical docs set often begins with Overview orientation and the first useful path, then follows with source-backed workflow, architecture, operations, and reference themes. Use fewer groups for small repos and more specialized subsystem groups only when source evidence justifies them.",
-          "Use page titles and descriptions that sound like documentation routes with one concern each: `Quickstart`, `Installation`, `Configuration reference`, `Agent run loop`, `One request end-to-end`, `Troubleshooting`, not wiki chapters, source-directory labels, appendices, summaries, or inventory titles.",
-          "Each page needs one reader job and one archetype: overview, install, quickstart, architecture/core-flow, concept, guide/subsystem, reference, example, troubleshooting, migration, release/changelog, operations, or contribution.",
-          "Overview descriptions must orient readers to the exposed product surface and shortest source-backed successful path before naming deeper planned routes — not restate the README.",
+          "A strong medium-size technical docs set often looks like: Overview, Installation, Quickstart, Core concepts, Guides, API/CLI/configuration reference, Examples, Troubleshooting, and Contributing. Use fewer groups for small repos and more specialized groups only when source evidence justifies them.",
+          "Use page titles and descriptions that sound like documentation routes: `Quickstart`, `Installation`, `Configuration reference`, `Model clients`, `Build a RAG system`, `Troubleshooting`, not wiki chapters, source-directory labels, appendices, or summaries.",
+          "Each page needs one reader job and one archetype: overview, install, quickstart, concept, guide, reference, example, troubleshooting, migration, release/changelog, operations, or contribution.",
           "Prefer functional technical coverage over explanation: exact commands, exported APIs, route/method names, config keys, environment variables, schema fields, lifecycle states, inputs, outputs, defaults, constraints, errors, and verification signals.",
           "Make the manifest agent- and human-friendly: stable headings, precise nouns, compact descriptions, reference-rich pages, and no generic teaching content.",
+          "Use Grok Docs MDX components when they clarify the page. These are our own renderer-supported docs components inspired by common MDX docs semantics: callouts, cards, steps, tabs, code groups, parameter/response fields, request/response examples, endpoint frames, accordions, frames, update timelines, file trees, tables, and expandable details.",
+          "Prefer component tags for content pages: `<Note>`, `<Tip>`, `<Warning>`, `<Info>`, `<Check>`, `<CardGroup>`, `<Card>`, `<Steps>`, `<Step>`, `<Tabs>`, `<Tab>`, `<CodeGroup>`, `<ParamField>`, `<ResponseField>`, `<RequestExample>`, `<ResponseExample>`, `<AccordionGroup>`, `<Accordion>`, and `<Frame>`. Use directive blocks only for features that do not yet have a tag form, such as `:::endpoint`, `:::updates`, and `:::files`.",
           "Do not plan pages that require MDX imports, hosted-docs configuration, proprietary platform features, or unsupported components.",
           "Keep the docs vendor-neutral and BYOC/BYOK-safe. Do not assume a single model provider, hosted docs platform, or proprietary runtime unless the repository itself requires it.",
         ].join("\n"),

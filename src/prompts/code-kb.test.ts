@@ -182,8 +182,8 @@ describe("renderCodeKbArchitectureSummary", () => {
 describe("renderStructureEvidence", () => {
   const fullArgs = {
     fileInventory: { results: [{ file_path: "src/index.ts" }, { qualified_name: "pkg.mod.helper" }] },
-    readmeHead: "# rlm-wiki\nGenerates grounded wikis from repositories.",
-    manifestHead: { path: "package.json", content: '{"name":"rlm-wiki","private":true}' },
+    readmeHead: "# Grok Wiki\nGenerates grounded wikis from repositories.",
+    manifestHead: { path: "package.json", content: '{"name":"grok-wiki","private":true}' },
     hotspots: { results: [{ qualified_name: "server.handleRequest", degree: 42 }] },
   };
 
@@ -198,7 +198,7 @@ describe("renderStructureEvidence", () => {
     expect(evidence).toContain("## README head");
     expect(evidence).toContain("Generates grounded wikis from repositories.");
     expect(evidence).toContain("## Manifest head (package.json)");
-    expect(evidence).toContain('"rlm-wiki"');
+    expect(evidence).toContain('"grok-wiki"');
     expect(evidence).toContain("## Hotspot symbols (highest graph degree)");
     expect(evidence).toContain("server.handleRequest (degree 42)");
   });
@@ -353,7 +353,7 @@ describe("renderAskEvidence", () => {
       { pattern: "computeCodeKbAskEntry", result: { matches: [{ file: "src/server.ts", line: 8418 }] } },
       { pattern: "ask_budget", result: { matches: [{ file: "src/server.ts", line: 8395 }] } },
     ],
-    readmeHead: { content: "# rlm-wiki\nRun docker compose up to deploy." },
+    readmeHead: { content: "# Grok Wiki\nRun docker compose up to deploy." },
   };
 
   test("renders search sections and the README head in one delimited candidate-evidence block", () => {

@@ -397,5 +397,5 @@ Rules:
 - If a source class is not available, do not claim that it was used.
 - Cite concrete files or retrieved artifacts in the final ${surfaceNoun} when they influence the result.
 - Keep the architecture BYOC/BYOK friendly: do not assume a particular model provider, hosted service, or proprietary connector.
-- When recommending a rlm-wiki integration or UI flow, explicitly state how the design stays provider-neutral and portable across file, repository, or catalog skill sources.`;
+- When recommending a Grok-Wiki integration or UI flow, explicitly state how the design stays provider-neutral and portable across file, repository, or catalog skill sources.`;
 }

@@ -175,17 +175,17 @@ function flagNumber(flags: Record<string, FlagValue>, name: string): number | un
 }
 
 function printUsage(io: CliIO): void {
-  print(io, `rlm-wiki — local CLI repository wikis and Ask
+  print(io, `grok-wiki — local CLI repository wikis and Ask
 
 Usage:
-  rlm-wiki generate <source...> [--agent ID] [--model MODEL] [--reasoning LEVEL] [--pages N] [--page-count-mode auto|fixed] [--style STYLE] [--language LANG] [--concurrency N]
-  rlm-wiki ask      <source> "question" [--agent ID] [--model MODEL] [--reasoning LEVEL] [--mode fast|deep]
-  rlm-wiki ask      <source...> --question "question" [--workspace-goal compare|steal|understand|bridge|audit]
-  rlm-wiki agents   [--rescan]
-  rlm-wiki list
-  rlm-wiki serve    [--port 3141] [--host 127.0.0.1]
-  rlm-wiki worker   [--once]
-  rlm-wiki sidecar  --token TOKEN [--port 0] [--host 127.0.0.1] [--stamp PATH]
+  grok-wiki generate <source...> [--agent ID] [--model MODEL] [--reasoning LEVEL] [--pages N] [--page-count-mode auto|fixed] [--style STYLE] [--language LANG] [--concurrency N]
+  grok-wiki ask      <source> "question" [--agent ID] [--model MODEL] [--reasoning LEVEL] [--mode fast|deep]
+  grok-wiki ask      <source...> --question "question" [--workspace-goal compare|steal|understand|bridge|audit]
+  grok-wiki agents   [--rescan]
+  grok-wiki list
+  grok-wiki serve    [--port 3141] [--host 127.0.0.1]
+  grok-wiki worker   [--once]
+  grok-wiki sidecar  --token TOKEN [--port 0] [--host 127.0.0.1] [--stamp PATH]
 
 Sources:
   GitHub URLs, owner/repo shorthands, or local paths. Repeat sources for a workspace wiki or multi-repo Ask.
@@ -206,11 +206,11 @@ Wiki defaults:
   Default page target: auto up to ${CLI_DEFAULT_WIKI_PAGE_COUNT}
 
 Examples:
-  rlm-wiki agents --rescan
-  rlm-wiki generate expressjs/express --agent grok --pages 8 --style first-30
-  rlm-wiki generate ./repo-a ./repo-b --agent codex --model gpt-5.5 --page-count-mode fixed --pages 6
-  rlm-wiki ask expressjs/express "How does routing work?" --agent claude --mode deep
-  rlm-wiki ask ./api ./web --question "Compare auth flows" --workspace-goal compare
+  grok-wiki agents --rescan
+  grok-wiki generate expressjs/express --agent grok --pages 8 --style first-30
+  grok-wiki generate ./repo-a ./repo-b --agent codex --model gpt-5.5 --page-count-mode fixed --pages 6
+  grok-wiki ask expressjs/express "How does routing work?" --agent claude --mode deep
+  grok-wiki ask ./api ./web --question "Compare auth flows" --workspace-goal compare
 `);
 }
 
@@ -253,7 +253,7 @@ async function resolveLocalCli(
   const status = await deps.getLocalCliAgents({ rescan: true });
   if (!status.enabled) {
     error(io, `Error: Local CLI mode is unavailable: ${status.error || "sidecar could not start"}`);
-    error(io, "  Open rlm-wiki on localhost or install and authenticate a local CLI agent.");
+    error(io, "  Open Grok-Wiki on localhost or install and authenticate a local CLI agent.");
     throw new CliExit(1);
   }
 
@@ -266,7 +266,7 @@ async function resolveLocalCli(
   if (selection.explicitAgent && selected?.runnable) return applyAgentDefaultModel(selection.localCli, selected);
 
   const agentLabel = selected?.name || (selection.explicitAgent ? localCliLabel(selection.localCli) : "Local CLI agent");
-  const setupHint = selected?.setupHint || "Install and authenticate a local CLI agent, then run `rlm-wiki agents --rescan`.";
+  const setupHint = selected?.setupHint || "Install and authenticate a local CLI agent, then run `grok-wiki agents --rescan`.";
   error(io, selection.explicitAgent
     ? `Error: ${agentLabel} is not ready for local-cli runs.`
     : "Error: no ready local CLI agents were found.");
@@ -404,7 +404,7 @@ function optionalEnumFlag<T extends string>(
 function assertLocalCliRuntimeFlag(flags: Record<string, FlagValue>): void {
   const runtime = flagString(flags, "runtime");
   if (runtime && runtime !== "local-cli") {
-    throw new Error("rlm-wiki CLI only supports --runtime local-cli.");
+    throw new Error("grok-wiki CLI only supports --runtime local-cli.");
   }
 }
 
@@ -716,7 +716,7 @@ async function cmdAsk(
 ): Promise<void> {
   const { sources, question } = parseAskInputs(positional, flags);
   if (!sources.length || !question) {
-    error(io, 'Error: usage is `rlm-wiki ask <source> "question"` or `rlm-wiki ask <source...> --question "question"`');
+    error(io, 'Error: usage is `grok-wiki ask <source> "question"` or `grok-wiki ask <source...> --question "question"`');
     throw new CliExit(1);
   }
 

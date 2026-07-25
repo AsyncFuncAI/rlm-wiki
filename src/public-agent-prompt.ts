@@ -17,14 +17,14 @@ export type PublicAgentPromptInput = {
 export function publicAgentPrompt(input: PublicAgentPromptInput): string {
   const artifact = normalizeArtifactLabel(input.artifactLabel);
   const titleLabel = artifact === "docs" ? "Docs" : "Wiki";
-  const contextSubject = artifact === "docs" ? "these rlm-wiki docs" : "this rlm-wiki wiki";
+  const contextSubject = artifact === "docs" ? "these Grok-Wiki docs" : "this Grok-Wiki wiki";
   const treatSubject = artifact === "docs" ? "these docs" : "this wiki";
   const pageLabel = artifact === "docs" ? "docs page" : "wiki page";
   const wholeContext = artifact === "docs" ? "whole-docs context" : "whole-wiki context";
   const lines = [
     `Use ${contextSubject} as source-grounded context for the task in this chat.`,
     "",
-    `${titleLabel}: ${lineValue(input.title, artifact === "docs" ? "Untitled Docs" : "Untitled rlm-wiki")}`,
+    `${titleLabel}: ${lineValue(input.title, artifact === "docs" ? "Untitled Grok Docs" : "Untitled Grok-Wiki")}`,
     input.description ? `Summary: ${lineValue(input.description)}` : "",
     `Human page: ${lineValue(input.pageUrl)}`,
     `Agent index (read first): ${lineValue(input.llmsUrl)}`,
@@ -71,7 +71,7 @@ export type PublicAskAgentPromptInput = {
 
 export function publicAskAgentPrompt(input: PublicAskAgentPromptInput): string {
   const lines = [
-    "Use this shared rlm-wiki Ask conversation as source-grounded context for the task in this chat.",
+    "Use this shared Grok-Wiki Ask conversation as source-grounded context for the task in this chat.",
     "",
     `Conversation: ${lineValue(input.title, "Shared Ask conversation")}`,
     input.description ? `First question: ${lineValue(input.description)}` : "",

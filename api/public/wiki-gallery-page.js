@@ -53,17 +53,17 @@ function fallbackGalleryShell() {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Public library - rlm-wiki</title>
-    <meta name="description" content="Browse public repository wikis and technical docs generated with rlm-wiki." />
-    <meta property="og:title" content="Public library - rlm-wiki" />
-    <meta property="og:description" content="Browse public repository wikis and technical docs generated with rlm-wiki." />
+    <title>Public library - Grok-Wiki</title>
+    <meta name="description" content="Browse public repository wikis and technical docs generated with Grok-Wiki." />
+    <meta property="og:title" content="Public library - Grok-Wiki" />
+    <meta property="og:description" content="Browse public repository wikis and technical docs generated with Grok-Wiki." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://rlmwiki.deepascii.com/public/wikis" />
-    <meta property="og:image" content="https://rlmwiki.deepascii.com/rlm-wiki-preview-bottom-left.png" />
+    <meta property="og:url" content="https://grok-wiki.com/public/wikis" />
+    <meta property="og:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Public library - rlm-wiki" />
-    <meta name="twitter:description" content="Browse public repository wikis and technical docs generated with rlm-wiki." />
-    <meta name="twitter:image" content="https://rlmwiki.deepascii.com/rlm-wiki-preview-bottom-left.png" />
+    <meta name="twitter:title" content="Public library - Grok-Wiki" />
+    <meta name="twitter:description" content="Browse public repository wikis and technical docs generated with Grok-Wiki." />
+    <meta name="twitter:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <script type="module" src="/public-wiki-gallery.ts"></script>
     <script type="module" src="/vercel-analytics.ts"></script>
@@ -93,14 +93,14 @@ function gallerySeo(baseUrl, surface) {
   if (surface === "docs") {
     return {
       canonicalUrl,
-      title: "Public docs - rlm-wiki",
-      description: "Browse public technical docs generated from repositories and folders with rlm-wiki.",
+      title: "Public docs - Grok-Wiki",
+      description: "Browse public technical docs generated from repositories and folders with Grok-Wiki.",
     };
   }
   return {
     canonicalUrl,
-    title: "Public library - rlm-wiki",
-    description: "Browse public repository wikis and technical docs generated with rlm-wiki.",
+    title: "Public library - Grok-Wiki",
+    description: "Browse public repository wikis and technical docs generated with Grok-Wiki.",
   };
 }
 
@@ -159,8 +159,8 @@ function renderGalleryFallback(items, surface) {
   const copy = surface === "docs"
     ? "Functional technical docs generated from repositories and folders."
     : surface === "wiki"
-      ? "Source-grounded repository wikis published from rlm-wiki."
-      : "Source-grounded public wikis and documentation generated with rlm-wiki.";
+      ? "Source-grounded repository wikis published from Grok-Wiki."
+      : "Source-grounded public wikis and documentation generated with Grok-Wiki.";
   return `
       <main class="gallery-main" data-public-gallery-fallback>
         <section class="gallery-hero" aria-labelledby="gallery-title">

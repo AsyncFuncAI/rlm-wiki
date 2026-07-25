@@ -120,7 +120,7 @@ export async function generateWikiSlides(
     deckSource: deckSource || null,
     readmeNote: usedAgent
       ? "The deck source was authored by the selected local CLI agent from the generated wiki context."
-      : "The selected local CLI agent returned invalid TSX, so rlm-wiki packaged the safe built-in Open Slide template.",
+      : "The selected local CLI agent returned invalid TSX, so Grok-Wiki packaged the safe built-in Open Slide template.",
   });
   return {
     deckId,
@@ -362,7 +362,7 @@ export async function validateGeneratedOpenSlideSource(source: string): Promise<
 
 async function validateOpenSlideSourceSemantics(source: string): Promise<void> {
   const ts = await import("typescript");
-  const tmp = await mkdtemp(join(tmpdir(), "rlm-wiki-open-slide-typecheck-"));
+  const tmp = await mkdtemp(join(tmpdir(), "grok-wiki-open-slide-typecheck-"));
   const sourcePath = join(tmp, "index.tsx");
   const shimPath = join(tmp, "open-slide-shims.d.ts");
   try {

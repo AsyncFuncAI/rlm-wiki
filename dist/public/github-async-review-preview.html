@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: #161b22;
+        --line: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #2f81f7;
+        --green: #3fb950;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 13px;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .github-page {
+        min-height: 100vh;
+        background: var(--bg);
+      }
+
+      .github-topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 48px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+        background: #010409;
+      }
+
+      .mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: #f0f6fc;
+      }
+
+      .search {
+        min-width: 0;
+        flex: 1;
+        max-width: 280px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .repo-head {
+        padding: 18px 18px 0;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .repo-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .repo-title strong {
+        color: #58a6ff;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .repo-title span {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 11px;
+        padding: 2px 7px;
+      }
+
+      .repo-description {
+        margin: 9px 0 14px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .repo-tabs {
+        display: flex;
+        gap: 18px;
+        overflow: hidden;
+      }
+
+      .repo-tabs span {
+        padding: 9px 0;
+        border-bottom: 2px solid transparent;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .repo-tabs .active {
+        border-color: #f78166;
+        color: var(--text);
+      }
+
+      .repo-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 230px;
+        gap: 18px;
+        padding: 18px;
+      }
+
+      .file-list,
+      .about {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #0d1117;
+      }
+
+      .branch-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .branch {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .file-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        padding: 9px 12px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .file-row:first-of-type {
+        border-top: 0;
+      }
+
+      .file-row strong {
+        min-width: 0;
+        overflow: hidden;
+        color: var(--text);
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 12px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .file-row small {
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+
+      .about {
+        padding: 12px;
+      }
+
+      .about h2 {
+        margin: 0 0 8px;
+        font-size: 13px;
+      }
+
+      .about p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .topic-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .topic {
+        border-radius: 999px;
+        background: rgba(47, 129, 247, 0.14);
+        color: #58a6ff;
+        padding: 4px 7px;
+        font-size: 11px;
+      }
+
+      .language {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .language::before {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 6px;
+        border-radius: 999px;
+        background: #3572a5;
+        content: "";
+      }
+
+      @media (max-width: 680px) {
+        .repo-body {
+          grid-template-columns: 1fr;
+        }
+
+        .about {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="github-page">
+      <div class="github-topbar">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="search">Search or jump to...</div>
+      </div>
+      <section class="repo-head">
+        <div class="repo-title">
+          <a href="https://github.com/AsyncFuncAI/AsyncReview" target="_blank" rel="noreferrer"><strong>AsyncFuncAI / AsyncReview</strong></a>
+          <span>Public</span>
+        </div>
+        <p class="repo-description">Open-source Agentic code review tool inspired by DevinReview, using Recursive Language Models.</p>
+        <nav class="repo-tabs" aria-label="Repository tabs">
+          <span class="active">Code</span>
+          <span>Issues</span>
+          <span>Pull requests</span>
+          <span>Actions</span>
+        </nav>
+      </section>
+      <section class="repo-body">
+        <div class="file-list">
+          <div class="branch-row"><span class="branch">main</span><span>Latest commit</span></div>
+          <div class="file-row"><strong>async_review/</strong><small>source</small></div>
+          <div class="file-row"><strong>frontend/</strong><small>app</small></div>
+          <div class="file-row"><strong>docs/</strong><small>guides</small></div>
+          <div class="file-row"><strong>README.md</strong><small>overview</small></div>
+          <div class="file-row"><strong>pyproject.toml</strong><small>config</small></div>
+        </div>
+        <aside class="about">
+          <h2>About</h2>
+          <p>Agentic code review for repositories, issues, and pull requests.</p>
+          <div class="topic-row">
+            <span class="topic">code-review</span>
+            <span class="topic">agents</span>
+            <span class="topic">python</span>
+          </div>
+          <div class="language">Python</div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

@@ -30,7 +30,7 @@ import {
 
 const KB_AGENT_TIMEOUT_MS = Math.max(
   5_000,
-  Number(process.env.RLM_WIKI_KB_TIMEOUT_MS || 60_000),
+  Number(process.env.GROK_WIKI_KB_TIMEOUT_MS || 60_000),
 );
 
 /**

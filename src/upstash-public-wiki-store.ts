@@ -36,8 +36,8 @@ export type UnpublishPublicWikiResult = {
 
 const KEY_PREFIX = "gw:public:wiki";
 
-export function publicWikiBaseUrlFromEnv(defaultBaseUrl = "https://rlmwiki.deepascii.com"): string {
-  return (process.env.RLM_WIKI_PUBLIC_URL || defaultBaseUrl).trim().replace(/\/+$/, "");
+export function publicWikiBaseUrlFromEnv(defaultBaseUrl = "https://grok-wiki.com"): string {
+  return (process.env.GROK_WIKI_PUBLIC_URL || process.env.RLM_WIKI_PUBLIC_URL || defaultBaseUrl).trim().replace(/\/+$/, "");
 }
 
 export class UpstashPublicWikiStore {

@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     const title = plainText(snapshot.title || snapshot.wiki?.structure?.title || "Repository Wiki", 86);
     const description = plainText(
-      snapshot.description || snapshot.wiki?.structure?.description || "A source-grounded public repository wiki generated with rlm-wiki.",
+      snapshot.description || snapshot.wiki?.structure?.description || "A source-grounded public repository wiki generated with Grok-Wiki.",
       160,
     );
     const pages = Array.isArray(snapshot.wiki?.structure?.pages)
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     const [instrumentSerif, inter] = await Promise.all([
       loadGoogleFont(
         "Instrument Serif",
-        "rlm-wiki©abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_…:./",
+        "Grok-Wiki©abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_…:./",
       ),
       loadGoogleFont(
         "Inter",
@@ -139,7 +139,7 @@ function renderOgCard({ title, description, pages, repo }) {
                 color: "#20242a",
               },
             },
-            "rlm-wiki",
+            "Grok-Wiki",
           ),
           h("div", { style: { fontSize: 24, transform: "translateY(-16px)" } }, "©"),
         ),
