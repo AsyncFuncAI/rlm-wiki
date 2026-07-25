@@ -78,16 +78,17 @@ function withoutInjectedAppStyles(html: string): string {
   );
 }
 
-function publishLanding(): Plugin {
+// Marketing film page (public/rlm-wiki.html) is a separate route only.
+// Never overwrite dist/public/index.html — that file is the real product SPA
+// (Wiki / Ask / Code / Review + BYOK model access + cinematic home hero).
+function publishMarketingLanding(): Plugin {
   return {
-    name: "rlm-wiki-publish-landing",
+    name: "rlm-wiki-publish-marketing-landing",
     writeBundle() {
       const landingPath = join(distPublicRoot, "rlm-wiki.html");
-      const indexPath = join(distPublicRoot, "index.html");
       if (!statSync(landingPath, { throwIfNoEntry: false })?.isFile()) return;
       const landingHtml = withoutInjectedAppStyles(readFileSync(landingPath, "utf8"));
       writeFileSync(landingPath, landingHtml);
-      writeFileSync(indexPath, landingHtml);
     },
   };
 }
@@ -95,7 +96,7 @@ function publishLanding(): Plugin {
 export default defineConfig({
   root: publicRoot,
   publicDir: false,
-  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishLanding()],
+  plugins: [copyStaticPublicAssets(), minifyInlineClassicScripts(), publishMarketingLanding()],
   // Public pages import shared reader UI from ../src/ui (outside public/).
   server: {
     fs: {
