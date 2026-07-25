@@ -1,97 +1,66 @@
 import { describe, expect, test } from "bun:test";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
-describe("public landing SEO", () => {
-  type VercelRouteRule = {
-    source: string;
-    destination?: string;
-    permanent?: boolean;
-    has?: unknown;
-  };
+/**
+ * Web product surface only (root public/).
+ * Desktop marketing lives under apps/desktop/marketing/ and is tested separately
+ * when that private tree is present (monorepo only).
+ */
+const marketingRoot = join(import.meta.dirname, "../apps/desktop/marketing");
+const hasDesktopMarketing = existsSync(join(marketingRoot, "index.html"));
 
+describe("rlm-wiki web product surface", () => {
   type VercelHeaderRule = {
     source: string;
     headers: Array<{ key: string; value: string }>;
   };
 
-  test("canonicalizes crawlable static marketing routes", async () => {
-    const pages = [
-      ["../public/rlm-wiki.html", "https://rlmwiki.deepascii.com/"],
-      ["../public/episodes.html", "https://rlmwiki.deepascii.com/episodes"],
-      ["../public/changelog.html", "https://rlmwiki.deepascii.com/changelog"],
-    ];
+  test("product SPA exposes Wiki Ask Code Review and BYOK", async () => {
+    const html = await Bun.file(new URL("../public/index.html", import.meta.url)).text();
 
-    for (const [path, canonicalUrl] of pages) {
-      const html = await Bun.file(new URL(path, import.meta.url)).text();
-
-      expect(html).toContain(`<link rel="canonical" href="${canonicalUrl}" />`);
-      expect(html).toContain('<meta name="robots" content="index,follow,max-image-preview:large" />');
-    }
+    expect(html).toContain('<title>rlm-wiki</title>');
+    expect(html).toContain('data-topbar-route="wikis"');
+    expect(html).toContain('data-topbar-route="ask"');
+    expect(html).toContain('data-topbar-route="code"');
+    expect(html).toContain('data-topbar-route="review"');
+    expect(html).toContain('id="provider-keys-btn"');
+    expect(html).toContain(">BYOK<");
+    expect(html).toContain('class="hero-video"');
+    expect(html).toContain("cloudfront.net");
   });
 
-  test("exposes answer-ready homepage structured data", async () => {
-    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
-    const jsonLd = Array.from(html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g), ([, raw]) => JSON.parse(raw));
-    const nodes = jsonLd.flatMap((value) => Array.isArray(value["@graph"]) ? value["@graph"] : [value]);
+  test("web Vite config never builds desktop marketing into index", async () => {
+    const viteConfig = await Bun.file(new URL("../vite.web.config.ts", import.meta.url)).text();
 
-    expect(nodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          "@type": "SoftwareApplication",
-          name: "rlm-wiki",
-          applicationCategory: "DeveloperApplication",
-          operatingSystem: "macOS",
-        }),
-        expect.objectContaining({
-          "@type": "FAQPage",
-          mainEntity: expect.arrayContaining([
-            expect.objectContaining({
-              name: "Why use rlm-wiki instead of just Codex, Claude Code, Grok, or ChatGPT?",
-            }),
-            expect.objectContaining({
-              name: "How does rlm-wiki keep the wiki grounded in the source?",
-            }),
-            expect.objectContaining({
-              name: "Can another agent use a rlm-wiki page after it is generated?",
-            }),
-          ]),
-        }),
-      ]),
-    );
+    expect(viteConfig).toContain('index: join(publicRoot, "index.html")');
+    expect(viteConfig).toContain("public-ask");
+    expect(viteConfig).toContain("public-wiki");
+    expect(viteConfig).not.toContain("episodes.html");
+    expect(viteConfig).not.toContain("changelog.html");
+    // Minify may rewrite index in place; marketing must never be the source.
+    expect(viteConfig).not.toContain("landingHtml");
+    expect(viteConfig).not.toContain("rlm-wiki.html");
+    expect(viteConfig).toContain("Product SPA only");
   });
 
-  test("canonicalizes duplicate host and keeps static shells noindex", async () => {
+  test("vercel config is product-only (no marketing film routes)", async () => {
     const config = JSON.parse(await Bun.file(new URL("../vercel.json", import.meta.url)).text()) as {
-      redirects: VercelRouteRule[];
+      redirects: Array<{ source: string; destination?: string }>;
       headers: VercelHeaderRule[];
+      rewrites: Array<{ source: string }>;
     };
 
     expect(config.redirects).toEqual(
       expect.arrayContaining([
-        {
-          source: "/rlm-wiki.html",
-          destination: "/",
-          permanent: true,
-        },
-        {
-          source: "/index.html",
-          destination: "/",
-          permanent: true,
-        },
-        {
-          source: "/episodes.html",
-          destination: "/episodes",
-          permanent: true,
-        },
-        {
-          source: "/changelog.html",
-          destination: "/changelog",
-          permanent: true,
-        },
+        { source: "/index.html", destination: "/", permanent: true },
       ]),
     );
-    expect(JSON.stringify(config.redirects).toLowerCase()).not.toMatch(/g\s*rok[\s_-]*wiki/);
+    expect(config.redirects.some((r) => r.source.includes("episodes"))).toBe(false);
+    expect(config.redirects.some((r) => r.source.includes("changelog"))).toBe(false);
+    expect(config.rewrites.some((r) => r.source === "/episodes")).toBe(false);
+    expect(config.rewrites.some((r) => r.source === "/changelog")).toBe(false);
 
-    expect(config.redirects.filter((redirect) => redirect.source === "/public-wiki-gallery.html")).toHaveLength(0);
     expect(config.headers).toEqual(
       expect.arrayContaining([
         {
@@ -109,36 +78,27 @@ describe("public landing SEO", () => {
       ]),
     );
   });
+});
 
-  test("gives every landing video a crawlable thumbnail poster", async () => {
-    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
-    const videoTags = Array.from(html.matchAll(/<video\b[^>]*>/g), ([tag]) => tag);
+describe.skipIf(!hasDesktopMarketing)("desktop marketing boundary", () => {
+  test("marketing homepage lives under apps/desktop/marketing only", () => {
+    const marketingIndex = join(marketingRoot, "index.html");
+    const html = readFileSync(marketingIndex, "utf8");
 
-    expect(videoTags.length).toBeGreaterThan(0);
-    for (const tag of videoTags) {
-      expect(tag).toContain('poster="https://rlmwiki.deepascii.com/');
-    }
-    expect(html).toContain('poster="https://rlmwiki.deepascii.com/episodes/rlm-wiki-ep1-poster.jpg"');
+    expect(html).toContain("hero");
+    expect(html.length).toBeGreaterThan(50_000);
+
+    // Must not sit in web product public/ anymore
+    const webPublic = join(import.meta.dirname, "../public");
+    expect(() => readFileSync(join(webPublic, "rlm-wiki.html"), "utf8")).toThrow();
+    expect(() => readFileSync(join(webPublic, "episodes.html"), "utf8")).toThrow();
+    expect(() => readFileSync(join(webPublic, "changelog.html"), "utf8")).toThrow();
   });
 
-  test("includes the rlm-wiki FAQ with onboarding contact and hardware artwork", async () => {
-    const html = await Bun.file(new URL("../public/rlm-wiki.html", import.meta.url)).text();
-
-    expect(html).toContain('id="faq"');
-    expect(html).toContain("Frequently Asked Questions");
-    expect(html).toContain("https://calendly.com/asyncfunc/rlm-wiki-onboarding");
-    expect(html).toContain("./editorial/rlm-wiki-faq-90s-hardware.webp");
-    expect(html).toContain("Why use rlm-wiki instead of just Codex, Claude Code, Grok, or ChatGPT?");
-    expect(html).toContain("How does rlm-wiki keep the wiki grounded in the source?");
-    expect(html).toContain("What happens when I publish a wiki?");
-    expect(html).toContain("Can another agent use a rlm-wiki page after it is generated?");
-    expect(html).toContain("What kinds of repositories are a good fit?");
-
-    const faqStart = html.indexOf('<section class="faq-section"');
-    const faqEnd = html.indexOf("</section>", faqStart);
-    const faqHtml = html.slice(faqStart, faqEnd);
-    expect((faqHtml.match(/<details class="faq-item"/g) || []).length).toBe(8);
-    expect(faqHtml).not.toContain("BYOK");
-    expect(faqHtml).not.toContain("BYOC");
+  test("marketing README documents the hard boundary", () => {
+    const readme = readFileSync(join(marketingRoot, "README.md"), "utf8");
+    expect(readme).toContain("apps/desktop/marketing/");
+    expect(readme).toContain("public/index.html");
+    expect(readme).toContain("Never");
   });
 });

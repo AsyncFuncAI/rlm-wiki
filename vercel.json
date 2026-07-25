@@ -3,23 +3,8 @@
   "outputDirectory": "dist/public",
   "redirects": [
     {
-      "source": "/rlm-wiki.html",
-      "destination": "/",
-      "permanent": true
-    },
-    {
       "source": "/index.html",
       "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/episodes.html",
-      "destination": "/episodes",
-      "permanent": true
-    },
-    {
-      "source": "/changelog.html",
-      "destination": "/changelog",
       "permanent": true
     }
   ],
@@ -60,14 +45,6 @@
     {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap"
-    },
-    {
-      "source": "/changelog",
-      "destination": "/changelog.html"
-    },
-    {
-      "source": "/episodes",
-      "destination": "/episodes.html"
     },
     {
       "source": "/public/wikis",
