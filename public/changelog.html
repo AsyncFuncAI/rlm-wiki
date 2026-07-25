@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-public-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Changelog - Grok-Wiki</title>
+    <meta
+      name="description"
+      content="Track Grok-Wiki release notes, documentation generation, local CLI runtime updates, public wiki sharing, and desktop app improvements."
+    />
+    <link rel="canonical" href="https://grok-wiki.com/changelog" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:title" content="Changelog - Grok-Wiki" />
+    <meta property="og:description" content="Track Grok-Wiki release notes, documentation generation, local CLI runtime updates, public wiki sharing, and desktop app improvements." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://grok-wiki.com/changelog" />
+    <meta property="og:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Grok-Wiki collaborators in a warm 90s office" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Changelog - Grok-Wiki" />
+    <meta name="twitter:description" content="Track Grok-Wiki release notes, documentation generation, local CLI runtime updates, public wiki sharing, and desktop app improvements." />
+    <meta name="twitter:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
+    <meta name="twitter:image:alt" content="Grok-Wiki collaborators in a warm 90s office" />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/changelog.css" />
+    <script type="module" src="/vercel-analytics.ts"></script>
+  </head>
+  <body class="changelog-body">
+    <div class="changelog-root">
+      <header class="changelog-topbar">
+        <a class="changelog-brand" href="/" aria-label="Grok-Wiki home">
+          <strong>Grok-Wiki</strong>
+          <span>Version history</span>
+        </a>
+        <nav class="changelog-nav" aria-label="Grok-Wiki links">
+          <a class="active" href="/changelog">Changelog</a>
+          <a href="/episodes">Episodes</a>
+          <a href="/public/wikis">Gallery</a>
+          <a href="/">Download</a>
+        </nav>
+      </header>
+
+      <main class="changelog-main">
+        <section class="changelog-hero" aria-labelledby="changelog-title">
+          <img
+            class="changelog-hero-art"
+            src="/editorial/grok-wiki-changelog-release.jpg"
+            alt=""
+            decoding="async"
+            fetchpriority="high"
+          />
+          <div>
+            <p class="changelog-kicker">Version history</p>
+            <h1 id="changelog-title">Changelog.</h1>
+            <p class="changelog-copy">
+              Track the desktop app releases that make Grok-Wiki more local-first, source-grounded, and shareable.
+              The product stays built around user-owned credentials, local CLI agents, and provider-agnostic runtime paths.
+            </p>
+          </div>
+          <aside class="changelog-hero-panel" aria-label="Latest release">
+            <span>Latest</span>
+            <strong>0.0.33</strong>
+            <p>Terminal projects, Code Graph, Ask polish, and local-agent runtime surfaces get sharper.</p>
+            <div class="changelog-actions">
+              <a class="changelog-action" href="https://github.com/AsyncFuncAI/grok-wiki/releases/latest" target="_blank" rel="noreferrer">Release</a>
+              <a class="changelog-action" href="https://github.com/AsyncFuncAI/grok-wiki" target="_blank" rel="noreferrer">GitHub</a>
+            </div>
+          </aside>
+        </section>
+
+        <div class="changelog-layout">
+          <nav class="changelog-index" aria-label="Release index">
+            <a href="#v0-0-33">0.0.33</a>
+            <a href="#v0-0-32">0.0.32</a>
+            <a href="#v0-0-31">0.0.31</a>
+            <a href="#v0-0-30">0.0.30</a>
+            <a href="#v0-0-29">0.0.29</a>
+            <a href="#v0-0-28">0.0.28</a>
+            <a href="#v0-0-27">0.0.27</a>
+            <a href="#v0-0-26">0.0.26</a>
+            <a href="#v0-0-25">0.0.25</a>
+            <a href="#v0-0-24">0.0.24</a>
+            <a href="#v0-0-23">0.0.23</a>
+            <a href="#v0-0-22">0.0.22</a>
+            <a href="#v0-0-21">0.0.21</a>
+            <a href="#v0-0-20">0.0.20</a>
+            <a href="#v0-0-19">0.0.19</a>
+            <a href="#v0-0-18">0.0.18</a>
+            <a href="#v0-0-17">0.0.17</a>
+            <a href="#v0-0-16">0.0.16</a>
+            <a href="#v0-0-15">0.0.15</a>
+            <a href="#v0-0-14">0.0.14</a>
+            <a href="#v0-0-13">0.0.13</a>
+            <a href="#v0-0-12">0.0.12</a>
+            <a href="#v0-0-11">0.0.11</a>
+            <a href="#v0-0-10">0.0.10</a>
+            <a href="#v0-0-9">0.0.9</a>
+            <a href="#v0-0-8">0.0.8</a>
+            <a href="#v0-0-7">0.0.7</a>
+            <a href="#v0-0-6">0.0.6</a>
+            <a href="#v0-0-5">0.0.5</a>
+            <a href="#v0-0-4">0.0.4</a>
+            <a href="#v0-0-3">0.0.3</a>
+            <a href="#v0-0-2">0.0.2</a>
+            <a href="#v0-0-1">0.0.1 alpha</a>
+          </nav>
+
+          <section class="changelog-list" aria-label="Release notes">
+            <article class="release latest" id="v0-0-33">
+              <div class="release-meta">
+                <span class="release-version">0.0.33</span>
+                <span class="release-date">July 12, 2026</span>
+                <span class="release-status">Latest</span>
+              </div>
+              <div class="release-body">
+                <h2>Terminal projects and Code Graph make local-agent work feel more direct.</h2>
+                <ul>
+                  <li>Adds an Orca-style Terminal projects rail with project-aware local-agent workspaces and improved TUI fidelity.</li>
+                  <li>Adds opt-in Code Graph support so Ask and Wiki generation can use evidence-backed code knowledge while keeping provider-agnostic runtime paths.</li>
+                  <li>Adds provider account and usage status surfaces, plus refreshed Grok, Codex, Claude, and Pi model catalogs that preserve Default and user-owned credentials.</li>
+                  <li>Polishes Ask with Codex-style send controls, middle-truncated context chips, scroll fades, follow-up queue handling, drag/drop affordances, and steadier process activity UI.</li>
+                  <li>Aligns Tasks agent terminals with desktop terminal spawning, color, and appearance, and fixes Tasks create/run completion flows.</li>
+                  <li>Continues the desktop render-boundary refactor with scoped controllers, renderers, runtime facades, and broader regression coverage across Ask, Wiki, Tasks, terminal, sidebar, settings, and project surfaces.</li>
+                  <li>Hardens public gallery, sitemap, and crawler routes while keeping public website assets separate from the signed desktop bundle.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.33.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Terminal</span>
+                  <span>Code Graph</span>
+                  <span>Ask</span>
+                  <span>Tasks</span>
+                  <span>Local agents</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-32">
+              <div class="release-meta">
+                <span class="release-version">0.0.32</span>
+                <span class="release-date">June 18, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Local Ask and desktop persistence get quieter under pressure.</h2>
+                <ul>
+                  <li>Normalizes Ask current-workspace scope labels item by item, including localized labels and mixed scope lists, so current workspace stays a sentinel instead of leaking display text into run data.</li>
+                  <li>Keeps Ask badges, scope summaries, interview prompts, and terminal project input aligned on the same current-workspace normalization path.</li>
+                  <li>Adds the minimal current Tauri dialog permission needed by terminal and confirmation flows while preserving narrow event permissions and avoiding broader file-system grants.</li>
+                  <li>Retries transient SQLite locks for lower-frequency run and artifact writes without changing the high-frequency stream-event timeout boundary.</li>
+                  <li>Expands regression coverage for scope normalization, generated desktop capability alignment, and SQLite lock timeout restoration.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.32.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Ask</span>
+                  <span>Desktop</span>
+                  <span>SQLite</span>
+                  <span>Local-first</span>
+                  <span>Reliability</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-31">
+              <div class="release-meta">
+                <span class="release-version">0.0.31</span>
+                <span class="release-date">June 16, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Desktop releases get stricter, local-first safety rails.</h2>
+                <ul>
+                  <li>Adds desktop TypeScript checking to the release gate and distribution path so release builds cannot skip desktop type regressions.</li>
+                  <li>Removes the remote Mermaid script fallback and narrows desktop script CSP so diagrams render from the local package instead of a CDN.</li>
+                  <li>Keeps non-script network, media, image, and font allowances intact for BYOK, BYOC, updater, and local-agent workflows.</li>
+                  <li>Removes layout-property animation from the floating Ask composer while preserving transform and opacity polish for child chrome.</li>
+                  <li>Restores PostHog Ask failure handling on main without coupling runtime behavior to one model provider.</li>
+                  <li>Expands regression coverage for release scripts, Mermaid CSP, Ask render scope, and composer motion stability.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.31.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Desktop</span>
+                  <span>Release gate</span>
+                  <span>Security</span>
+                  <span>Ask</span>
+                  <span>Local-first</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-30">
+              <div class="release-meta">
+                <span class="release-version">0.0.30</span>
+                <span class="release-date">June 12, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Local CLI Ask recovers desktop-only socket failures.</h2>
+                <ul>
+                  <li>Fixes <code>FailedToOpenSocket</code> failures where Claude Code or another local CLI worked in Terminal but desktop Ask could not open the provider API socket.</li>
+                  <li>Imports only safe login-shell network configuration into the desktop server launch path, including proxy, <code>NO_PROXY</code>, and CA bundle variables.</li>
+                  <li>Keeps BYOK and BYOC boundaries intact by continuing to filter provider API keys from local agent processes.</li>
+                  <li>Adds PostHog Ask failure classification across request failures, terminal stream errors, and streamed agent error text.</li>
+                  <li>Expands regression coverage for Local CLI environment filtering and Ask error classification without coupling runs to one model provider.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.30.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Ask</span>
+                  <span>Local CLI</span>
+                  <span>Claude Code</span>
+                  <span>PostHog</span>
+                  <span>Reliability</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-29">
+              <div class="release-meta">
+                <span class="release-version">0.0.29</span>
+                <span class="release-date">June 11, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Public Ask sharing for read-only sessions.</h2>
+                <ul>
+                  <li>Adds desktop Ask sharing so a completed Ask session can be published, copied, updated, or unpublished from the Ask view.</li>
+                  <li>Creates public read-only Ask pages with sanitized session payloads and stable links managed by the local desktop server.</li>
+                  <li>Adds public Ask website assets alongside the existing public wiki surface without changing the desktop app bundle boundary.</li>
+                  <li>Fixes a Safari/WebKit boot-order crash that could prevent the desktop shell from rendering after persisted navigation state loaded.</li>
+                  <li>Hardens run-event persistence so disk-full SQLite failures stop retry storms while live streams keep updating in memory.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.29.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Ask</span>
+                  <span>Sharing</span>
+                  <span>Desktop</span>
+                  <span>Reliability</span>
+                  <span>Public pages</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-28">
+              <div class="release-meta">
+                <span class="release-version">0.0.28</span>
+                <span class="release-date">June 11, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Server errors become private, actionable telemetry.</h2>
+                <ul>
+                  <li>Adds server-side PostHog error capture for the desktop local server and API flows.</li>
+                  <li>Redacts exception messages and stack traces, stripping paths, URLs, emails, tokens, and long identifiers before anything leaves the process.</li>
+                  <li>Rate-limits exception reporting so a failure loop cannot flood telemetry.</li>
+                  <li>Syncs the desktop analytics opt-out state to the bundled server so privacy settings disable both client-side and server-side capture.</li>
+                  <li>Adds hosted/server telemetry controls through <code>RLM_WIKI_SERVER_TELEMETRY</code> without coupling runs to one model provider or changing BYOK/BYOC execution paths.</li>
+                  <li>Refactors Ask outline, Wiki stream, document tabs, and repo route controllers while preserving scoped rendering boundaries for high-frequency streams.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.28.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Telemetry</span>
+                  <span>Privacy</span>
+                  <span>PostHog</span>
+                  <span>Server</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-27">
+              <div class="release-meta">
+                <span class="release-version">0.0.27</span>
+                <span class="release-date">June 10, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Tasks turn Ask findings into local-agent work.</h2>
+                <ul>
+                  <li>Adds a local-first Tasks board with backlog, ready, doing, and done columns, plus epics and sub-tasks for larger implementation threads.</li>
+                  <li>Adds Ask-to-Tasks extraction so repository answers can become actionable backlog cards while preserving user-chosen local CLI agents and BYOK/BYOC runtime paths.</li>
+                  <li>Runs tasks from cards through detected local agents, keeps terminal transcripts watchable, reconciles completion state, and records change summaries.</li>
+                  <li>Adds screenshot attachments for Ask and Clarify flows on supported local CLI agents, with clear gating for runtimes that cannot read images.</li>
+                  <li>Fixes clarified Ask turns so clarification answers reach the model and appear as a visible "Clarified" pill in the thread.</li>
+                  <li>Keeps Docs and Wiki generation progress scoped to the owning surface so a Docs run does not stream into the Wiki panel.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.27.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Tasks</span>
+                  <span>Ask</span>
+                  <span>Screenshots</span>
+                  <span>Local CLI</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-26">
+              <div class="release-meta">
+                <span class="release-version">0.0.26</span>
+                <span class="release-date">June 9, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Knowledge Bases become a source-backed study partner.</h2>
+                <ul>
+                  <li>Adds the Knowledge Base distillation pipeline so Ask sessions can roll up into source-grounded cards, merge with existing cards, and stay connected to their repository evidence.</li>
+                  <li>Adds Knowledge Base publishing and private-link read paths, plus a calmer record-shop banner and card/list toggle for dense or expanded review.</li>
+                  <li>Changes project Knowledge Base affordances to a lightbulb, lights it when a project has a Knowledge Base, and keeps sidebar updates scoped as Knowledge Base state loads.</li>
+                  <li>Adds guided Wiki and Ask interview flows that ask short clarifying questions before generation starts, while preserving skip paths for fast runs.</li>
+                  <li>Adds Episode 06, “Jealousy-Driven Development,” promoting Ask as a multi-repository study partner.</li>
+                  <li>Expands regression coverage for Knowledge Base storage, merge, publish, project grouping, Ask clarify, wiki interview, render scope, and desktop routing.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.26.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Knowledge Base</span>
+                  <span>Ask</span>
+                  <span>Wiki</span>
+                  <span>Publishing</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-25">
+              <div class="release-meta">
+                <span class="release-version">0.0.25</span>
+                <span class="release-date">June 7, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Floating outline peek for long Ask sessions.</h2>
+                <ul>
+                  <li>Adds a floating outline peek for multi-turn Ask sessions so long answers stay easier to scan while you keep working in the active turn.</li>
+                  <li>Keeps outline updates scoped to the active Ask surface instead of repainting the broader desktop shell during streaming.</li>
+                  <li>Improves project item rendering and repository grouping coverage so project lists stay stable as repository metadata changes.</li>
+                  <li>Adds focused regression tests for Ask outline render scope and project grouping behavior.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.25.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Ask</span>
+                  <span>Outline</span>
+                  <span>Projects</span>
+                  <span>Streaming</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-24">
+              <div class="release-meta">
+                <span class="release-version">0.0.24</span>
+                <span class="release-date">June 7, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Warmer desktop entry surfaces.</h2>
+                <ul>
+                  <li>Adds 90s memory-style image covers across Projects, Wiki, Ask, Docs, and the launchpad so empty and starting states feel more welcoming.</li>
+                  <li>Reworks Projects into an image-backed top cover while keeping the project list dense and the New Project action visible.</li>
+                  <li>Makes Ask use a standalone top hero above the composer instead of wrapping the input surface inside the image treatment.</li>
+                  <li>Refreshes the launchpad with a softer office coffee-kitchen banner, removes the logo mark, adds explanatory copy, and sharpens the placeholder for repo, folder, or question starts.</li>
+                  <li>Removes the Wiki and Docs refresh button from the gallery hero to keep those generation surfaces calmer.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.24.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Desktop</span>
+                  <span>Projects</span>
+                  <span>Launchpad</span>
+                  <span>Wiki</span>
+                  <span>Ask</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-23">
+              <div class="release-meta">
+                <span class="release-version">0.0.23</span>
+                <span class="release-date">June 6, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Packaged terminal-agent launch fixes.</h2>
+                <ul>
+                  <li>Fixes packaged macOS terminal-agent launches when Claude, Codex, Grok, or another local CLI binary is detected by the sidecar but not available on the app's narrower GUI PATH.</li>
+                  <li>Launches local agents through the detected executable path, preserving BYOK/BYOC setups across shell managers, npm install roots, Volta, asdf, mise, nvm, and fnm.</li>
+                  <li>Keeps very fast startup exits visible long enough to show diagnostics instead of flickering the pane closed after a failed launch.</li>
+                  <li>Preserves Orca-style close-on-exit behavior for established terminal panes.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.23.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Terminal</span>
+                  <span>Local CLI</span>
+                  <span>BYOK</span>
+                  <span>Diagnostics</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-22">
+              <div class="release-meta">
+                <span class="release-version">0.0.22</span>
+                <span class="release-date">June 6, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Background completion alerts and terminal splits.</h2>
+                <ul>
+                  <li>Adds desktop completion attention for long-running wiki and Ask work: native alerts, optional sound, dock badge counts, and deep links back to the finished item.</li>
+                  <li>Upgrades the embedded terminal into a local workspace surface with xterm-backed PTYs, compact project/runtime controls, and cleaner empty states.</li>
+                  <li>Adds Orca-style terminal split shortcuts: <code>Cmd+D</code> splits right and <code>Cmd+Shift+D</code> splits down while staying inside the same tab.</li>
+                  <li>Makes terminal exit behavior match Orca more closely: natural <code>exit</code> closes the shell pane, duplicate split panes are prevented, and surviving panes stay visible when another pane exits.</li>
+                  <li>Tightens streaming render boundaries so Ask answers, wiki progress, and local CLI terminal updates patch their owning surfaces instead of repainting the desktop shell.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.22.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Notifications</span>
+                  <span>Terminal</span>
+                  <span>Splits</span>
+                  <span>Streaming</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-21">
+              <div class="release-meta">
+                <span class="release-version">0.0.21</span>
+                <span class="release-date">June 5, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>First-run onboarding and calmer agent progress.</h2>
+                <ul>
+                  <li>Adds an Orca-style desktop onboarding flow for first-time setup: pick the default local CLI agent, choose appearance, then choose the app UI language.</li>
+                  <li>Supports English, Japanese, and Mandarin as desktop app language choices while keeping generated wiki output language separate.</li>
+                  <li>Updates desktop branding to use the Grok-Wiki favicon, app icon, and serif wordmark treatment so the app matches grok-wiki.com.</li>
+                  <li>Redesigns Ask thinking steps into human-readable progress such as searching code, reading key files, and analyzing results instead of raw command/path logs.</li>
+                  <li>Smooths high-frequency stream updates by coalescing process events, patching only the active Ask timeline, and avoiding repeated row animations or shell repaints.</li>
+                  <li>Fixes the Grok CLI live-answer state so users always see a visible Research Agent indicator before and during streamed answer text, even when no tool events arrive first.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.21.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Onboarding</span>
+                  <span>Grok CLI</span>
+                  <span>Thinking steps</span>
+                  <span>Localization</span>
+                  <span>Desktop</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-20">
+              <div class="release-meta">
+                <span class="release-version">0.0.20</span>
+                <span class="release-date">June 4, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Local CLI picker selection fix.</h2>
+                <ul>
+                  <li>Fixes the Local CLI menu so selecting Grok CLI, Codex CLI, Claude Code, Pi, or Antigravity reliably updates the active desktop runtime instead of collapsing back to the previous agent.</li>
+                  <li>Uses delegated menu handling so refreshed local-agent rows keep their click behavior during readiness rescans.</li>
+                  <li>Opens and preserves setup instructions when the newly selected local CLI is missing or blocked, including Grok CLI install/auth guidance.</li>
+                  <li>Adds regression coverage for refreshed Local CLI menu rows, rebinding safety, persisted runtime selection, and setup-popover visibility.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.20.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Local CLI</span>
+                  <span>Agent picker</span>
+                  <span>Setup</span>
+                  <span>Desktop</span>
+                  <span>Updater</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-19">
+              <div class="release-meta">
+                <span class="release-version">0.0.19</span>
+                <span class="release-date">June 4, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Local CLI agent selection patch.</h2>
+                <ul>
+                  <li>Improves desktop local CLI discovery for users with custom npm, pnpm, Bun, Volta, asdf, mise, nvm, or fnm install roots.</li>
+                  <li>Keeps selected Codex, Claude, Pi, Antigravity, and Grok agents discoverable when the macOS desktop app launches with a narrower GUI PATH than the user's terminal.</li>
+                  <li>Retries Grok CLI startup in headless streaming mode when the ACP initialize/session path fails, while preserving normal cancellation behavior.</li>
+                  <li>Adds focused regression coverage for local CLI path discovery, fake-machine test isolation, and Grok fallback decisions.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.19.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Local CLI</span>
+                  <span>Grok CLI</span>
+                  <span>Codex</span>
+                  <span>Desktop</span>
+                  <span>Updater</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-18">
+              <div class="release-meta">
+                <span class="release-version">0.0.18</span>
+                <span class="release-date">June 3, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Japanese and Mandarin desktop localization.</h2>
+                <ul>
+                  <li>Adds desktop UI localization for English, Japanese, and Mandarin across shell navigation, settings, Ask, Wiki, source evidence, terminal, updater, and runtime status copy.</li>
+                  <li>Detects supported system/browser locales on first launch and persists the selected app language from Settings.</li>
+                  <li>Keeps app UI language separate from generated wiki output language, so existing BYOC/BYOK generation flows remain unchanged.</li>
+                  <li>Fixes a desktop React dependency mismatch that could trigger invalid hook call errors at startup.</li>
+                  <li>Restores Pi local-agent logo assets in public web builds and ships signed/notarized macOS DMG plus updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Localization</span>
+                  <span>Japanese</span>
+                  <span>Mandarin</span>
+                  <span>Desktop</span>
+                  <span>Updater</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-17">
+              <div class="release-meta">
+                <span class="release-version">0.0.17</span>
+                <span class="release-date">June 2, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Docs Chat, public docs polish, and safer release boundaries.</h2>
+                <ul>
+                  <li>Adds an in-place Docs Chat overlay that keeps answers on the documentation page and supports follow-up or new questions without sending users to the Ask workspace.</li>
+                  <li>Prioritizes the current documentation MDX before repository inspection, with the full generated docs artifact available as fallback context.</li>
+                  <li>Preserves the selected local CLI agent and model for documentation questions instead of allowing Ask polling to reset the runtime selection.</li>
+                  <li>Improves Docs Chat typing and streaming responsiveness by keeping high-frequency answer updates scoped to the chat panel.</li>
+                  <li>Fixes generated docs rendering across desktop and public docs, including tabs, light-mode highlights, Python syntax highlighting, Mermaid diagrams, and hover copy controls for code blocks.</li>
+                  <li>Adds public docs video thumbnail metadata so indexed video pages have a thumbnail URL for Google Search Console.</li>
+                  <li>Strengthens the release runbook around the public GitHub boundary: public <code>main</code> and release tags must contain only <code>README.md</code> and <code>skills/</code>.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.17.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Docs Chat</span>
+                  <span>Public docs</span>
+                  <span>Rendering</span>
+                  <span>Release safety</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-16">
+              <div class="release-meta">
+                <span class="release-version">0.0.16</span>
+                <span class="release-date">June 1, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Grok Docs and agent-ready public documentation.</h2>
+                <ul>
+                  <li>Adds first-class documentation support: Grok-Wiki can now generate Grok Docs from repositories instead of only producing wiki-style knowledge maps.</li>
+                  <li>Adds a dedicated docs workspace and reader with documentation navigation, a page rail, docs-specific formatting, and a static Documentation format selection for docs runs.</li>
+                  <li>Adds public documentation publishing under <code>/public/docs</code>, including canonical docs pages, gallery routing, public Open Graph metadata, sitemap coverage, and robots coverage.</li>
+                  <li>Adds docs-aware agent-readable routes: <code>llms.txt</code>, <code>llms-full.txt</code>, <code>.md</code>, and per-page markdown paths for compact and full-context agent consumption.</li>
+                  <li>Adds the Add Agent handoff prompt for public docs and public wikis, copying a provider-agnostic prompt that tells the user's chosen agent to read the compact index first and fetch full context only when needed.</li>
+                  <li>Improves the documentation generator contract with docs-specific structure planning, required frontmatter, planned-route link checks, Grok Docs MDX component guidance, and safeguards against visible source-citation clutter inside docs bodies.</li>
+                  <li>Expands the markdown renderer with documentation components such as cards, steps, tabs, code groups, parameter fields, endpoint frames, update timelines, file trees, tables, diagrams, and code blocks.</li>
+                  <li>Improves docs and wiki reader stability so generation streams, page-agent progress, markdown rendering, diagram zoom, source previews, and public publishing controls update their owning surfaces without repainting the desktop shell.</li>
+                  <li>Adds bundled Grok-Wiki agent skills and local-first source/runtime documentation for BYOK, BYOC, and vendor-agnostic agent workflows.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts for 0.0.16.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Documentation</span>
+                  <span>Public docs</span>
+                  <span>Add Agent</span>
+                  <span>BYOK/BYOC</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-15">
+              <div class="release-meta">
+                <span class="release-version">0.0.15</span>
+                <span class="release-date">May 27, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Local folders and clearer CLI diagnostics.</h2>
+                <ul>
+                  <li>Allows wiki generation from local folders that do not contain a <code>.git</code> directory.</li>
+                  <li>Keeps branch and ref selection disabled for non-git folders while preserving Git-backed branch workflows.</li>
+                  <li>Adds a desktop confirmation when opening a non-git folder so the branch/ref tradeoff is explicit.</li>
+                  <li>Adds an Antigravity quiet-output timeout and richer local CLI exit diagnostics with command and working-directory context.</li>
+                  <li>Captures Claude Code Agent SDK stderr so failures expose the real diagnostic instead of a bare exit code.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Local folders</span>
+                  <span>Local CLI</span>
+                  <span>Diagnostics</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-14">
+              <div class="release-meta">
+                <span class="release-version">0.0.14</span>
+                <span class="release-date">May 25, 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>More local CLI agents for Ask.</h2>
+                <ul>
+                  <li>Adds Pi.Codex and Pi.Claude as local CLI agent runtime options for desktop Ask workflows.</li>
+                  <li>Adds Pi agent readiness, install, and auth guidance while preserving the local, user-owned credential model.</li>
+                  <li>Improves local CLI streaming and markdown rendering so Pi, Codex, and Claude-style agent output stays scoped and readable.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Local CLI</span>
+                  <span>BYOC</span>
+                  <span>Ask</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-13">
+              <div class="release-meta">
+                <span class="release-version">0.0.13</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Quieter source citations.</h2>
+                <ul>
+                  <li>Compacts noisy wiki source citations into a subtle sources disclosure in desktop and public wiki readers.</li>
+                  <li>Fixes a desktop-only renderer override that could still show raw Sources lines after Mermaid setup.</li>
+                  <li>Keeps the desktop app bundle scoped to local app assets while shipping signed, notarized macOS artifacts.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Reader</span>
+                  <span>Sources</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-12">
+              <div class="release-meta">
+                <span class="release-version">0.0.12</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Format previews and wiki ask.</h2>
+                <ul>
+                  <li>Adds format previews so users can peek at each wiki style before spending a run.</li>
+                  <li>Adds a floating wiki ask composer that opens directly into Ask with the wiki attached as context.</li>
+                  <li>Adds quota-aware page guidance for larger wiki runs.</li>
+                  <li>Improves public wiki markdown access for agentic readers and generation status handling for partial failures.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Wiki</span>
+                  <span>Ask</span>
+                  <span>Markdown</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-11">
+              <div class="release-meta">
+                <span class="release-version">0.0.11</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Privacy-first analytics.</h2>
+                <ul>
+                  <li>Adds privacy-first desktop product analytics with a local Settings &gt; Privacy opt-out.</li>
+                  <li>Keeps analytics explicit: no session replay, autocapture, pageviews, prompts, code, repo names, local paths, API keys, or run logs.</li>
+                  <li>Allows Ask to select local folders that are not Git repositories.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Privacy</span>
+                  <span>Local paths</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-10">
+              <div class="release-meta">
+                <span class="release-version">0.0.10</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Private wiki sharing.</h2>
+                <ul>
+                  <li>Adds private link sharing for wikis while keeping private snapshots out of the public gallery.</li>
+                  <li>Adds Obsidian-ready Markdown ZIP export for local and team knowledge workflows.</li>
+                  <li>Adds print-to-PDF export from the desktop Share flow.</li>
+                  <li>Improves public wiki sharing route clarity and gallery visibility handling.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Sharing</span>
+                  <span>Export</span>
+                  <span>Obsidian</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-9">
+              <div class="release-meta">
+                <span class="release-version">0.0.9</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Markdown export and gallery polish.</h2>
+                <ul>
+                  <li>Adds Markdown ZIP export from the desktop Share flow.</li>
+                  <li>Adds Explain Like I'm 5 wiki format.</li>
+                  <li>Improves Antigravity CLI wiki generation reliability.</li>
+                  <li>Refines wiki reader and gallery polish, including scroll/pages controls, theme support, and search behavior.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Export</span>
+                  <span>Antigravity CLI</span>
+                  <span>Gallery</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-8">
+              <div class="release-meta">
+                <span class="release-version">0.0.8</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Public wiki publishing.</h2>
+                <ul>
+                  <li>Adds public wiki publishing and sharing to grok-wiki.com.</li>
+                  <li>Adds dynamic social preview images for public wiki links.</li>
+                  <li>Adds public wiki diagram zoom for Mermaid and detected ASCII diagrams.</li>
+                  <li>Improves desktop wiki reader controls, continuous scroll, hotkey feedback, and configurable wiki defaults.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Publishing</span>
+                  <span>Diagrams</span>
+                  <span>Reader</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-7">
+              <div class="release-meta">
+                <span class="release-version">0.0.7</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Hotkeys and continuous reading.</h2>
+                <ul>
+                  <li>Adds configurable global wiki hotkeys with confirmation mode and power-user auto-run mode.</li>
+                  <li>Adds subtle desktop feedback for hotkey triggers, including the floating status pill and optional haptic tick.</li>
+                  <li>Improves hotkey wiki defaults for runtime, page count, and format selection.</li>
+                  <li>Adds continuous-scroll wiki reading as the default with a Pages mode toggle for paged navigation.</li>
+                  <li>Refines wiki reader layout so continuous markdown keeps the same readable width behavior as paged markdown.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Hotkeys</span>
+                  <span>Reader</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-6">
+              <div class="release-meta">
+                <span class="release-version">0.0.6</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Antigravity CLI and safer repair.</h2>
+                <ul>
+                  <li>Adds Google Antigravity CLI as a local agent alongside Grok CLI, Codex CLI, and Claude Code.</li>
+                  <li>Improves local-agent Ask runs with clearer idle/loading states, better progress signals, and cancellable wiki generation.</li>
+                  <li>Fixes follow-up composer submission and clearing, slash picker bounds, source citation linking, and local/remote source previews.</li>
+                  <li>Adds safer page repair flows, including concurrent page regeneration without clobbering saved wiki pages.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Antigravity CLI</span>
+                  <span>Repair</span>
+                  <span>Streaming</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-5">
+              <div class="release-meta">
+                <span class="release-version">0.0.5</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Updater and composer fixes.</h2>
+                <ul>
+                  <li>Adds a titlebar Update button driven by the Tauri updater when a newer release is available.</li>
+                  <li>Fixes follow-up submit behavior so Enter and click send reliably and clear the follow-up input immediately.</li>
+                  <li>Fixes follow-up slash-command picker positioning and keeps picker updates scoped to the active composer.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Updater</span>
+                  <span>Composer</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-4">
+              <div class="release-meta">
+                <span class="release-version">0.0.4</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Bundled desktop runtime.</h2>
+                <ul>
+                  <li>Bundles the desktop server, web assets, and Bun runtime inside the macOS app for reliable first-run startup.</li>
+                  <li>Fixes local CLI readiness and run execution drift after installing Grok CLI, Codex CLI, or Claude Code while the app is open.</li>
+                  <li>Adds sidecar recovery so Ask and Wiki runs can restart a stale local CLI sidecar instead of staying stuck.</li>
+                  <li>Updates first-time setup copy for Grok CLI, Codex CLI, and Claude Code.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG plus Tauri updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Desktop</span>
+                  <span>Sidecar</span>
+                  <span>Local CLI</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-3">
+              <div class="release-meta">
+                <span class="release-version">0.0.3</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Outcome-led wiki formats.</h2>
+                <ul>
+                  <li>Adds formats for first-pass orientation, mental models, hidden quirks, feature scouting, worth-stealing analysis, debugging atlases, repo comparison, and tech-reader briefs.</li>
+                  <li>Adds cleaner Compound Engineering lens support in Ask with slash commands, pro tips, and quieter UI copy.</li>
+                  <li>Adds multiple concurrent wiki generations with higher page limits for larger codebase digests.</li>
+                  <li>Adds slide generation and in-app Open Slide preview from generated wikis.</li>
+                  <li>Improves desktop polish for sidebars, wiki controls, stream panels, feedback links, and reduced repaint/flicker during agent streaming.</li>
+                  <li>Ships signed and notarized macOS Apple Silicon DMG and updater artifacts.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Formats</span>
+                  <span>Slides</span>
+                  <span>Streaming</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-2">
+              <div class="release-meta">
+                <span class="release-version">0.0.2</span>
+                <span class="release-date">May 2026</span>
+              </div>
+              <div class="release-body">
+                <h2>Early update path.</h2>
+                <ul>
+                  <li>Adds signed updater artifacts for automatic future updates.</li>
+                  <li>Fixes Grok CLI readiness.</li>
+                  <li>Polishes the pinned sidebar.</li>
+                  <li>Adds an Ask source-panel hide/show toggle.</li>
+                  <li>Cleans up the landing download flow.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Updater</span>
+                  <span>Grok CLI</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="release" id="v0-0-1">
+              <div class="release-meta">
+                <span class="release-version">0.0.1</span>
+                <span class="release-date">Alpha</span>
+              </div>
+              <div class="release-body">
+                <h2>Initial desktop build.</h2>
+                <ul>
+                  <li>Initial macOS Apple Silicon desktop build.</li>
+                </ul>
+                <div class="release-tags">
+                  <span>Alpha</span>
+                  <span>macOS</span>
+                </div>
+              </div>
+            </article>
+
+            <p class="changelog-note">
+              Release notes are curated from the
+              <a href="https://github.com/AsyncFuncAI/grok-wiki" target="_blank" rel="noreferrer">AsyncFuncAI/grok-wiki README</a>
+              and the latest
+              <a href="https://github.com/AsyncFuncAI/grok-wiki/releases/latest" target="_blank" rel="noreferrer">GitHub release</a>.
+            </p>
+          </section>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

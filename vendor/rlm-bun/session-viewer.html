@@ -1,0 +1,2205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RLM Session Viewer</title>
+<style>
+  /* Geist font family — self-hosted from jsDelivr */
+  @font-face {
+    font-family: 'Geist';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Geist';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Geist';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Geist Mono';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-mono/GeistMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Geist Mono';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-mono/GeistMono-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Geist Pixel Square';
+    src: url('https://cdn.jsdelivr.net/npm/geist@1.7.0/dist/fonts/geist-pixel/GeistPixel-Square.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+</style>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* Prism syntax highlight overrides — muted but chromatic, Vercel-dark */
+code[class*="language-"], pre[class*="language-"] {
+  background: transparent !important;
+  color: #ccc !important;
+  text-shadow: none !important;
+  font-family: var(--mono) !important;
+}
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #4a5568 !important; font-style: italic; }
+.token.punctuation { color: #718096 !important; }
+.token.property, .token.tag, .token.boolean, .token.deleted { color: #fc8181 !important; }
+.token.number, .token.constant, .token.symbol { color: #f6ad55 !important; }
+.token.selector, .token.attr-name, .token.string, .token.char, .token.builtin, .token.inserted { color: #68d391 !important; }
+.token.operator, .token.entity, .token.url { color: #90cdf4 !important; background: transparent !important; }
+.language-css .token.string, .style .token.string { color: #90cdf4 !important; background: transparent !important; }
+.token.atrule, .token.attr-value, .token.keyword { color: #b794f4 !important; }
+.token.function, .token.class-name { color: #63b3ed !important; }
+.token.regex, .token.important, .token.variable { color: #f6ad55 !important; }
+.token.important, .token.bold { font-weight: 600 !important; }
+.token.italic { font-style: italic !important; }
+.submit-markdown {
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.submit-markdown h1, .submit-markdown h2, .submit-markdown h3, .submit-markdown h4 {
+  color: var(--text);
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+.submit-markdown p { margin: 6px 0; }
+.submit-markdown code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #90cdf4;
+}
+.submit-markdown pre {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #ccc;
+}
+.submit-markdown pre code { background: none; padding: 0; color: inherit; }
+.submit-markdown ul, .submit-markdown ol { padding-left: 20px; margin: 6px 0; }
+.submit-markdown li { margin: 3px 0; }
+.submit-markdown a { color: #90cdf4; text-decoration: underline; }
+.submit-markdown blockquote {
+  border-left: 3px solid var(--border-3);
+  margin: 8px 0;
+  padding: 4px 12px;
+  color: var(--text-2);
+}
+.submit-markdown hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.submit-markdown strong { color: var(--text); font-weight: 600; }
+.submit-markdown em { color: var(--text-2); }
+</style>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface-2: #111111;
+    --surface-3: #0d0d0d;
+    --border: #1a1a1a;
+    --border-2: #222222;
+    --border-3: #2a2a2a;
+    --text: #ededed;
+    --text-2: #888888;
+    --text-3: #555555;
+    --text-muted: #444444;
+    --accent: #ffffff;
+    --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --pixel: 'Geist Pixel Square', 'Geist Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection { background: #2a2a2a; color: var(--text); }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: #1a1a1a;
+    border-radius: 10px;
+    border: 2px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #2a2a2a; }
+
+  .page {
+    min-height: 100vh;
+    padding: 48px 24px 120px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-title {
+    font-family: var(--pixel);
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    word-break: break-all;
+  }
+  .header-meta {
+    display: flex;
+    gap: 16px;
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+  .header-meta span strong {
+    color: var(--text-2);
+    font-weight: 500;
+  }
+
+  /* Drop zone */
+  .dropzone {
+    border: 1px dashed var(--border-3);
+    border-radius: 8px;
+    padding: 48px 24px;
+    text-align: center;
+    background: var(--surface);
+    transition: border-color 160ms ease, background 160ms ease;
+    cursor: pointer;
+    margin-bottom: 32px;
+  }
+  .dropzone:hover,
+  .dropzone.dragover {
+    border-color: #3a3a3a;
+    background: var(--surface-2);
+  }
+  .dropzone-title {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .dropzone-hint {
+    font-size: 12px;
+    color: var(--text-3);
+    font-family: var(--pixel);
+  }
+  .dropzone input { display: none; }
+  .dropzone-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .btn {
+    font-family: var(--pixel);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    padding: 7px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .btn:hover {
+    color: var(--text);
+    border-color: var(--border-3);
+    background: #161616;
+  }
+
+  .error-banner {
+    font-family: var(--pixel);
+    font-size: 12px;
+    color: var(--text-2);
+    padding: 12px 14px;
+    border: 1px solid var(--border-2);
+    border-left: 2px solid #444;
+    border-radius: 6px;
+    background: var(--surface);
+    margin-bottom: 24px;
+  }
+
+  /* Query (status at top) */
+  .query {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 20px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .query-label {
+    display: block;
+    font-family: var(--pixel);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+
+  /* Steps */
+  .step {
+    border-top: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: 1px solid var(--border); }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 120ms ease;
+  }
+  .step-header:hover { opacity: 0.85; }
+
+  .step-chevron {
+    font-family: var(--pixel);
+    font-size: 10px;
+    color: var(--text-3);
+    width: 10px;
+    transition: transform 160ms ease;
+    display: inline-block;
+  }
+  .step.open .step-chevron { transform: rotate(90deg); }
+
+  .step-label {
+    font-family: var(--pixel);
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .step-meta {
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+  }
+
+  .step-body {
+    display: none;
+    padding: 4px 0 20px 24px;
+  }
+  .step.open .step-body { display: block; }
+
+  /* Events */
+  .event {
+    margin: 12px 0;
+  }
+  .event-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-family: var(--pixel);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-2);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .timestamp {
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  /* Reasoning */
+  .reasoning {
+    font-style: italic;
+    color: var(--text-2);
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .reasoning.collapsed {
+    max-height: 4.8em;
+    overflow: hidden;
+    position: relative;
+    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+  }
+  .reasoning-toggle {
+    display: inline-block;
+    margin-top: 6px;
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+  .reasoning-toggle:hover { color: var(--text-2); }
+
+  /* Code block */
+  .code-wrap {
+    border: 1px solid var(--border-2);
+    background: var(--surface-3);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: #0a0a0a;
+  }
+  .code-lang {
+    font-family: var(--pixel);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+  }
+  .code {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 12px 14px;
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* Output / error */
+  .output {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 0;
+    max-height: 200px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .error .output {
+    border-left: 2px solid #444;
+    color: var(--text-2);
+  }
+
+  /* Submit */
+  .submit-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-2);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    padding: 5px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+  }
+  .submit-arrow { color: var(--text-3); }
+
+  /* Tool call / result */
+  .tool {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+    padding: 6px 0 6px 12px;
+    border-left: 1px solid var(--border-2);
+    line-height: 1.6;
+  }
+  .tool-name {
+    color: var(--text);
+  }
+  .tool-dir {
+    color: var(--text-3);
+    width: 14px;
+    flex-shrink: 0;
+  }
+  .tool-content {
+    color: var(--text-2);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--text-3);
+    font-family: var(--pixel);
+    font-size: 12px;
+    padding: 48px 0;
+  }
+
+  /* Toggle bar */
+  .toggle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 0 16px;
+  }
+  .toggle-btn {
+    font-family: var(--pixel);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--text-3);
+    background: none;
+    border: 1px solid var(--border-2);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .toggle-btn:hover {
+    color: var(--text-2);
+    border-color: var(--border-3);
+    background: var(--surface-2);
+  }
+
+  /* Fade in on load */
+  .fade-in { animation: fadeIn 240ms ease both; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    font-family: var(--pixel);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .tab-btn:hover { color: var(--text-2); }
+  .tab-btn.active {
+    color: var(--text);
+    background: var(--surface-2);
+    border-color: var(--border-2);
+  }
+  .tab-status {
+    margin-left: auto;
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    align-self: center;
+  }
+  .tab-status .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #555;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .tab-status.online .dot { background: #68d391; }
+  .tab-status.offline .dot { background: #555; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  /* Reserve space under the run panel so the fixed follow-up dock never covers content */
+  #panel-run.active { padding-bottom: 90px; }
+
+  /* Run panel — form */
+  .run-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field label {
+    font-family: var(--pixel);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+  }
+  .field input, .field select, .field textarea {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 120ms ease;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--border-3);
+  }
+  .field textarea {
+    min-height: 72px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  details.advanced {
+    border: 1px dashed var(--border-2);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  details.advanced[open] { padding-bottom: 14px; }
+  details.advanced summary {
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  details.advanced summary:hover { color: var(--text-2); }
+  details.advanced .inner {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .checkbox-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-2);
+    letter-spacing: 0.04em;
+  }
+  .checkbox-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .checkbox-row input[type="checkbox"] {
+    accent-color: #90cdf4;
+  }
+
+  .actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .btn-primary {
+    font-family: var(--pixel);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--text);
+    border: 1px solid var(--text);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .btn-primary:hover { background: #fff; border-color: #fff; }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Follow-up dock — floats at the bottom of the viewport while active */
+  .followup-dock {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 18px;
+    width: min(720px, calc(100vw - 32px));
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    z-index: 50;
+  }
+  .followup-dock.ready {
+    border-color: #2a4d3a;
+    box-shadow: 0 8px 32px rgba(104, 211, 145, 0.08), 0 0 0 1px rgba(104, 211, 145, 0.15);
+  }
+  .followup-dock.resume {
+    border-color: #3a3a5a;
+    box-shadow: 0 8px 32px rgba(144, 205, 244, 0.06), 0 0 0 1px rgba(144, 205, 244, 0.12);
+  }
+  .followup-dock input {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    outline: none;
+  }
+  .followup-dock input:focus { border-color: var(--border-3); }
+  .followup-dock input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .followup-dock .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Workspace sources rows */
+  .sources-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .source-row {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 6px;
+  }
+  .source-row input {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    padding: 7px 10px;
+    outline: none;
+  }
+  .source-row input:focus { border-color: var(--border-3); }
+  .source-row .btn-remove {
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-3);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    padding: 0 10px;
+    cursor: pointer;
+  }
+  .source-row .btn-remove:hover { color: var(--text); border-color: var(--border-3); }
+
+  /* Sessions sidebar */
+  .sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .sessions-list .sess {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+    transition: background 120ms ease;
+  }
+  .sessions-list .sess:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .sessions-list .sess .when {
+    font-family: var(--pixel);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* Status strip */
+  .live-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-2);
+    border-radius: 6px;
+    background: var(--surface);
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text-2);
+    letter-spacing: 0.03em;
+    margin-bottom: 16px;
+  }
+  .live-strip .spinner {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #b794f4;
+    line-height: 1;
+    width: 12px;
+    text-align: center;
+    display: inline-block;
+  }
+  .live-strip.done .spinner { color: #68d391; }
+  .live-strip.error .spinner { color: #fc8181; }
+  .live-strip .cost { margin-left: auto; color: var(--text-3); }
+
+  /* Braille spinner used in-step while awaiting next event */
+  .braille-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+    padding: 8px 0 2px 12px;
+    border-left: 1px solid var(--border-2);
+    animation: fadeIn 200ms ease both;
+  }
+  .braille-spinner .glyph {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #b794f4;
+    width: 14px;
+    text-align: center;
+  }
+  .braille-spinner .msg {
+    color: var(--text-3);
+    font-style: italic;
+  }
+
+  /* Live delta stream — shown while the LLM is emitting tokens */
+  .stream-live {
+    margin: 10px 0 4px;
+    padding: 10px 12px;
+    border-left: 1px solid var(--border-3);
+    background: var(--surface);
+    border-radius: 4px;
+    animation: fadeIn 180ms ease both;
+  }
+  .stream-live-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-family: var(--pixel);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+  }
+  .stream-live-header .glyph {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #b794f4;
+    width: 12px;
+    text-align: center;
+  }
+  .stream-live-body {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-2);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 260px;
+    overflow: auto;
+  }
+  /* Thin caret at the end of streaming text */
+  .stream-live-body::after {
+    content: "▍";
+    color: #b794f4;
+    animation: caretBlink 900ms steps(2) infinite;
+    margin-left: 1px;
+  }
+  @keyframes caretBlink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="container">
+
+    <div class="tab-bar" id="tab-bar">
+      <button class="tab-btn active" data-tab="viewer" type="button">Viewer</button>
+      <button class="tab-btn" data-tab="run" type="button" id="tab-run-btn" style="display:none">Run</button>
+      <div class="tab-status offline" id="tab-status"><span class="dot"></span><span id="tab-status-text">server offline</span></div>
+    </div>
+
+    <div class="tab-panel active" id="panel-viewer">
+      <div id="dropzone" class="dropzone">
+        <div class="dropzone-title">Drop a <code style="font-family:var(--mono);color:var(--text-2)">.jsonl</code> session file</div>
+        <div class="dropzone-hint">or click to browse — default: .rlm-sessions/rlm-mo1snb5f-d18fce06.jsonl</div>
+        <div class="dropzone-actions">
+          <button class="btn" id="btn-browse" type="button">Browse</button>
+          <button class="btn" id="btn-auto" type="button">Try auto-load</button>
+        </div>
+        <input type="file" id="file-input" accept=".jsonl,.json,.txt" />
+      </div>
+
+      <div id="sessions-sidebar" style="display:none">
+        <div style="font-family:var(--pixel);font-size:11px;color:var(--text-3);letter-spacing:0.06em;text-transform:uppercase;margin-top:20px">Saved sessions</div>
+        <div class="sessions-list" id="sessions-list"></div>
+      </div>
+
+      <div id="error" style="display:none"></div>
+      <div id="view"></div>
+    </div>
+
+    <div class="tab-panel" id="panel-run">
+      <form class="run-form" id="run-form">
+        <div class="form-row">
+          <div class="field">
+            <label for="run-mode">Mode</label>
+            <select id="run-mode">
+              <option value="auto" selected>auto</option>
+              <option value="repo">repo</option>
+              <option value="file">file</option>
+              <option value="workspace">workspace</option>
+              <option value="pr">pr</option>
+              <option value="rlm">rlm</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="run-provider">Provider</label>
+            <select id="run-provider">
+              <option value="anthropic" selected>anthropic</option>
+              <option value="openai">openai</option>
+              <option value="gemini">gemini</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="run-model">Model (optional)</label>
+            <input id="run-model" type="text" placeholder="claude-opus-4-7" />
+          </div>
+          <div class="field">
+            <label for="run-branch">Branch (optional)</label>
+            <input id="run-branch" type="text" placeholder="main" />
+          </div>
+        </div>
+        <div class="form-row full" id="single-source-block">
+          <div class="field">
+            <label for="run-source">Source <span style="color:var(--text-muted)">— repo URL, file path, or PR URL (leave blank for --prompt mode)</span></label>
+            <input id="run-source" type="text" placeholder="https://github.com/org/repo or ./path" />
+          </div>
+        </div>
+
+        <div id="workspace-sources-block" style="display:none">
+          <div class="form-row full">
+            <div class="field">
+              <label>Sources <span style="color:var(--text-muted)">— one per repo; <code style="font-family:var(--mono);color:var(--text-2)">id=url/path</code> or just a URL/path</span></label>
+              <div id="sources-rows" class="sources-rows"></div>
+              <button type="button" class="btn" id="btn-add-source" style="align-self:flex-start;margin-top:6px">+ Add source</button>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="field">
+              <label for="run-goal">Goal <span style="color:var(--text-muted)">— pre-built workspace prompt template (optional)</span></label>
+              <select id="run-goal">
+                <option value="">(none — use query as-is)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row full">
+          <div class="field">
+            <label for="run-query">Query</label>
+            <textarea id="run-query" placeholder="What does this codebase do?"></textarea>
+          </div>
+        </div>
+
+        <details class="advanced">
+          <summary>Advanced</summary>
+          <div class="inner">
+            <div class="form-row triple">
+              <div class="field">
+                <label for="run-max-iter">Max iter</label>
+                <input id="run-max-iter" type="number" min="1" placeholder="20" />
+              </div>
+              <div class="field">
+                <label for="run-max-llm">Max LLM</label>
+                <input id="run-max-llm" type="number" min="1" placeholder="5000" />
+              </div>
+              <div class="field">
+                <label for="run-sandbox-timeout">Sandbox timeout (ms)</label>
+                <input id="run-sandbox-timeout" type="number" min="1000" placeholder="1800000" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="run-sub-provider">Sub provider</label>
+                <input id="run-sub-provider" type="text" placeholder="anthropic" />
+              </div>
+              <div class="field">
+                <label for="run-sub-model">Sub model</label>
+                <input id="run-sub-model" type="text" placeholder="claude-haiku-4-5" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="run-base-url">Base URL</label>
+                <input id="run-base-url" type="text" placeholder="" />
+              </div>
+              <div class="field">
+                <label for="run-resume">Resume session id</label>
+                <input id="run-resume" type="text" placeholder="rlm-xxxx-xxxx" />
+              </div>
+            </div>
+            <div class="checkbox-row">
+              <label><input type="checkbox" id="run-interactive" checked /> interactive (enables follow-ups)</label>
+              <label><input type="checkbox" id="run-prompt" /> prompt mode</label>
+              <label><input type="checkbox" id="run-optimizer" /> optimizer</label>
+              <label><input type="checkbox" id="run-verbose" /> verbose</label>
+            </div>
+          </div>
+        </details>
+
+        <div class="actions-bar">
+          <button class="btn-primary" id="btn-run" type="submit">▶ Run</button>
+          <button class="btn" id="btn-abort" type="button" disabled>Abort</button>
+          <button class="btn" id="btn-export" type="button" disabled>Export JSON</button>
+        </div>
+      </form>
+
+      <div class="live-strip" id="live-strip" style="display:none">
+        <span class="spinner" id="live-strip-spinner">⠋</span>
+        <span id="live-status">waiting…</span>
+        <span class="cost" id="live-cost"></span>
+      </div>
+
+      <div id="run-error" style="display:none"></div>
+      <div id="run-view"></div>
+
+      <div class="followup-dock" id="followup-dock" style="display:none">
+        <input id="followup-input" type="text" placeholder="Waiting for answer…" disabled />
+        <button class="btn-primary" id="followup-send" type="button" disabled>Send</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const DEFAULT_PATH = ".rlm-sessions/rlm-mo1snb5f-d18fce06.jsonl";
+
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("file-input");
+  const btnBrowse = document.getElementById("btn-browse");
+  const btnAuto = document.getElementById("btn-auto");
+  const errorEl = document.getElementById("error");
+  const viewEl = document.getElementById("view");
+
+  // --- Tab switching ---
+  const tabBar = document.getElementById("tab-bar");
+  tabBar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab-btn");
+    if (!btn) return;
+    const name = btn.getAttribute("data-tab");
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b === btn));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === `panel-${name}`));
+  });
+
+  // --- Drop zone wiring ---
+  dropzone.addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") return;
+    fileInput.click();
+  });
+  btnBrowse.addEventListener("click", (e) => { e.stopPropagation(); fileInput.click(); });
+  btnAuto.addEventListener("click", (e) => { e.stopPropagation(); tryAutoLoad(); });
+
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) readFile(file);
+  });
+
+  ["dragenter", "dragover"].forEach(ev => {
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.add("dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach(ev => {
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault(); e.stopPropagation();
+      dropzone.classList.remove("dragover");
+    });
+  });
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) readFile(file);
+  });
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result;
+      render(parseJSONL(text), file.name);
+    };
+    reader.onerror = () => showError("Failed to read file.");
+    reader.readAsText(file);
+  }
+
+  async function tryAutoLoad() {
+    try {
+      const res = await fetch(DEFAULT_PATH, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      render(parseJSONL(text), DEFAULT_PATH.split("/").pop());
+    } catch (err) {
+      showError("Auto-load failed (serve this file via a local server, or drop a file). " + err.message);
+    }
+  }
+
+  function showError(msg) {
+    errorEl.style.display = "block";
+    errorEl.className = "error-banner";
+    errorEl.textContent = msg;
+  }
+
+  function parseJSONL(text) {
+    const events = [];
+    const lines = text.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      try {
+        events.push(JSON.parse(line));
+      } catch (e) {
+        // skip malformed
+      }
+    }
+    return events;
+  }
+
+  function formatTime(iso) {
+    try {
+      const d = new Date(iso);
+      const h = String(d.getHours()).padStart(2, "0");
+      const m = String(d.getMinutes()).padStart(2, "0");
+      const s = String(d.getSeconds()).padStart(2, "0");
+      return h + ":" + m + ":" + s;
+    } catch (e) { return ""; }
+  }
+
+  function formatTimeRange(a, b) {
+    const t1 = formatTime(a);
+    const t2 = formatTime(b);
+    if (!t1) return "";
+    return t1 === t2 ? t1 : t1 + " → " + t2;
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function parseSessionId(filename) {
+    if (!filename) return "session";
+    return filename.replace(/\.jsonl$/i, "");
+  }
+
+  function groupByStep(events) {
+    const map = new Map();
+    for (const ev of events) {
+      const step = typeof ev.step === "number" ? ev.step : 0;
+      if (!map.has(step)) map.set(step, []);
+      map.get(step).push(ev);
+    }
+    return [...map.entries()].sort((a, b) => a[0] - b[0]);
+  }
+
+  function render(events, filename, opts) {
+    opts = opts || {};
+    const target = opts.target || viewEl;
+    const hideDropzone = opts.hideDropzone !== false;
+    errorEl.style.display = "none";
+
+    if (!events.length) {
+      if (!opts.silentEmpty) showError("No valid JSONL events found.");
+      return;
+    }
+
+    // Hide drop zone
+    if (hideDropzone && dropzone) dropzone.style.display = "none";
+
+    const sessionId = parseSessionId(filename);
+    const grouped = groupByStep(events);
+
+    // Find the final submit event globally
+    var finalSubmitEvent = globalThis.finalSubmitEvent = null;
+    for (let i = events.length - 1; i >= 0; i--) {
+      if (events[i].type === 'submit') { finalSubmitEvent = events[i]; break; }
+    }
+
+    // Pull out first status event (query)
+    let queryText = "";
+    for (const ev of events) {
+      if (ev.type === "status" && ev.step === 0) {
+        queryText = ev.content || "";
+        break;
+      }
+    }
+
+    const container = document.createElement("div");
+    container.className = "fade-in";
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "header";
+    header.innerHTML = `
+      <div class="header-title">${escapeHtml(sessionId)}</div>
+      <div class="header-meta">
+        <span><strong>${grouped.length}</strong> steps</span>
+        <span><strong>${events.length}</strong> events</span>
+      </div>
+    `;
+    container.appendChild(header);
+
+    // Query
+    if (queryText) {
+      const q = document.createElement("div");
+      q.className = "query";
+      q.innerHTML = `
+        <span class="query-label">Query</span>
+        <div>${escapeHtml(stripQueryPrefix(queryText))}</div>
+      `;
+      container.appendChild(q);
+    }
+
+    // Toggle bar — expand / collapse all
+    const toggleBar = document.createElement("div");
+    toggleBar.className = "toggle-bar";
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "toggle-btn";
+    toggleBtn.type = "button";
+    toggleBtn.textContent = "expand all";
+    let allExpanded = false;
+    toggleBtn.addEventListener("click", () => {
+      allExpanded = !allExpanded;
+      container.querySelectorAll(".step").forEach(s => {
+        if (allExpanded) s.classList.add("open");
+        else s.classList.remove("open");
+      });
+      toggleBtn.textContent = allExpanded ? "collapse all" : "expand all";
+    });
+    toggleBar.appendChild(toggleBtn);
+    container.appendChild(toggleBar);
+
+    // Determine which steps should be open by default.
+    // Live mode: open the last 2 steps and focus the latest. Static viewer: open step 0.
+    const lastStepNum = grouped.length ? grouped[grouped.length - 1][0] : 0;
+    const prevStepNum = grouped.length > 1 ? grouped[grouped.length - 2][0] : null;
+    const autoScroll = !!opts.autoScroll;
+    const isLive = autoScroll;
+
+    let lastStepEl = null;
+
+    // Steps
+    for (const [stepNum, stepEvents] of grouped) {
+      // Skip the initial status (already rendered as query) from the step list
+      const visibleEvents = stepEvents.filter((ev, idx) => !(stepNum === 0 && idx === 0 && ev.type === "status"));
+      if (!visibleEvents.length && stepEvents.length === 1) continue;
+
+      const step = document.createElement("section");
+      step.className = "step";
+      if (isLive) {
+        if (stepNum === lastStepNum || stepNum === prevStepNum) step.classList.add("open");
+      } else if (stepNum === 0) {
+        step.classList.add("open");
+      }
+      if (stepNum === lastStepNum) lastStepEl = step;
+
+      const first = stepEvents[0];
+      const last = stepEvents[stepEvents.length - 1];
+      const timeRange = formatTimeRange(first.timestamp, last.timestamp);
+
+      const headerEl = document.createElement("div");
+      headerEl.className = "step-header";
+      headerEl.innerHTML = `
+        <span class="step-chevron">▶</span>
+        <span class="step-label">Step ${stepNum}</span>
+        <span class="step-meta">
+          <span>${stepEvents.length} event${stepEvents.length === 1 ? "" : "s"}</span>
+          <span>${escapeHtml(timeRange)}</span>
+        </span>
+      `;
+      headerEl.addEventListener("click", () => step.classList.toggle("open"));
+      step.appendChild(headerEl);
+
+      const body = document.createElement("div");
+      body.className = "step-body";
+      for (const ev of visibleEvents) {
+        body.appendChild(renderEvent(ev, finalSubmitEvent && ev === finalSubmitEvent));
+      }
+      step.appendChild(body);
+
+      container.appendChild(step);
+    }
+
+    target.innerHTML = "";
+    target.appendChild(container);
+
+    if (opts.autoScroll && lastStepEl) {
+      // Defer to let layout settle before scrolling
+      requestAnimationFrame(() => {
+        try { lastStepEl.scrollIntoView({ behavior: "smooth", block: "start" }); }
+        catch (_) { lastStepEl.scrollIntoView(); }
+      });
+    }
+  }
+
+  function stripQueryPrefix(s) {
+    return s.replace(/^Query:\s*/i, "");
+  }
+
+  function renderEvent(ev, isFinalSubmit) {
+    const wrap = document.createElement("div");
+    wrap.className = "event " + (ev.type || "");
+
+    const meta = document.createElement("div");
+    meta.className = "event-meta";
+    meta.innerHTML = `
+      <span class="badge">${escapeHtml(ev.type || "event")}</span>
+      <span class="timestamp">${formatTime(ev.timestamp)}</span>
+    `;
+    wrap.appendChild(meta);
+
+    switch (ev.type) {
+      case "status": {
+        const d = document.createElement("div");
+        d.className = "reasoning";
+        d.style.fontStyle = "normal";
+        d.style.color = "var(--text)";
+        d.textContent = ev.content || "";
+        wrap.appendChild(d);
+        break;
+      }
+      case "reasoning": {
+        const d = document.createElement("div");
+        d.className = "reasoning";
+        const content = ev.content || "";
+        d.textContent = content;
+        if (content.length > 300) {
+          d.classList.add("collapsed");
+          const btn = document.createElement("button");
+          btn.className = "reasoning-toggle";
+          btn.type = "button";
+          btn.textContent = "expand";
+          btn.addEventListener("click", () => {
+            const isCollapsed = d.classList.toggle("collapsed");
+            btn.textContent = isCollapsed ? "expand" : "collapse";
+          });
+          wrap.appendChild(d);
+          wrap.appendChild(btn);
+        } else {
+          wrap.appendChild(d);
+        }
+        break;
+      }
+      case "code": {
+        const box = document.createElement("div");
+        box.className = "code-wrap";
+        const head = document.createElement("div");
+        head.className = "code-header";
+        head.innerHTML = `<span class="code-lang">js</span>`;
+        const pre = document.createElement("pre");
+        var codeContent = globalThis.codeContent = ev.content || "";
+        pre.className = "code language-javascript";
+        pre.innerHTML = "";
+        var codeEl = globalThis.codeEl = document.createElement("code");
+        codeEl.className = "language-javascript";
+        codeEl.textContent = codeContent;
+        pre.appendChild(codeEl);
+        if (window.Prism) Prism.highlightElement(codeEl);
+        box.appendChild(head);
+        box.appendChild(pre);
+        wrap.appendChild(box);
+        break;
+      }
+      case "output": {
+        const pre = document.createElement("pre");
+        pre.className = "output";
+        pre.textContent = ev.content || "";
+        wrap.appendChild(pre);
+        break;
+      }
+      case "error": {
+        const pre = document.createElement("pre");
+        pre.className = "output";
+        pre.textContent = ev.content || "";
+        wrap.appendChild(pre);
+        break;
+      }
+      case "submit": {
+        var pill = globalThis.pill = document.createElement("div");
+        pill.className = "submit-pill";
+        pill.innerHTML = '<span class="submit-arrow">↳</span><span>submitted</span>';
+        wrap.appendChild(pill);
+        if (isFinalSubmit && ev.content) {
+          // Render markdown in its own standalone block, like code-wrap does for code
+          var mdWrap = document.createElement("div");
+          mdWrap.className = "code-wrap";
+          mdWrap.style.marginTop = "10px";
+          var mdHeader = document.createElement("div");
+          mdHeader.className = "code-header";
+          mdHeader.innerHTML = '<span class="code-lang">answer</span>';
+          mdWrap.appendChild(mdHeader);
+          var mdDiv = globalThis.mdDiv = document.createElement("div");
+          mdDiv.className = "submit-markdown";
+          if (window.marked) {
+            mdDiv.innerHTML = marked.parse(ev.content);
+            // Highlight any code blocks inside the rendered markdown
+            mdDiv.querySelectorAll('pre code').forEach(function(block) {
+              if (window.Prism) Prism.highlightElement(block);
+            });
+          } else {
+            mdDiv.textContent = ev.content;
+          }
+          mdWrap.appendChild(mdDiv);
+          wrap.appendChild(mdWrap);
+        } else if (!isFinalSubmit && ev.content) {
+          var pill2 = globalThis.pill2 = document.createElement("span");
+          pill2.style.cssText = "color:var(--text-3);font-family:var(--mono);font-size:11px;";
+          pill2.textContent = " · " + ev.content.slice(0, 120) + (ev.content.length > 120 ? "…" : "");
+          pill.querySelector("span:last-child").appendChild(pill2);
+        }
+        break;
+      }
+      case "tool-call":
+      case "tool-result": {
+        const row = document.createElement("div");
+        row.className = "tool";
+        const dir = ev.type === "tool-call" ? "→" : "←";
+        const toolName = (ev.metadata && ev.metadata.tool) || ev.type.replace("tool-", "");
+        row.innerHTML = `
+          <span class="tool-dir">${dir}</span>
+          <span class="tool-name">${escapeHtml(toolName)}</span>
+          <span class="tool-content">${escapeHtml(truncate(ev.content || "", 400))}</span>
+        `;
+        wrap.appendChild(row);
+        break;
+      }
+      default: {
+        const d = document.createElement("div");
+        d.className = "reasoning";
+        d.textContent = ev.content || "";
+        wrap.appendChild(d);
+      }
+    }
+
+    return wrap;
+  }
+
+  function truncate(s, n) {
+    if (!s) return "";
+    return s.length > n ? s.slice(0, n) + "…" : s;
+  }
+
+  // ── Server detection + sessions sidebar ──────────────────────────
+  const tabStatus = document.getElementById("tab-status");
+  const tabStatusText = document.getElementById("tab-status-text");
+  const tabRunBtn = document.getElementById("tab-run-btn");
+  const sessionsSidebar = document.getElementById("sessions-sidebar");
+  const sessionsListEl = document.getElementById("sessions-list");
+
+  let serverOnline = false;
+
+  async function detectServer() {
+    try {
+      const r = await fetch("/api/status", { cache: "no-store" });
+      if (!r.ok) throw new Error("not ok");
+      serverOnline = true;
+      tabStatus.classList.remove("offline");
+      tabStatus.classList.add("online");
+      tabStatusText.textContent = "server online";
+      tabRunBtn.style.display = "";
+      loadSessions();
+    } catch (_) {
+      serverOnline = false;
+    }
+  }
+
+  async function loadSessions() {
+    try {
+      const r = await fetch("/api/sessions", { cache: "no-store" });
+      if (!r.ok) return;
+      const { sessions } = await r.json();
+      if (!sessions || !sessions.length) return;
+      sessionsSidebar.style.display = "";
+      sessionsListEl.innerHTML = "";
+      for (const s of sessions.slice(0, 40)) {
+        const row = document.createElement("div");
+        row.className = "sess";
+        const when = new Date(s.mtime).toLocaleString();
+        row.innerHTML = `<span>${escapeHtml(s.id)}</span><span class="when">${escapeHtml(when)}</span>`;
+        row.addEventListener("click", async () => {
+          const resp = await fetch(`/api/session/${encodeURIComponent(s.id)}`);
+          if (!resp.ok) { showError("Failed to load session"); return; }
+          const text = await resp.text();
+          // Switch to viewer tab
+          document.querySelector('.tab-btn[data-tab="viewer"]').click();
+          render(parseJSONL(text), `${s.id}.jsonl`);
+        });
+        sessionsListEl.appendChild(row);
+      }
+    } catch (_) { }
+  }
+
+  // ── Run tab: SSE streaming + form handling ───────────────────────
+  const runForm = document.getElementById("run-form");
+  const runView = document.getElementById("run-view");
+  const runErrorEl = document.getElementById("run-error");
+  const btnRun = document.getElementById("btn-run");
+  const btnAbort = document.getElementById("btn-abort");
+  const btnExport = document.getElementById("btn-export");
+  const liveStrip = document.getElementById("live-strip");
+  const liveStatusEl = document.getElementById("live-status");
+  const liveCostEl = document.getElementById("live-cost");
+  const followupDock = document.getElementById("followup-dock");
+  const followupInput = document.getElementById("followup-input");
+  const followupSend = document.getElementById("followup-send");
+
+  const LS_KEY = "rlm-run-config-v1";
+
+  // ── Workspace sources rows ───────────────────────────────────────
+  const sourcesRowsEl = document.getElementById("sources-rows");
+  const btnAddSource = document.getElementById("btn-add-source");
+  const singleSourceBlock = document.getElementById("single-source-block");
+  const workspaceSourcesBlock = document.getElementById("workspace-sources-block");
+  const goalSelect = document.getElementById("run-goal");
+  const modeSelect = document.getElementById("run-mode");
+
+  function addSourceRow(id, source) {
+    const row = document.createElement("div");
+    row.className = "source-row";
+    row.innerHTML = `
+      <input type="text" class="src-id" placeholder="id (e.g. graphify)" />
+      <input type="text" class="src-url" placeholder="https://github.com/org/repo or ./path" />
+      <button type="button" class="btn-remove" title="Remove">×</button>
+    `;
+    if (id !== undefined) row.querySelector(".src-id").value = id;
+    if (source !== undefined) row.querySelector(".src-url").value = source;
+    row.querySelector(".btn-remove").addEventListener("click", () => {
+      row.remove();
+      if (!sourcesRowsEl.querySelector(".source-row")) addSourceRow();
+    });
+    sourcesRowsEl.appendChild(row);
+  }
+  btnAddSource.addEventListener("click", () => addSourceRow());
+
+  function readSourceRows() {
+    const rows = sourcesRowsEl.querySelectorAll(".source-row");
+    const out = [];
+    for (const r of rows) {
+      const id = r.querySelector(".src-id").value.trim();
+      const src = r.querySelector(".src-url").value.trim();
+      if (!src) continue;
+      out.push(id ? { id, source: src } : src);
+    }
+    return out;
+  }
+
+  function isWorkspaceMode(mode) {
+    return mode === "workspace" || mode === "rlm";
+  }
+
+  function applyModeVisibility() {
+    const mode = modeSelect.value;
+    if (isWorkspaceMode(mode)) {
+      singleSourceBlock.style.display = "none";
+      workspaceSourcesBlock.style.display = "";
+      if (!sourcesRowsEl.querySelector(".source-row")) addSourceRow();
+    } else {
+      singleSourceBlock.style.display = "";
+      workspaceSourcesBlock.style.display = "none";
+    }
+  }
+  modeSelect.addEventListener("change", applyModeVisibility);
+
+  async function populateGoals() {
+    try {
+      const r = await fetch("/api/goals", { cache: "no-store" });
+      if (!r.ok) return;
+      const { goals } = await r.json();
+      if (!goals || !goals.length) return;
+      for (const g of goals) {
+        const opt = document.createElement("option");
+        opt.value = g.id;
+        opt.textContent = `${g.id} — ${g.label}`;
+        goalSelect.appendChild(opt);
+      }
+    } catch (_) { }
+  }
+
+  function loadConfig() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+      if (saved.mode) document.getElementById("run-mode").value = saved.mode;
+      if (saved.provider) document.getElementById("run-provider").value = saved.provider;
+      if (saved.model) document.getElementById("run-model").value = saved.model;
+      if (saved.branch) document.getElementById("run-branch").value = saved.branch;
+      if (saved.source) document.getElementById("run-source").value = saved.source;
+      if (saved.query) document.getElementById("run-query").value = saved.query;
+      if (saved.subProvider) document.getElementById("run-sub-provider").value = saved.subProvider;
+      if (saved.subModel) document.getElementById("run-sub-model").value = saved.subModel;
+      if (saved.baseURL) document.getElementById("run-base-url").value = saved.baseURL;
+      if (saved.maxIter) document.getElementById("run-max-iter").value = saved.maxIter;
+      if (saved.maxLLM) document.getElementById("run-max-llm").value = saved.maxLLM;
+      if (saved.sandboxTimeout) document.getElementById("run-sandbox-timeout").value = saved.sandboxTimeout;
+      if (typeof saved.interactive === "boolean") document.getElementById("run-interactive").checked = saved.interactive;
+      if (saved.promptMode) document.getElementById("run-prompt").checked = true;
+      if (saved.optimizer) document.getElementById("run-optimizer").checked = true;
+      if (saved.verbose) document.getElementById("run-verbose").checked = true;
+      if (saved.goal) {
+        // Deferred: option may not be populated yet. Re-apply after goals load.
+        goalSelect.dataset.pending = saved.goal;
+      }
+      if (Array.isArray(saved.sources) && saved.sources.length) {
+        sourcesRowsEl.innerHTML = "";
+        for (const s of saved.sources) {
+          if (typeof s === "string") addSourceRow("", s);
+          else addSourceRow(s.id || "", s.source || "");
+        }
+      }
+    } catch (_) { }
+  }
+
+  function readForm() {
+    const mode = modeSelect.value || "auto";
+    const workspace = isWorkspaceMode(mode);
+    const sources = workspace ? readSourceRows() : [];
+    const body = {
+      mode,
+      provider: document.getElementById("run-provider").value || "anthropic",
+      model: document.getElementById("run-model").value.trim() || undefined,
+      branch: document.getElementById("run-branch").value.trim() || undefined,
+      source: workspace ? undefined : (document.getElementById("run-source").value.trim() || undefined),
+      sources: workspace && sources.length ? sources : undefined,
+      goal: workspace ? (goalSelect.value || undefined) : undefined,
+      query: document.getElementById("run-query").value.trim(),
+      subProvider: document.getElementById("run-sub-provider").value.trim() || undefined,
+      subModel: document.getElementById("run-sub-model").value.trim() || undefined,
+      baseURL: document.getElementById("run-base-url").value.trim() || undefined,
+      resumeSessionId: document.getElementById("run-resume").value.trim() || undefined,
+      maxIter: numOrUndef(document.getElementById("run-max-iter").value),
+      maxLLM: numOrUndef(document.getElementById("run-max-llm").value),
+      sandboxTimeout: numOrUndef(document.getElementById("run-sandbox-timeout").value),
+      interactive: document.getElementById("run-interactive").checked,
+      promptMode: document.getElementById("run-prompt").checked,
+      optimizer: document.getElementById("run-optimizer").checked,
+      verbose: document.getElementById("run-verbose").checked,
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(body));
+    return body;
+  }
+
+  function numOrUndef(v) {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : undefined;
+  }
+
+  // Live-session state: SessionEvent[] accumulated from the server's session-tail.
+  let liveEvents = [];
+  let liveJobId = null;
+  let liveSessionId = null;
+  let liveEventSource = null;
+  let lastKnownUsage = null;
+  let jobDone = false;
+  let jobWaiting = false;    // true while server is awaiting a follow-up
+  let lastRunBody = null;    // for resuming after done
+
+  // Live-token stream buffer — accumulated from stream-delta events between
+  // consecutive stream-done events. Rendered as a "pending" block inside the
+  // latest step until the durable SessionEvents arrive and replace it.
+  const STREAM_MAX_CHARS = 32 * 1024;
+  let streamBuffer = "";
+  let streamActive = false;     // true between first delta and next stream-done
+  let streamOverflow = false;   // true once we cross STREAM_MAX_CHARS
+
+  // ── Braille spinner (mirrors CLI's display.ts) ───────────────────
+  const BRAILLE_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+  const LLM_LOADING_MESSAGES = [
+    "cooking up answers…",
+    "hardcore thinking…",
+    "consulting the hive mind…",
+    "crunching neurons…",
+    "summoning intelligence…",
+    "brewing insights…",
+    "juggling tokens…",
+    "deep in thought…",
+    "assembling brain cells…",
+    "connecting synapses…",
+    "warming up the thinking cap…",
+    "spinning up brain cores…",
+    "digesting the codebase…",
+    "doing the thinking thing…",
+    "asking the oracle…",
+  ];
+  let brailleFrame = 0;
+  let brailleMsgIdx = Math.floor(Math.random() * LLM_LOADING_MESSAGES.length);
+  let brailleTick = null;
+  let brailleMsgTick = null;
+
+  function startBrailleTicker() {
+    if (brailleTick) return;
+    brailleTick = setInterval(() => {
+      brailleFrame = (brailleFrame + 1) % BRAILLE_FRAMES.length;
+      const glyph = BRAILLE_FRAMES[brailleFrame];
+      document.querySelectorAll(".js-braille-glyph").forEach((el) => {
+        el.textContent = glyph;
+      });
+      const stripGlyph = document.getElementById("live-strip-spinner");
+      if (stripGlyph && liveStrip.style.display !== "none" &&
+          !liveStrip.classList.contains("done") &&
+          !liveStrip.classList.contains("error")) {
+        stripGlyph.textContent = glyph;
+      }
+    }, 80);
+    brailleMsgTick = setInterval(() => {
+      brailleMsgIdx = (brailleMsgIdx + 1) % LLM_LOADING_MESSAGES.length;
+      document.querySelectorAll(".js-braille-msg").forEach((el) => {
+        el.textContent = LLM_LOADING_MESSAGES[brailleMsgIdx];
+      });
+    }, 3000);
+  }
+
+  function stopBrailleTicker() {
+    if (brailleTick) { clearInterval(brailleTick); brailleTick = null; }
+    if (brailleMsgTick) { clearInterval(brailleMsgTick); brailleMsgTick = null; }
+  }
+
+  function isBusy() {
+    // "Busy" means: a job is running and we're NOT idling at a follow-up prompt or done.
+    return !!liveJobId && !jobDone && !jobWaiting;
+  }
+
+  function injectInStepSpinner() {
+    if (!isBusy()) return;
+    // If a live-delta block is showing, it already conveys "in progress".
+    if (runView.querySelector(".stream-live")) return;
+    const container = runView.querySelector(".fade-in");
+    if (!container) return;
+    const steps = container.querySelectorAll(".step");
+    if (!steps.length) return;
+    const last = steps[steps.length - 1];
+    const body = last.querySelector(".step-body");
+    if (!body) return;
+    // Avoid duplicates
+    if (body.querySelector(".braille-spinner")) return;
+    const spinner = document.createElement("div");
+    spinner.className = "braille-spinner";
+    spinner.innerHTML = `
+      <span class="glyph js-braille-glyph">${BRAILLE_FRAMES[brailleFrame]}</span>
+      <span class="msg js-braille-msg">${LLM_LOADING_MESSAGES[brailleMsgIdx]}</span>
+    `;
+    body.appendChild(spinner);
+    // Ensure the step is open so the spinner is visible
+    last.classList.add("open");
+  }
+
+  // ── Live delta streaming ─────────────────────────────────────────
+  function getLiveStreamHost() {
+    const container = runView.querySelector(".fade-in");
+    if (!container) return null;
+    const steps = container.querySelectorAll(".step");
+    if (!steps.length) return null;
+    const last = steps[steps.length - 1];
+    last.classList.add("open");
+    return last.querySelector(".step-body");
+  }
+
+  function ensureLiveStreamEl() {
+    let el = runView.querySelector(".stream-live");
+    if (el) return el;
+    const body = getLiveStreamHost();
+    if (!body) return null;
+    // Remove any braille spinner — the live stream is a stronger progress
+    // signal and we don't want both in the same body.
+    const sp = body.querySelector(".braille-spinner");
+    if (sp) sp.remove();
+
+    el = document.createElement("div");
+    el.className = "stream-live";
+    el.innerHTML = `
+      <div class="stream-live-header">
+        <span class="glyph js-braille-glyph">${BRAILLE_FRAMES[brailleFrame]}</span>
+        <span>streaming</span>
+      </div>
+      <div class="stream-live-body"></div>
+    `;
+    body.appendChild(el);
+    return el;
+  }
+
+  function updateLiveStreamEl() {
+    const el = ensureLiveStreamEl();
+    if (!el) return;
+    const bodyEl = el.querySelector(".stream-live-body");
+    if (!bodyEl) return;
+    const text = streamOverflow
+      ? streamBuffer + "\n\n…(buffered, waiting for durable event)…"
+      : streamBuffer;
+    // Cheaper than setting innerHTML — textContent preserves whitespace via CSS.
+    bodyEl.textContent = text;
+    // Auto-scroll the internal container so latest text is visible.
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+  }
+
+  function clearLiveStream() {
+    streamBuffer = "";
+    streamActive = false;
+    streamOverflow = false;
+    runView.querySelectorAll(".stream-live").forEach(n => n.remove());
+  }
+
+  function appendStreamDelta(delta) {
+    if (!delta) return;
+    if (!streamActive) {
+      streamActive = true;
+      streamBuffer = "";
+      streamOverflow = false;
+    }
+    if (streamBuffer.length + delta.length > STREAM_MAX_CHARS) {
+      // Stop growing the buffer; keep what we have and mark overflow.
+      streamOverflow = true;
+      return;
+    }
+    streamBuffer += delta;
+    updateLiveStreamEl();
+  }
+
+  function finalizeStream() {
+    // stream-done: mark inactive. Leave the DOM node visible until the
+    // durable SessionEvent (reasoning/code/submit) arrives and a full
+    // re-render from the file-tail wipes it.
+    streamActive = false;
+  }
+
+  function resetLiveState(opts) {
+    opts = opts || {};
+    liveEvents = [];
+    liveJobId = null;
+    jobDone = false;
+    jobWaiting = false;
+    streamBuffer = "";
+    streamActive = false;
+    streamOverflow = false;
+    if (!opts.keepSessionId) liveSessionId = null;
+    if (liveEventSource) { try { liveEventSource.close(); } catch (_) {} }
+    liveEventSource = null;
+    lastKnownUsage = null;
+    runView.innerHTML = "";
+    followupDock.style.display = "none";
+    followupDock.classList.remove("ready");
+    followupInput.disabled = true;
+    followupSend.disabled = true;
+    followupInput.placeholder = "Waiting for answer…";
+    liveStrip.classList.remove("done", "error");
+    btnAbort.disabled = true;
+    btnExport.disabled = true;
+    btnRun.disabled = false;
+    runErrorEl.style.display = "none";
+  }
+
+  // mode = "waiting" (disabled), "ready" (active follow-up), "resume" (job done, ask new)
+  function showFollowUpDock(mode) {
+    followupDock.style.display = "";
+    followupDock.classList.remove("ready", "resume");
+    if (mode === "ready") {
+      followupDock.classList.add("ready");
+      followupInput.disabled = false;
+      followupSend.disabled = false;
+      followupInput.placeholder = "Follow-up (enter to send, empty + enter to end)";
+      followupInput.focus();
+    } else if (mode === "resume") {
+      followupDock.classList.add("resume");
+      followupInput.disabled = false;
+      followupSend.disabled = false;
+      followupInput.placeholder = "Ask a follow-up (resumes this session)";
+    } else {
+      followupInput.disabled = true;
+      followupSend.disabled = true;
+      followupInput.placeholder = "Waiting for answer…";
+    }
+  }
+
+  function renderLive(filename) {
+    if (!liveEvents.length) return;
+    render(liveEvents, filename || (liveJobId ? `${liveJobId}.live` : "live"), {
+      target: runView,
+      hideDropzone: false,
+      silentEmpty: true,
+      autoScroll: true,
+    });
+    // The render call wiped the DOM. Restore live overlays if still relevant.
+    if (streamActive && streamBuffer.length > 0) {
+      updateLiveStreamEl();
+    } else {
+      injectInStepSpinner();
+    }
+  }
+
+  function setLiveStatus(text) {
+    liveStrip.style.display = "";
+    liveStatusEl.textContent = text;
+  }
+
+  function setCost(usage) {
+    if (!usage) return;
+    lastKnownUsage = usage;
+    const tot = usage.totalTokens || ((usage.promptTokens || 0) + (usage.completionTokens || 0));
+    liveCostEl.textContent = `${(usage.calls || 0)} calls · ${tot.toLocaleString()} tokens`;
+  }
+
+  function handleEnvelope(env) {
+    if (!env || !env.kind) return;
+    switch (env.kind) {
+      case "ready":
+        liveSessionId = env.sessionId;
+        setLiveStatus(`session ${env.sessionId} started`);
+        break;
+      case "session": {
+        const ev = env.data;
+        // Dedupe by id (SSE stream may replay buffered items on reconnect)
+        if (liveEvents.length && ev.id <= liveEvents[liveEvents.length - 1].id) {
+          const idx = liveEvents.findIndex(e => e.id === ev.id);
+          if (idx >= 0) return;
+        }
+        liveEvents.push(ev);
+        liveEvents.sort((a, b) => (a.id || 0) - (b.id || 0));
+        // A durable `reasoning` or `submit` event is the finalized version of
+        // the tokens we were streaming — drop the live overlay so the next
+        // render shows only the rendered block.
+        if (ev.type === "reasoning" || ev.type === "submit") {
+          streamBuffer = "";
+          streamActive = false;
+          streamOverflow = false;
+        }
+        renderLive();
+        break;
+      }
+      case "rlm": {
+        const ev = env.data;
+        if (ev.type === "status") {
+          setLiveStatus(`${ev.phase}: ${ev.message}`);
+        } else if (ev.type === "usage") {
+          setCost(ev);
+        } else if (ev.type === "error") {
+          setLiveStatus(`error: ${ev.error}`);
+          liveStrip.classList.add("error");
+        } else if (ev.type === "stream-delta") {
+          appendStreamDelta(ev.delta);
+        } else if (ev.type === "stream-done") {
+          finalizeStream();
+        } else if (ev.type === "step" || ev.type === "submit") {
+          // A phase completed — next deltas belong to a new phase.
+          streamActive = false;
+        }
+        break;
+      }
+      case "waiting-followup":
+        jobWaiting = true;
+        setLiveStatus("waiting for follow-up");
+        showFollowUpDock("ready");
+        runView.querySelectorAll(".braille-spinner").forEach(n => n.remove());
+        clearLiveStream();
+        break;
+      case "done":
+        jobWaiting = false;
+        jobDone = true;
+        setLiveStatus("done");
+        liveStrip.classList.add("done");
+        document.getElementById("live-strip-spinner").textContent = "✓";
+        if (env.result && env.result.tokenUsage) setCost(env.result.tokenUsage);
+        btnAbort.disabled = true;
+        btnExport.disabled = liveEvents.length === 0;
+        btnRun.disabled = false;
+        stopBrailleTicker();
+        // Remove any in-step spinner still present
+        runView.querySelectorAll(".braille-spinner").forEach(n => n.remove());
+        clearLiveStream();
+        // Keep the dock visible — user can start a new run on the same session.
+        showFollowUpDock("resume");
+        break;
+      case "error":
+        jobWaiting = false;
+        jobDone = true;
+        setLiveStatus(`error: ${env.error}`);
+        liveStrip.classList.add("error");
+        document.getElementById("live-strip-spinner").textContent = "✗";
+        btnAbort.disabled = true;
+        btnRun.disabled = false;
+        stopBrailleTicker();
+        runView.querySelectorAll(".braille-spinner").forEach(n => n.remove());
+        clearLiveStream();
+        // Still allow resume on error if we have a session id.
+        if (liveSessionId) showFollowUpDock("resume");
+        else followupDock.style.display = "none";
+        break;
+    }
+  }
+
+  async function runQuery(body, opts) {
+    opts = opts || {};
+    resetLiveState({ keepSessionId: !!opts.keepSessionId });
+    lastRunBody = body;
+    btnRun.disabled = true;
+    btnAbort.disabled = false;
+    setLiveStatus("starting…");
+    // Reserve the dock slot right away so the user knows follow-ups are coming
+    showFollowUpDock("waiting");
+    startBrailleTicker();
+
+    let jobId;
+    try {
+      const resp = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await resp.json();
+      if (!resp.ok) throw new Error(j.error || `HTTP ${resp.status}`);
+      jobId = j.jobId;
+    } catch (err) {
+      setLiveStatus(`failed to start: ${err.message}`);
+      liveStrip.classList.add("error");
+      btnRun.disabled = false;
+      btnAbort.disabled = true;
+      return;
+    }
+    liveJobId = jobId;
+
+    liveEventSource = new EventSource(`/api/events/${jobId}`);
+    liveEventSource.onmessage = (e) => {
+      try {
+        const env = JSON.parse(e.data);
+        handleEnvelope(env);
+      } catch (_) { }
+    };
+    liveEventSource.onerror = () => {
+      // EventSource auto-reconnects; nothing special to do. The server drops
+      // connections after done, which triggers an error here — ignore.
+    };
+  }
+
+  runForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const body = readForm();
+    if (isWorkspaceMode(body.mode) && (!body.sources || body.sources.length === 0)) {
+      alert("Workspace/RLM mode needs at least one source. Fill in a source row.");
+      return;
+    }
+    if (!body.query && !body.goal) {
+      alert("Query is required (or pick a workspace goal).");
+      return;
+    }
+    runQuery(body);
+  });
+
+  btnAbort.addEventListener("click", async () => {
+    if (!liveJobId) return;
+    btnAbort.disabled = true;
+    try {
+      await fetch(`/api/abort/${liveJobId}`, { method: "POST" });
+    } catch (_) { }
+  });
+
+  btnExport.addEventListener("click", () => {
+    if (!liveEvents.length) return;
+    const text = liveEvents.map(e => JSON.stringify(e)).join("\n") + "\n";
+    const blob = new Blob([text], { type: "application/x-ndjson" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${liveJobId || "rlm"}.jsonl`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  });
+
+  async function sendFollowUp(q) {
+    // Case A: active job awaiting a follow-up → deliver via /api/followup
+    if (jobWaiting && liveJobId) {
+      showFollowUpDock("waiting");
+      jobWaiting = false;
+      clearLiveStream();
+      startBrailleTicker();
+      injectInStepSpinner();
+      try {
+        await fetch(`/api/followup/${liveJobId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+        });
+      } catch (err) {
+        setLiveStatus(`follow-up failed: ${err.message}`);
+      }
+      return;
+    }
+
+    // Case B: job already done → start a new run that resumes this session
+    if (jobDone && liveSessionId && q && lastRunBody) {
+      const body = Object.assign({}, lastRunBody, {
+        query: q,
+        resumeSessionId: liveSessionId,
+        interactive: true, // ensure follow-up capable
+      });
+      // Preserve scrollback: don't wipe liveEvents until the new session tail
+      // replays them. Simplest: let runQuery() fully reset and the tailer replay.
+      runQuery(body, { keepSessionId: true });
+      return;
+    }
+
+    // Empty submit while waiting ends the follow-up loop cleanly
+    if (jobWaiting && liveJobId && !q) {
+      showFollowUpDock("waiting");
+      try {
+        await fetch(`/api/followup/${liveJobId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: null }),
+        });
+      } catch (_) { }
+    }
+  }
+
+  followupSend.addEventListener("click", () => {
+    const q = followupInput.value.trim();
+    followupInput.value = "";
+    sendFollowUp(q || null);
+  });
+  followupInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); followupSend.click(); }
+  });
+
+  // Initialize form
+  (async () => {
+    await populateGoals();
+    loadConfig();
+    // Re-apply any saved goal now that options exist
+    if (goalSelect.dataset.pending) {
+      goalSelect.value = goalSelect.dataset.pending;
+      delete goalSelect.dataset.pending;
+    }
+    applyModeVisibility();
+  })();
+
+  // Try auto-load on page load (works when served via http://)
+  window.addEventListener("DOMContentLoaded", () => {
+    detectServer();
+    if (location.protocol === "http:" || location.protocol === "https:") {
+      // Don't auto-load DEFAULT_PATH when server is available; sessions sidebar handles it.
+      // We still try the legacy path for backward compat if the sidebar is empty.
+      tryAutoLoad();
+    }
+  });
+</script>
+</body>
+</html>

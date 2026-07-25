@@ -1,0 +1,59 @@
+{
+  "name": "rlm-wiki",
+  "version": "0.1.0",
+  "description": "Generate interactive repository wikis using agentic code investigation. Point at a GitHub URL, get a multi-page wiki plus chat-with-repo.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsyncFuncAI/rlm-wiki.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AsyncFuncAI/rlm-wiki/issues"
+  },
+  "homepage": "https://github.com/AsyncFuncAI/rlm-wiki#readme",
+  "bin": {
+    "rlm-wiki": "./bin/rlm-wiki.ts",
+    "grok-wiki": "./bin/grok-wiki.ts"
+  },
+  "scripts": {
+    "build": "bun run build:web",
+    "build:web": "vite build --config vite.web.config.ts",
+    "start": "bun run ./bin/rlm-wiki.ts",
+    "server": "bun run ./bin/rlm-wiki.ts serve",
+    "worker": "bun run ./bin/rlm-wiki.ts worker",
+    "test": "bun test src",
+    "typecheck": "bunx tsc --noEmit",
+    "kb:spike": "bun test src/kb/kb-merge.test.ts",
+    "kb:storage": "bun test src/kb/kb-store.test.ts",
+    "kb:distill": "bun test src/kb/kb-distill-pipeline.test.ts",
+    "kb:publish": "bun test src/kb/kb-publish.test.ts api/public/wiki/_shared.test.js",
+    "railway:worker-mode": "bash scripts/railway-worker-mode.sh",
+    "generate": "bun run ./bin/rlm-wiki.ts generate"
+  },
+  "dependencies": {
+    "@agentclientprotocol/sdk": "^1.2.1",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.96",
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@composio/core": "^0.8.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/og": "^0.11.1",
+    "cli-highlight": "^2.1.11",
+    "postgres": "^3.4.9",
+    "react": "19.2.7",
+    "rlm-bun": "file:./vendor/rlm-bun",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.10",
+    "@types/node": "^25.9.1",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.4"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  }
+}

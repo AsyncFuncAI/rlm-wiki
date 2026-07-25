@@ -1,0 +1,41 @@
+# Keep the build context small and deterministic.
+# Everything listed here is EXCLUDED from the Docker build, which means
+# - faster builds (less to upload to the Docker daemon)
+# - cleaner image layers (we install deps inside the image, not copy them)
+# - no secrets leak into the image
+
+# node deps — reinstalled inside the image
+node_modules
+bun.lockb
+**/node_modules
+
+# Local graphify venv — built fresh inside the Linux image from a Python wheel
+.graphify-venv
+vendor/rlm-bun/.graphify-venv
+
+# Local storage, logs, sessions
+storage/
+.rlm-sessions/
+rlm-logs/
+*.log
+
+# Secrets — keys come from Railway env vars, not the image
+.env
+.env.local
+.env.*.local
+
+# Git & dev files
+.git
+.github
+.gitignore
+.dockerignore
+.vscode
+.idea
+.DS_Store
+
+# Editor / tooling caches
+.claude
+
+# Not runtime artefacts
+*.md
+!README.md

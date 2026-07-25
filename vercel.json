@@ -1,0 +1,219 @@
+{
+  "buildCommand": "bun run build:web",
+  "outputDirectory": "dist/public",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.grok-wiki.com"
+        }
+      ],
+      "destination": "https://grok-wiki.com/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.grok-wiki.com"
+        }
+      ],
+      "destination": "https://grok-wiki.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/grok-wiki.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/episodes.html",
+      "destination": "/episodes",
+      "permanent": true
+    },
+    {
+      "source": "/changelog.html",
+      "destination": "/changelog",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/public-wiki-gallery.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/public-wiki.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/public-ask.html",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/changelog",
+      "destination": "/changelog.html"
+    },
+    {
+      "source": "/episodes",
+      "destination": "/episodes.html"
+    },
+    {
+      "source": "/public/wikis",
+      "destination": "/api/public/wiki-gallery-page"
+    },
+    {
+      "source": "/public/docs",
+      "destination": "/api/public/wiki-gallery-page?surface=docs"
+    },
+    {
+      "source": "/public/docs/:id/llms.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=llms"
+    },
+    {
+      "source": "/share/docs/:id/llms.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=llms"
+    },
+    {
+      "source": "/public/docs/:id/llms-full.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/share/docs/:id/llms-full.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/public/docs/:id.md",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/share/docs/:id.md",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/public/docs/:id/pages/:page",
+      "destination": "/api/public/wiki-markdown?id=:id&format=page&page=:page"
+    },
+    {
+      "source": "/share/docs/:id/pages/:page",
+      "destination": "/api/public/wiki-markdown?id=:id&format=page&page=:page"
+    },
+    {
+      "source": "/public/docs/:id",
+      "destination": "/api/public/wiki-page?id=:id&surface=docs"
+    },
+    {
+      "source": "/share/docs/:id",
+      "destination": "/api/public/wiki-page?id=:id&surface=docs"
+    },
+    {
+      "source": "/public/wiki/:id/llms.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=llms"
+    },
+    {
+      "source": "/share/wiki/:id/llms.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=llms"
+    },
+    {
+      "source": "/public/wiki/:id/llms-full.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/share/wiki/:id/llms-full.txt",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/public/wiki/:id.md",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/share/wiki/:id.md",
+      "destination": "/api/public/wiki-markdown?id=:id&format=full"
+    },
+    {
+      "source": "/public/wiki/:id/pages/:page",
+      "destination": "/api/public/wiki-markdown?id=:id&format=page&page=:page"
+    },
+    {
+      "source": "/share/wiki/:id/pages/:page",
+      "destination": "/api/public/wiki-markdown?id=:id&format=page&page=:page"
+    },
+    {
+      "source": "/public/wiki/:id",
+      "destination": "/api/public/wiki-page?id=:id"
+    },
+    {
+      "source": "/share/wiki/:id",
+      "destination": "/api/public/wiki-page?id=:id"
+    },
+    {
+      "source": "/api/public/ask/:id",
+      "destination": "/api/public/ask?id=:id"
+    },
+    {
+      "source": "/public/ask/:id/llms.txt",
+      "destination": "/api/public/ask-page?id=:id&format=llms"
+    },
+    {
+      "source": "/share/ask/:id/llms.txt",
+      "destination": "/api/public/ask-page?id=:id&format=llms"
+    },
+    {
+      "source": "/public/ask/:id/llms-full.txt",
+      "destination": "/api/public/ask-page?id=:id&format=full"
+    },
+    {
+      "source": "/share/ask/:id/llms-full.txt",
+      "destination": "/api/public/ask-page?id=:id&format=full"
+    },
+    {
+      "source": "/public/ask/:id.md",
+      "destination": "/api/public/ask-page?id=:id&format=full"
+    },
+    {
+      "source": "/share/ask/:id.md",
+      "destination": "/api/public/ask-page?id=:id&format=full"
+    },
+    {
+      "source": "/public/ask/:id",
+      "destination": "/api/public/ask-page?id=:id"
+    },
+    {
+      "source": "/share/ask/:id",
+      "destination": "/api/public/ask-page?id=:id"
+    }
+  ]
+}

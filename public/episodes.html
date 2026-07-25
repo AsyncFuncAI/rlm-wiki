@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Episodes - Grok-Wiki</title>
+    <meta
+      name="description"
+      content="Watch short Grok-Wiki product episodes about the desktop app, Ask across repositories, hot key, agent context, localization, and the midnight push."
+    />
+    <link rel="canonical" href="https://grok-wiki.com/episodes" />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta property="og:title" content="Episodes - Grok-Wiki" />
+    <meta property="og:description" content="Six short Grok-Wiki product films for local-agent repository work." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://grok-wiki.com/episodes" />
+    <meta property="og:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Grok-Wiki collaborators in a warm 90s office" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Episodes - Grok-Wiki" />
+    <meta name="twitter:description" content="Six short Grok-Wiki product films for local-agent repository work." />
+    <meta name="twitter:image" content="https://grok-wiki.com/grok-wiki-preview-bottom-left.png" />
+    <meta name="twitter:image:alt" content="Grok-Wiki collaborators in a warm 90s office" />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/episodes.css" />
+    <script type="module" src="/episodes.ts"></script>
+    <script type="module" src="/vercel-analytics.ts"></script>
+  </head>
+  <body class="episodes-body">
+    <div class="episodes-root">
+      <header class="episodes-topbar" aria-label="Grok-Wiki navigation">
+        <a class="episodes-brand" href="/" aria-label="Grok-Wiki home">
+          <strong>Grok-Wiki</strong>
+          <span>Episodes</span>
+        </a>
+        <nav class="episodes-nav" aria-label="Public links">
+          <a href="/public/wikis">Gallery</a>
+          <a class="active" href="/episodes">Episodes</a>
+          <a href="/changelog">Changelog</a>
+          <a href="/">Download</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="episodes-feature" aria-labelledby="episodes-title">
+          <div class="feature-stage">
+            <video
+              class="feature-video"
+              data-feature-video
+              muted
+              autoplay
+              loop
+              playsinline
+              preload="metadata"
+            ></video>
+            <button
+              class="feature-sound-toggle"
+              type="button"
+              data-feature-sound-toggle
+              aria-label="Play with sound"
+              title="Play with sound"
+            >
+              <svg class="feature-sound-icon feature-sound-muted" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="m18 9 4 4m0-4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              <svg class="feature-sound-icon feature-sound-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 9v6h4l5 4V5L8 9H4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="feature-shade" aria-hidden="true"></div>
+            <div class="feature-episode-dock" role="listbox" aria-label="Featured episodes">
+              <button class="feature-episode-button active" type="button" role="option" aria-selected="true" data-episode-card="0">
+                <span>EP 01</span>
+                <strong>What's Grok-Wiki?</strong>
+              </button>
+              <button class="feature-episode-button" type="button" role="option" aria-selected="false" data-episode-card="1">
+                <span>EP 02</span>
+                <strong>The Hot Key (⌘ ⇧ ␣)</strong>
+              </button>
+              <button class="feature-episode-button" type="button" role="option" aria-selected="false" data-episode-card="2">
+                <span>EP 03</span>
+                <strong>Agent Context</strong>
+              </button>
+              <button class="feature-episode-button" type="button" role="option" aria-selected="false" data-episode-card="3">
+                <span>EP 04</span>
+                <strong>The Midnight Push</strong>
+              </button>
+              <button class="feature-episode-button" type="button" role="option" aria-selected="false" data-episode-card="4">
+                <span>EP 05</span>
+                <strong>The Language Mix-Up</strong>
+              </button>
+              <button class="feature-episode-button" type="button" role="option" aria-selected="false" data-episode-card="5">
+                <span>EP 06</span>
+                <strong>Jealousy-Driven Dev</strong>
+              </button>
+            </div>
+            <div class="feature-copy">
+              <p class="episodes-kicker">Season 01 / 15 second dispatches</p>
+              <h1 id="episodes-title" data-episode-title>What's Grok-Wiki?</h1>
+              <p data-episode-copy>
+                A short product film for the desktop loop: source-grounded repository context, local CLI agents, and model access that stays with you.
+              </p>
+              <div class="feature-actions">
+                <button class="episodes-primary" type="button" data-play-feature>Play with sound</button>
+                <a class="episodes-secondary" href="/public/wikis">Browse public library</a>
+              </div>
+            </div>
+            <aside class="feature-panel" aria-label="Current episode">
+              <span data-episode-number>Episode 01</span>
+              <strong data-episode-short>What's Grok-Wiki?</strong>
+              <p data-episode-meta>10 sec / Desktop film</p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="episode-rail" aria-labelledby="episode-rail-title">
+          <div class="rail-head">
+            <div>
+              <p class="episodes-kicker">Now streaming</p>
+              <h2 id="episode-rail-title">Six small cuts from the desktop.</h2>
+            </div>
+            <div class="rail-controls" aria-label="Episode controls">
+              <button type="button" data-previous-episode aria-label="Previous episode">Previous</button>
+              <button type="button" data-next-episode aria-label="Next episode">Next</button>
+            </div>
+          </div>
+
+          <div class="episode-list" role="listbox" aria-label="Grok-Wiki episodes">
+            <button class="episode-card active" type="button" role="option" aria-selected="true" data-episode-card="0">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 01</span><span>10 sec</span></span>
+                <strong>What's Grok-Wiki?</strong>
+                <span>Repository wikis, Ask, and selected CLI accounts stay in one local desktop loop.</span>
+              </span>
+            </button>
+
+            <button class="episode-card" type="button" role="option" aria-selected="false" data-episode-card="1">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 02</span><span>15 sec</span></span>
+                <strong>The Hot Key (⌘ ⇧ ␣)</strong>
+                <span>Jump from work to repository context without changing your agent, provider, or credentials.</span>
+              </span>
+            </button>
+
+            <button class="episode-card" type="button" role="option" aria-selected="false" data-episode-card="2">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 03</span><span>15 sec</span></span>
+                <strong>Agent Context</strong>
+                <span>Point local agents at source-backed wikis and keep the evidence close to the work.</span>
+              </span>
+            </button>
+
+            <button class="episode-card" type="button" role="option" aria-selected="false" data-episode-card="3">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 04</span><span>15 sec</span></span>
+                <strong>The Midnight Push</strong>
+                <span>A late-night release pass where repo memory, public handoff, and agent context stay aligned.</span>
+              </span>
+            </button>
+
+            <button class="episode-card" type="button" role="option" aria-selected="false" data-episode-card="4">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 05</span><span>15 sec</span></span>
+                <strong>The Language Mix-Up</strong>
+                <span>Japanese and Mandarin join the desktop loop so generated context can meet the team where they work.</span>
+              </span>
+            </button>
+
+            <button class="episode-card" type="button" role="option" aria-selected="false" data-episode-card="5">
+              <span class="episode-thumb">
+                <video muted loop playsinline preload="metadata"></video>
+              </span>
+              <span class="episode-content">
+                <span class="episode-row"><span>EP 06</span><span>15 sec</span></span>
+                <strong>Jealousy-Driven Development</strong>
+                <span>Ask across multiple repositories and turn source-backed project research into a study session.</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="episode-notes" aria-labelledby="episode-notes-title">
+          <div>
+            <p class="episodes-kicker">What the season covers</p>
+            <h2 id="episode-notes-title">A product story told in small cuts.</h2>
+          </div>
+          <div class="notes-table" aria-label="Episode themes">
+            <div class="note-row">
+              <span>01</span>
+              <strong>What Grok-Wiki is</strong>
+              <p>Source-grounded wikis, docs, and Ask sessions made for the local CLI agents you already use.</p>
+            </div>
+            <div class="note-row">
+              <span>02</span>
+              <strong>Hot key entry</strong>
+              <p>Bring repository context forward with a fast desktop gesture instead of breaking your working rhythm.</p>
+            </div>
+            <div class="note-row">
+              <span>03</span>
+              <strong>Agent context</strong>
+              <p>Published pages, Markdown handoff, and Obsidian exports keep generated knowledge useful for humans and agents.</p>
+            </div>
+            <div class="note-row">
+              <span>04</span>
+              <strong>The midnight push</strong>
+              <p>Ship late without scattering context: keep release notes, source trails, and local agent handoff in one place.</p>
+            </div>
+            <div class="note-row">
+              <span>05</span>
+              <strong>The language mix-up</strong>
+              <p>Japanese and Mandarin support keeps repository docs and desktop UI context readable for multilingual teams.</p>
+            </div>
+            <div class="note-row">
+              <span>06</span>
+              <strong>Jealousy-driven development</strong>
+              <p>Ask across multiple repositories at once, then keep the answers grounded in source trails your own agent setup can use.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="episodes-cta" aria-labelledby="episodes-cta-title">
+          <div>
+            <p class="episodes-kicker">Desktop app</p>
+            <h2 id="episodes-cta-title">Bring the series back to your own repositories.</h2>
+          </div>
+          <div class="feature-actions">
+            <a
+              class="episodes-primary"
+              href="https://github.com/AsyncFuncAI/grok-wiki/releases/latest/download/Grok-Wiki_aarch64.dmg"
+            >
+              Download for Mac
+            </a>
+            <a class="episodes-secondary" href="https://github.com/AsyncFuncAI/grok-wiki">GitHub</a>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "name": "rlm-bun",
+  "version": "0.3.0",
+  "description": "Recursive Language Model for codebase understanding, powered by Bun REPL",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "rlm-bun": "./bin/rlm.ts",
+    "rlm-server": "./bin/rlm-server.ts",
+    "graphify": "./bin/graphify.ts"
+  },
+  "scripts": {
+    "graphify": "bun run ./bin/graphify.ts",
+    "server": "bun run ./bin/rlm-server.ts",
+    "test": "bun test",
+    "example:local": "bun run examples/ask-local.ts",
+    "example:github": "bun run examples/ask-github.ts"
+  },
+  "keywords": [
+    "rlm",
+    "recursive-language-model",
+    "codebase",
+    "code-understanding",
+    "bun",
+    "repl",
+    "llm",
+    "agent",
+    "anthropic",
+    "openai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.96",
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "cli-highlight": "^2.1.11",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.10",
+    "pyright": "^1.1.408",
+    "typescript": "^5.9.3",
+    "typescript-language-server": "^5.1.3"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  }
+}

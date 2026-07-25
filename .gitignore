@@ -1,0 +1,28 @@
+node_modules/
+storage/
+.rlm-sessions/
+*.log
+.DS_Store
+# bun.lock is Bun's plaintext lockfile — commit it for reproducible deploys.
+# Ignore only the old binary variant.
+bun.lockb
+.env
+.env.local
+# graphify Python sidecar — set up as a local venv or symlink per-machine
+.graphify-venv
+# rlm-bun's graph output written into cloned-repo caches
+graphify-out/
+# Editor / platform local caches
+.claude/
+.vercel/
+.idea/
+.vscode/
+
+# Generated merge / marketing build outputs
+dist/sharenow-merge-report/
+
+# KB spike: raw live-agent replies captured by the KB_SPIKE_LIVE test block.
+src/kb/__fixtures__/.live-output/
+
+# Build output (Vite)
+dist/

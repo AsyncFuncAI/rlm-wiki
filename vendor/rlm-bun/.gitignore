@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Bun
+.bun/
+bun.lockb
+
+# Logs
+feedback.csv
+rlm-logs/
+.rlm-sessions/
+*.log
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build output
+dist/
+out/
+
+.claude/
+
+# Graphify
+.graphify-venv/
+.graphify_*.json
+.graphifyignore
+graphify-out/
