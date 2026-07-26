@@ -6568,11 +6568,18 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         });
       }
 
-      if (method === "GET" && url.pathname === "/api/review/github/status") {
+      // Shared Composio GitHub connection (Review + Code use the same toolkit).
+      if (
+        method === "GET"
+        && (url.pathname === "/api/github/status" || url.pathname === "/api/review/github/status")
+      ) {
         return jsonResponse(await reviewGitHubConnectionStatus(store.root, capabilityProfile));
       }
 
-      if (method === "POST" && url.pathname === "/api/review/github/connect") {
+      if (
+        method === "POST"
+        && (url.pathname === "/api/github/connect" || url.pathname === "/api/review/github/connect")
+      ) {
         try {
           const current = await reviewGitHubConnectionStatus(store.root, capabilityProfile);
           if (current.connected) return jsonResponse(current);
@@ -6987,6 +6994,22 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         const codeSt = providerStatusForRuntime(codeRuntime, providerSecrets);
         if (!codeSt[codeChannel.provider].configured) return providerSetupResponse(codeChannel, codeSt[codeChannel.provider], req);
 
+        // Code patches and PR publish need GitHub (Composio or GITHUB_TOKEN).
+        try {
+          const github = await reviewGitHubConnectionStatus(store.root, capabilityProfile);
+          if (!github.connected) {
+            return jsonResponse({
+              error: github.message || "Connect GitHub before running Code Anything.",
+              needsGitHubConnection: true,
+            }, 428);
+          }
+        } catch (e) {
+          return jsonResponse({
+            error: e instanceof Error ? e.message : String(e),
+            needsGitHubConnection: true,
+          }, 428);
+        }
+
         const allowInlinePublishIntent = body.publishIntent !== false && body.publishIntent !== "false";
         const inlinePublishOnly = allowInlinePublishIntent && isCodePublishRequest(task);
         const codeExternalWorker = !inlinePublishOnly && runModeFor(productStore, baseJobQueue, baseSecretGrantStore) === "worker";
@@ -7290,6 +7313,22 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         const localCli = normalizeLocalCliConfig(body.localCli ?? jsonObject(input.localCli) ?? { agentId: body.agent });
         const localCliPreflight = await localCliPreflightResponse(codeRuntime, localCli, req, "coding follow-up", opts);
         if (localCliPreflight) return localCliPreflight;
+
+        try {
+          const github = await reviewGitHubConnectionStatus(store.root, capabilityProfile);
+          if (!github.connected) {
+            return jsonResponse({
+              error: github.message || "Connect GitHub before continuing a Code session.",
+              needsGitHubConnection: true,
+            }, 428);
+          }
+        } catch (e) {
+          return jsonResponse({
+            error: e instanceof Error ? e.message : String(e),
+            needsGitHubConnection: true,
+          }, 428);
+        }
+
         const codeAgent = normalizeCodeAnythingAgent(codeRuntime === "local-cli" ? localCli.agentId : body.agent);
         let codeChannel;
         try {
@@ -7565,6 +7604,21 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
 
         const run = await productStore.getRun(runId);
         if (!run || run.kind !== "code") return jsonResponse({ error: "Code session not found" }, 404);
+
+        try {
+          const github = await reviewGitHubConnectionStatus(store.root, capabilityProfile);
+          if (!github.connected) {
+            return jsonResponse({
+              error: github.message || "Connect GitHub before publishing a pull request.",
+              needsGitHubConnection: true,
+            }, 428);
+          }
+        } catch (e) {
+          return jsonResponse({
+            error: e instanceof Error ? e.message : String(e),
+            needsGitHubConnection: true,
+          }, 428);
+        }
 
         try {
           const publish = await publishCodeAnythingPullRequest(store.root, run, {

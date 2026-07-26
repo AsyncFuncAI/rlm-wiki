@@ -9296,7 +9296,8 @@ body.panel-resizing {
 .review-secondary-action {
   min-width: 108px;
 }
-.review-github-gate {
+.review-github-gate,
+.code-github-gate {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
@@ -9307,8 +9308,13 @@ body.panel-resizing {
   background: rgba(255,255,255,0.035);
   transition: opacity 160ms ease, border-color 160ms ease, background 160ms ease;
 }
+.code-github-gate {
+  margin: 0 0 12px;
+}
 .review-github-gate[hidden],
-.review-github-gate[data-state="connected"] {
+.review-github-gate[data-state="connected"],
+.code-github-gate[hidden],
+.code-github-gate[data-state="connected"] {
   display: none;
 }
 .review-github-gate[data-state="error"] {

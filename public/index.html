@@ -586,7 +586,14 @@
     if (text) {
       try { data = JSON.parse(text); } catch { data = { error: text }; }
     }
-    if (!r.ok) throw new Error(data.error || `${r.status} ${r.statusText}`);
+    if (!r.ok) {
+      const error = new Error(data.error || `${r.status} ${r.statusText}`);
+      error.status = r.status;
+      error.needsGitHubConnection = Boolean(data.needsGitHubConnection) || r.status === 428;
+      error.code = data.code;
+      error.provider = data.provider;
+      throw error;
+    }
     return data;
   }
 
@@ -10747,6 +10754,14 @@ Execution rules:
             </div>
           </div>
 
+          <div class="review-github-gate code-github-gate" id="code-github-gate" data-state="checking" aria-live="polite">
+            <div class="review-github-gate-copy">
+              <strong id="code-github-gate-title">Checking GitHub</strong>
+              <span id="code-github-gate-meta">Code clones, patches, and PR publish need a connected GitHub account first.</span>
+            </div>
+            <button class="review-github-connect" id="code-github-connect" type="button">Checking</button>
+          </div>
+
           ${renderCodeSetupComponentMarkup({
             repoValue: prefillRepo,
             taskValue: initialTaskDisplay,
@@ -10929,6 +10944,211 @@ Execution rules:
     const sessionRepo = document.getElementById('code-session-repo');
     const sessionState = document.getElementById('code-session-state');
     const stopRunButton = document.getElementById('code-stop-run');
+    const codeGithubGate = document.getElementById('code-github-gate');
+    const codeGithubGateTitle = document.getElementById('code-github-gate-title');
+    const codeGithubGateMeta = document.getElementById('code-github-gate-meta');
+    const codeGithubConnectBtn = document.getElementById('code-github-connect');
+
+    let codeGithubStatus = { connected: false, checking: true, connecting: false, message: '' };
+    let codeGithubConnectionPromise = null;
+    let codeGithubPollTimer = null;
+
+    function codeGithubConnected() {
+      return Boolean(codeGithubStatus?.connected);
+    }
+
+    function setCodeGithubGate(next = {}, opts = {}) {
+      codeGithubStatus = {
+        ...codeGithubStatus,
+        ...next,
+        connected: Object.prototype.hasOwnProperty.call(next, 'connected')
+          ? Boolean(next.connected)
+          : Boolean(codeGithubStatus.connected),
+        checking: Object.prototype.hasOwnProperty.call(next, 'checking')
+          ? Boolean(next.checking)
+          : Boolean(codeGithubStatus.checking),
+        connecting: Object.prototype.hasOwnProperty.call(next, 'connecting')
+          ? Boolean(next.connecting)
+          : Boolean(codeGithubStatus.connecting),
+      };
+      const connected = codeGithubConnected();
+      if (codeGithubGate) {
+        codeGithubGate.hidden = connected && !opts.forceVisible;
+        codeGithubGate.dataset.state = connected
+          ? 'connected'
+          : codeGithubStatus.error
+            ? 'error'
+            : codeGithubStatus.checking
+              ? 'checking'
+              : codeGithubStatus.connecting
+                ? 'connecting'
+                : 'needs';
+      }
+      if (codeGithubGateTitle) {
+        codeGithubGateTitle.textContent = connected
+          ? 'GitHub connected'
+          : codeGithubStatus.checking
+            ? 'Checking GitHub'
+            : codeGithubStatus.connecting
+              ? 'Finish GitHub connection'
+              : 'Connect GitHub';
+      }
+      if (codeGithubGateMeta) {
+        codeGithubGateMeta.textContent = connected
+          ? 'Code can clone private repos, open worktrees, and publish pull requests.'
+          : codeGithubStatus.message || codeGithubStatus.error || 'Required before Code can clone, patch, and open a PR through GitHub.';
+      }
+      if (codeGithubConnectBtn) {
+        codeGithubConnectBtn.textContent = connected
+          ? 'Connected'
+          : codeGithubStatus.checking
+            ? 'Checking'
+            : codeGithubStatus.connecting
+              ? 'Waiting'
+              : 'Connect GitHub';
+        codeGithubConnectBtn.disabled = connected || Boolean(codeGithubStatus.checking) || Boolean(codeGithubStatus.connecting);
+      }
+      syncCodeGithubControls();
+    }
+
+    function syncCodeGithubControls() {
+      const connected = codeGithubConnected();
+      const followupSubmit = document.getElementById('code-followup-submit');
+      // `busy` is declared later in this page scope; only gate when the run is idle.
+      const runBusy = Boolean(document.getElementById('code-stop-run') && !document.getElementById('code-stop-run').hidden);
+      if (submitBtn) submitBtn.disabled = !connected || runBusy;
+      if (followupSubmit) followupSubmit.disabled = !connected || runBusy;
+    }
+
+    async function refreshCodeGithubConnection(force = false, opts = {}) {
+      if (!force && codeGithubConnectionPromise) return codeGithubConnectionPromise;
+      if (!opts.silent) {
+        setCodeGithubGate({
+          connected: codeGithubStatus.connected,
+          checking: true,
+          connecting: false,
+          message: 'Code uses your GitHub connection for cloning, patches, and PR publish.',
+          error: '',
+        });
+      }
+      codeGithubConnectionPromise = fetchJSON('/api/github/status')
+        .then((data) => {
+          const connected = Boolean(data.connected);
+          setCodeGithubGate({
+            ...data,
+            connected,
+            checking: false,
+            connecting: connected ? false : Boolean(codeGithubStatus.connecting),
+            message: connected ? '' : codeGithubStatus.message,
+            error: '',
+          });
+          if (connected) window.dispatchEvent(new CustomEvent('code-github-connected'));
+          return connected;
+        })
+        .catch((error) => {
+          console.warn('failed to inspect GitHub connection for Code', error);
+          setCodeGithubGate({
+            connected: false,
+            checking: false,
+            connecting: false,
+            error: error.message || String(error),
+            message: 'Could not confirm GitHub access. Connect GitHub before running Code.',
+          }, { forceVisible: true });
+          return false;
+        })
+        .finally(() => {
+          codeGithubConnectionPromise = null;
+        });
+      return codeGithubConnectionPromise;
+    }
+
+    function pollCodeGithubConnection(attempt = 0) {
+      if (codeGithubPollTimer) window.clearTimeout(codeGithubPollTimer);
+      if (attempt > 45) {
+        setCodeGithubGate({
+          connected: false,
+          checking: false,
+          connecting: false,
+          message: 'Still waiting for GitHub. Finish the connection, then press Connect GitHub again.',
+        }, { forceVisible: true });
+        return;
+      }
+      codeGithubPollTimer = window.setTimeout(async () => {
+        const connected = await refreshCodeGithubConnection(true, { silent: true });
+        if (!connected) pollCodeGithubConnection(attempt + 1);
+      }, attempt === 0 ? 1000 : 2000);
+    }
+
+    async function connectCodeGithub(button = codeGithubConnectBtn) {
+      if (codeGithubConnected()) return true;
+      const previousLabel = button?.textContent || '';
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Opening';
+      }
+      setCodeGithubGate({
+        connected: false,
+        checking: false,
+        connecting: true,
+        message: 'Opening GitHub connection. Complete the approval window, then return here.',
+        error: '',
+      }, { forceVisible: true });
+      try {
+        const data = await postJSON('/api/github/connect', {});
+        if (data.connected) {
+          setCodeGithubGate({ ...data, connected: true, checking: false, connecting: false, message: '', error: '' });
+          window.dispatchEvent(new CustomEvent('code-github-connected'));
+          return true;
+        }
+        const redirectUrl = data.redirectUrl || data.authorization?.redirectUrl || data.authorization?.url || '';
+        if (redirectUrl) {
+          window.open(redirectUrl, 'rlm-wiki-github-connect', 'width=760,height=820,noopener,noreferrer');
+        }
+        setCodeGithubGate({
+          connected: false,
+          checking: false,
+          connecting: true,
+          message: redirectUrl
+            ? 'Finish the GitHub connection in the new window. This page will unlock automatically.'
+            : 'Finish the GitHub connection, then press Connect GitHub again.',
+          error: '',
+        }, { forceVisible: true });
+        pollCodeGithubConnection();
+        return false;
+      } catch (error) {
+        setCodeGithubGate({
+          connected: false,
+          checking: false,
+          connecting: false,
+          error: error.message || String(error),
+          message: error.message || 'Could not start GitHub connection.',
+        }, { forceVisible: true });
+        if (button) {
+          button.disabled = false;
+          button.textContent = previousLabel || 'Connect GitHub';
+        }
+        return false;
+      }
+    }
+
+    function showCodeGithubRequired(message = '') {
+      setCodeGithubGate({
+        connected: false,
+        checking: false,
+        connecting: false,
+        message: message || 'Connect GitHub before running Code Anything.',
+        error: '',
+      }, { forceVisible: true });
+      document.getElementById('topbar-status').textContent = 'connect github';
+    }
+
+    codeGithubConnectBtn?.addEventListener('click', () => connectCodeGithub(codeGithubConnectBtn));
+    window.addEventListener('focus', () => {
+      if (!codeGithubConnected() && (codeGithubStatus.connecting || codeGithubStatus.checking)) {
+        refreshCodeGithubConnection(true, { silent: true });
+      }
+    });
+    refreshCodeGithubConnection(true);
     const deleteRunButton = document.getElementById('code-delete-run');
     const thread = document.getElementById('code-thread');
     const tabs = document.getElementById('code-tabs');
@@ -11401,20 +11621,22 @@ Execution rules:
 
     function setBusy(next) {
       busy = next;
-      submitBtn.disabled = next;
+      const githubReady = codeGithubConnected();
+      submitBtn.disabled = next || !githubReady;
       repoInput.disabled = next;
       document.getElementById('code-primary-repo-input')?.toggleAttribute('disabled', next);
       if (codeAddRepoTrigger) codeAddRepoTrigger.disabled = next;
       taskInput.disabled = next;
-      followupSubmit.disabled = next;
+      followupSubmit.disabled = next || !githubReady;
       followupInput.disabled = next;
-      publishSubmit.disabled = next || publishing;
+      publishSubmit.disabled = next || publishing || !githubReady;
       reviewPrSubmit.disabled = next || publishing || !latestPullRequest?.url;
       submitBtn.textContent = next ? 'running' : 'run';
       followupSubmit.textContent = next ? 'Continuing' : 'Continue';
       setSessionState(next ? 'working' : (latestDiff ? 'ready' : 'ready'), next ? 'working' : 'ready');
       updateFollowupVisibility();
       updateCodeSessionActions();
+      syncCodeGithubControls();
     }
 
     function updateFollowupVisibility() {
@@ -11947,6 +12169,10 @@ Execution rules:
         taskInput.focus();
         return;
       }
+      if (!codeGithubConnected()) {
+        showCodeGithubRequired('Connect GitHub before running Code Anything.');
+        return;
+      }
       if (screenshots.length && !selectedChannelSupportsVision()) {
         showCodeValidation(`Selected model cannot inspect screenshots. ${visionProviderHint()}`);
         return;
@@ -12126,7 +12352,12 @@ Execution rules:
           if (reconnectCodeRunStream(err, streamHandlers, { card, statusEl })) return;
           const message = streamErrorMessage(err);
           card.markError(message, err);
-          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
+          if (err?.needsGitHubConnection || err?.status === 428) {
+            showCodeGithubRequired(err.message || message);
+            setTurnStatus(statusEl, 'error', 'Connect GitHub');
+          } else {
+            setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
+          }
           answerContent.className = 'ask-reader-body';
           answerContent.innerHTML = renderErrorBanner(message, err);
           appendAskScanRow(message);
@@ -12166,6 +12397,10 @@ Execution rules:
       if (!task) {
         showCodeValidation('Describe the tweak, paste a screenshot, or attach one.');
         followupInput.focus();
+        return;
+      }
+      if (!codeGithubConnected()) {
+        showCodeGithubRequired('Connect GitHub before continuing a Code session.');
         return;
       }
       if (screenshots.length && !selectedChannelSupportsVision()) {
@@ -12322,7 +12557,12 @@ Execution rules:
           if (reconnectCodeRunStream(err, streamHandlers, { card, statusEl })) return;
           const message = streamErrorMessage(err);
           card.markError(message, err);
-          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
+          if (err?.needsGitHubConnection || err?.status === 428) {
+            showCodeGithubRequired(err.message || message);
+            setTurnStatus(statusEl, 'error', 'Connect GitHub');
+          } else {
+            setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
+          }
           answerContent.className = 'ask-reader-body';
           answerContent.innerHTML = renderErrorBanner(message, err);
           appendAskScanRow(message);
@@ -12433,6 +12673,10 @@ Execution rules:
 
     async function publishCodePr() {
       if (busy || publishing || !activeRunId) return;
+      if (!codeGithubConnected()) {
+        showCodeGithubRequired('Connect GitHub before publishing a pull request.');
+        return;
+      }
       if (!latestDiff || latestDiff === '(no diff)') {
         showCodeValidation('Run Code Anything until a patch is ready before publishing.');
         return;
@@ -12469,6 +12713,9 @@ Execution rules:
         setAskScanMeta(latestPullRequest?.url ? (mode === 'update' ? 'pr updated' : 'pr ready') : 'fork ready');
       } catch (error) {
         const message = error.message || String(error);
+        if (error.needsGitHubConnection || error.status === 428) {
+          showCodeGithubRequired(message);
+        }
         publishError = message;
         setSessionState('error', 'error');
         appendAskScanRow(message);
@@ -12568,9 +12815,15 @@ Execution rules:
       resetAskScan(prefillRepo || 'idle');
       if (prefillRepo && initialTask) {
         if (shouldAutoRunHandoff) {
-          appendAskScanRow('Code request loaded. Starting task.');
+          appendAskScanRow('Code request loaded. Checking GitHub before start.');
           setAskScanMeta('starting');
-          window.setTimeout(() => {
+          window.setTimeout(async () => {
+            const connected = await refreshCodeGithubConnection(true, { silent: true });
+            if (!connected) {
+              showCodeGithubRequired('Connect GitHub before running this Code handoff.');
+              setAskScanMeta('connect github');
+              return;
+            }
             if (!busy && !activeRunId) doCode();
           }, 0);
         } else {

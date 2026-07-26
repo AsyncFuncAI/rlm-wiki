@@ -42,3 +42,14 @@ describe("provider keys UI privacy contract", () => {
     expect(indexHtml).toContain("Ready in this browser");
   });
 });
+
+describe("code surface GitHub connect-first gate", () => {
+  test("Code page requires GitHub connection before run, same as Review", () => {
+    expect(indexHtml).toContain('id="code-github-gate"');
+    expect(indexHtml).toContain('id="code-github-connect"');
+    expect(indexHtml).toContain("/api/github/status");
+    expect(indexHtml).toContain("/api/github/connect");
+    expect(indexHtml).toContain("Connect GitHub before running Code Anything");
+    expect(indexHtml).toContain("Connect GitHub before publishing a pull request");
+  });
+});

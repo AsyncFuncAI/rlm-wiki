@@ -38,11 +38,16 @@ export async function reviewGitHubConnectionStatus(
   try {
     const connected = await listComposioConnectedApps(root, opts);
     const github = connected.items.find((item) => item.slug === "github");
+    const active = Boolean(github && (github.isActive || github.isNoAuth));
     return {
-      connected: Boolean(github && (github.isActive || github.isNoAuth)),
-      provider: github && (github.isActive || github.isNoAuth) ? "github" : "none",
+      connected: active,
+      provider: active ? "github" : "none",
       configured: connected.configured,
-      message: github && !(github.isActive || github.isNoAuth) ? "GitHub is not connected yet." : undefined,
+      message: active
+        ? undefined
+        : github
+          ? "GitHub is not connected yet."
+          : "Connect GitHub before running Code or Review.",
     };
   } catch (error) {
     return {
