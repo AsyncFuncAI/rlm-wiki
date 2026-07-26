@@ -582,12 +582,23 @@ body.provider-keys-open {
   justify-content: space-between;
   gap: 14px;
 }
+.provider-keys-privacy {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--accent, #6ea8fe) 12%);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.provider-keys-privacy strong {
+  color: var(--text);
+  font-weight: 600;
+}
+/* Legacy toggle styles kept inert if old markup appears. */
 .provider-keys-storage {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
+  display: none;
 }
 .provider-keys-storage-label {
   color: var(--text-2);

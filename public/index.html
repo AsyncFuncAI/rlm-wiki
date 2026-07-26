@@ -75,7 +75,7 @@
       <a class="topbar-link topbar-setup-link" href="/capabilities" data-topbar-route="capabilities">Apps</a>
       <!-- Execution settings panel still exists in JS; top nav entry is hidden until the surface is useful again. -->
       <button class="topbar-link topbar-button" id="execution-settings-btn" type="button" hidden>Execution</button>
-      <button class="topbar-link topbar-button" id="provider-keys-btn" type="button">BYOK</button>
+      <button class="topbar-link topbar-button" id="provider-keys-btn" type="button">Keys</button>
       <div class="topbar-model-control" id="topbar-model-control">
         <button class="topbar-runtime" id="topbar-model-trigger" type="button" aria-label="Switch model" aria-haspopup="listbox" aria-expanded="false">
           <span class="topbar-runtime-dot" aria-hidden="true"></span>
@@ -1072,18 +1072,13 @@
   const PROVIDER_ACCESS_BY_PROVIDER = new Map(PROVIDER_ACCESS_SPECS.map((spec) => [spec.provider, spec]));
   const KNOWN_PROVIDER_IDS = new Set([...PROVIDER_ACCESS_BY_PROVIDER.keys(), 'codex']);
   const PROVIDER_SECRET_PREFIX = 'rlm-wiki:provider-secret:';
+  // Legacy key from the old session/device toggle; still read so older session-only
+  // keys keep working. New saves always go to local browser storage only.
   const PROVIDER_SECRET_SCOPE_KEY = 'rlm-wiki:provider-secret-scope';
   let providerKeysDialog = null;
   let providerKeysPreferredProvider = '';
   let providerKeysStatus = { message: '', tone: '' };
   let providerKeyDraftValues = new Map();
-  let providerSecretSaveScope = (() => {
-    try {
-      return localStorage.getItem(PROVIDER_SECRET_SCOPE_KEY) === 'session' ? 'session' : 'device';
-    } catch {
-      return 'device';
-    }
-  })();
 
   function providerSecretStorageKey(key) {
     return `${PROVIDER_SECRET_PREFIX}${key}`;
@@ -1116,6 +1111,7 @@
   }
 
   function getProviderSessionSecret(key) {
+    // Legacy: older UI could store session-only keys here.
     return storageGet(sessionStorage, providerSecretStorageKey(key));
   }
 
@@ -1124,17 +1120,18 @@
   }
 
   function getProviderSecret(key) {
-    return getProviderSessionSecret(key) || getProviderDeviceSecret(key);
+    // Prefer durable browser storage; fall back to any legacy session key.
+    return getProviderDeviceSecret(key) || getProviderSessionSecret(key);
   }
 
-  function setProviderSecret(key, value, scope = providerSecretSaveScope) {
+  function setProviderSecret(key, value) {
     const storageKey = providerSecretStorageKey(key);
+    // Single model: keys live in this browser only (localStorage).
+    // Mirror into sessionStorage so same-tab reads stay consistent.
+    const localSaved = storageSet(localStorage, storageKey, value);
     const sessionSaved = storageSet(sessionStorage, storageKey, value);
-    if (scope === 'device') {
-      return storageSet(localStorage, storageKey, value) && sessionSaved;
-    }
-    storageRemove(localStorage, storageKey);
-    return sessionSaved;
+    try { localStorage.removeItem(PROVIDER_SECRET_SCOPE_KEY); } catch { /* ignore */ }
+    return localSaved && sessionSaved;
   }
 
   function removeProviderSecret(key) {
@@ -1170,19 +1167,8 @@
     return Boolean(spec?.fields.some((field) => getProviderSecret(field.key).trim()));
   }
 
-  function providerRememberedOnDevice(provider) {
-    const spec = PROVIDER_ACCESS_BY_PROVIDER.get(normalizeProviderId(provider));
-    if (!spec || !spec.fields.length) return false;
-    return spec.fields.every((field) => Boolean(getProviderDeviceSecret(field.key).trim()));
-  }
-
-  function providerRememberedCount() {
-    return PROVIDER_ACCESS_SPECS.filter((spec) => providerRememberedOnDevice(spec.provider)).length;
-  }
-
   function providerFieldStorageLabel(key) {
-    if (getProviderDeviceSecret(key).trim()) return 'Remembered on this device (hidden)';
-    if (getProviderSessionSecret(key).trim()) return 'Saved for this session (hidden)';
+    if (getProviderSecret(key).trim()) return 'Saved in this browser · paste to replace';
     return '';
   }
 
@@ -1227,9 +1213,14 @@
     const button = document.getElementById('provider-keys-btn');
     if (!button) return;
     const count = providerSavedCount();
-    button.textContent = count ? `BYOK (${count})` : 'BYOK';
+    button.textContent = count ? `Keys (${count})` : 'Keys';
     button.classList.toggle('keys-set', count > 0);
-    button.setAttribute('aria-label', count ? `${count} BYOK ${count === 1 ? 'provider is' : 'providers are'} available in this browser` : 'Open BYOK');
+    button.setAttribute(
+      'aria-label',
+      count
+        ? `${count} provider ${count === 1 ? 'key is' : 'keys are'} saved in this browser only`
+        : 'Add model API keys (saved in this browser only)',
+    );
   }
 
   function updateTopbarActive(route) {
@@ -1285,21 +1276,17 @@
   function providerStatusForModal(provider) {
     const localReady = providerHasLocalCredentials(provider);
     const setup = providerSetupForProvider(provider);
-    if (localReady) {
-      return providerRememberedOnDevice(provider)
-        ? { label: 'Remembered on device', tone: 'session' }
-        : { label: 'Session key saved', tone: 'session' };
-    }
-    if (setup) return { label: 'Connect or add key', tone: 'needs' };
+    if (localReady) return { label: 'Ready in this browser', tone: 'session' };
+    if (setup) return { label: 'Add key or connect', tone: 'needs' };
     return providerAcceptsKeys(provider)
       ? { label: 'Add key', tone: 'needs' }
-      : { label: 'Unavailable in BYOK-only', tone: 'needs' };
+      : { label: 'Not available', tone: 'needs' };
   }
 
   function providerStatusShortLabel(provider) {
     const status = providerStatusForModal(provider);
-    if (status.tone === 'session') return providerRememberedOnDevice(provider) ? 'device' : 'session';
-    if (status.tone === 'needs') return providerAcceptsKeys(provider) ? 'needed' : 'connect';
+    if (status.tone === 'session') return 'ready';
+    if (status.tone === 'needs') return providerAcceptsKeys(provider) ? 'needed' : '—';
     return status.label;
   }
 
@@ -1363,19 +1350,16 @@
     const selectedSetup = providerSetupForProvider(selectedProvider);
     const selectedHasLocal = providerHasAnyLocalField(selectedProvider);
     const readyCount = providerSavedCount();
-    const deviceCount = providerRememberedCount();
-    const scopeCopy = providerSecretSaveScope === 'device'
-      ? 'remember on this device'
-      : 'clear when the session ends';
-    const saveButtonLabel = providerSecretSaveScope === 'device' ? 'Save to device' : 'Save for session';
     providerKeysDialog.innerHTML = `
       <div class="provider-keys-scrim" data-provider-keys-close></div>
       <section class="provider-keys-panel" role="dialog" aria-modal="true" aria-labelledby="provider-keys-title">
         <div class="provider-keys-head">
           <div>
-            <div class="provider-keys-kicker">Model keys</div>
-            <h2 id="provider-keys-title">BYOK</h2>
-            <p>${escapeHtml(readyCount ? `${readyCount} provider${readyCount === 1 ? '' : 's'} ready · ${deviceCount} remembered on device` : `No keys saved · ${scopeCopy}`)}</p>
+            <div class="provider-keys-kicker">Bring your own keys</div>
+            <h2 id="provider-keys-title">API keys</h2>
+            <p>${escapeHtml(readyCount
+              ? `${readyCount} provider${readyCount === 1 ? '' : 's'} ready in this browser`
+              : 'Paste a key and save. It stays in this browser only.')}</p>
           </div>
           <button class="provider-keys-close" type="button" data-provider-keys-close aria-label="Close">×</button>
         </div>
@@ -1411,25 +1395,23 @@
                 <span></span>${escapeHtml(selectedStatus.label)}
               </span>
             </div>
-            <div class="provider-keys-storage" role="group" aria-label="Where to save new model keys">
-              <span class="provider-keys-storage-label">Save new keys</span>
-              <div class="provider-storage-toggle">
-                <button class="${providerSecretSaveScope === 'session' ? 'active' : ''}" type="button" data-provider-secret-scope="session" aria-pressed="${providerSecretSaveScope === 'session' ? 'true' : 'false'}">Session</button>
-                <button class="${providerSecretSaveScope === 'device' ? 'active' : ''}" type="button" data-provider-secret-scope="device" aria-pressed="${providerSecretSaveScope === 'device' ? 'true' : 'false'}">Device</button>
-              </div>
+            <div class="provider-keys-privacy" role="note">
+              <strong>Local only.</strong>
+              Keys are kept in your browser storage. We do not save them to your account or our database.
+              They are only sent with the run request so your chosen model provider can answer.
             </div>
-            ${selectedSpec?.fields.length ? `<div class="provider-key-fields">${selectedSpec.fields.map(renderProviderField).join('')}</div>` : '<div class="provider-key-empty">Use the provider connection flow for BYOK.</div>'}
+            ${selectedSpec?.fields.length ? `<div class="provider-key-fields">${selectedSpec.fields.map(renderProviderField).join('')}</div>` : '<div class="provider-key-empty">This provider uses a local CLI connection, not a pasted API key.</div>'}
             <div class="provider-key-actions">
               ${selectedSpec?.keyUrl ? `<a class="provider-key-link" href="${escapeHtml(selectedSpec.keyUrl)}" target="_blank" rel="noreferrer">Get key</a>` : ''}
               ${selectedSetup ? `<button class="provider-key-secondary" type="button" data-provider-setup="${escapeHtml(selectedSetup.provider)}">${escapeHtml(selectedSetup.buttonLabel || `Connect ${selectedSpec.shortLabel}`)}</button>` : ''}
               ${selectedSpec?.fields.length ? `<button class="provider-key-secondary" type="button" data-clear-provider="${escapeHtml(selectedProvider)}" ${selectedHasLocal ? '' : 'disabled'}>Clear</button>` : ''}
-              ${selectedSpec?.fields.length ? `<button class="provider-key-primary" type="button" data-save-provider="${escapeHtml(selectedProvider)}">${escapeHtml(saveButtonLabel)}</button>` : ''}
+              ${selectedSpec?.fields.length ? `<button class="provider-key-primary" type="button" data-save-provider="${escapeHtml(selectedProvider)}">Save</button>` : ''}
             </div>
             <div class="provider-keys-message" data-tone="${escapeHtml(tone || '')}">${escapeHtml(message || '')}</div>
           </div>
         </div>
         <div class="provider-keys-foot">
-          <span>Keys stay in this browser and are sent only with runs.</span>
+          <span>Browser-local · not stored on our servers · clear anytime</span>
           <div class="provider-keys-foot-actions">
             <button class="provider-key-secondary" type="button" data-clear-all-providers ${readyCount ? '' : 'disabled'}>Clear all</button>
           </div>
@@ -1449,23 +1431,6 @@
       const target = event.target;
       if (target?.closest?.('[data-provider-keys-close]')) {
         closeProviderKeysDialog();
-        return;
-      }
-      const scopeButton = target?.closest?.('[data-provider-secret-scope]');
-      if (scopeButton) {
-        captureProviderKeyDrafts();
-        const nextScope = scopeButton.dataset.providerSecretScope === 'device' ? 'device' : 'session';
-        providerSecretSaveScope = nextScope;
-        try {
-          localStorage.setItem(PROVIDER_SECRET_SCOPE_KEY, providerSecretSaveScope);
-        } catch { /* ignore */ }
-        providerKeysStatus = {
-          message: nextScope === 'device'
-            ? 'New keys will be remembered on this browser until cleared.'
-            : 'New keys will last for this browser session only.',
-          tone: '',
-        };
-        renderProviderKeysDialog();
         return;
       }
       const providerSelect = target?.closest?.('[data-provider-select]')?.dataset.providerSelect;
@@ -1541,16 +1506,15 @@
         const input = providerKeysDialog?.querySelector(`[data-provider-secret-key="${field.key}"]`);
         const value = input?.value?.trim() || '';
         if (!value) continue;
-        if (setProviderSecret(field.key, value, providerSecretSaveScope)) saved += 1;
+        if (setProviderSecret(field.key, value)) saved += 1;
         else failed = true;
         providerKeyDraftValues.delete(field.key);
       }
     }
-    const savedWhere = providerSecretSaveScope === 'device' ? 'to this device' : 'for this session';
     providerKeysStatus = failed
-      ? { message: `Could not save ${savedWhere}.`, tone: 'error' }
+      ? { message: 'Could not save in this browser (storage may be blocked).', tone: 'error' }
       : saved
-        ? { message: `Saved ${saved} ${saved === 1 ? 'field' : 'fields'} ${savedWhere}.`, tone: 'success' }
+        ? { message: `Saved ${saved} ${saved === 1 ? 'key' : 'keys'} in this browser only.`, tone: 'success' }
         : { message: 'No changes. Empty fields keep existing keys.', tone: '' };
     updateProviderKeysButton();
     renderProviderKeysDialog();
@@ -1569,8 +1533,8 @@
       }
     }
     providerKeysStatus = cleared
-      ? { message: `Cleared ${cleared} ${cleared === 1 ? 'field' : 'fields'} from this browser.`, tone: 'success' }
-      : { message: 'No saved browser keys to clear.', tone: '' };
+      ? { message: `Removed ${cleared} ${cleared === 1 ? 'key' : 'keys'} from this browser.`, tone: 'success' }
+      : { message: 'No browser keys to clear.', tone: '' };
     updateProviderKeysButton();
     renderProviderKeysDialog();
     renderChannelOptions();
@@ -2193,7 +2157,7 @@
     const title = setup?.message || message || `${spec?.shortLabel || 'This model'} needs access before it can run.`;
     const detail = setup?.detail || (providerAcceptsKeys(normalizedProvider)
       ? 'Use a session key or connect the provider, then retry.'
-      : 'This provider is not available in BYOK-only mode.');
+      : 'This provider is not available with browser API keys.');
     return `
       <div class="provider-setup-notice">
         <div class="provider-setup-copy">
@@ -2217,7 +2181,7 @@
 
   function streamErrorMessage(err, fallback = 'Transport error') {
     if (err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED') {
-      return err.message || 'This model needs a BYOK key before it can run.';
+      return err.message || 'This model needs an API key in this browser before it can run.';
     }
     return `${fallback}: ${err?.message || err || 'unknown error'}`;
   }
@@ -2567,8 +2531,8 @@
     const title = ready
       ? `${c.sub} · session key`
       : c.acceptsProviderSecrets
-        ? `Add ${c.label} in BYOK`
-        : 'Unavailable in BYOK-only mode';
+        ? `Add ${c.label} key`
+        : 'Unavailable with browser API keys';
     const accessAttr = !ready ? ` data-provider-access="${escapeHtml(c.provider)}"` : '';
     const chip = ready
       ? '<span class="channel-setup-chip ready">session</span>'
@@ -4331,7 +4295,7 @@
         return;
       }
       tuneButton.disabled = true;
-      setCustomStatus('Tuning with the selected BYOK model...');
+      setCustomStatus('Tuning with the selected model...');
       try {
         const data = await postJSONWithSecrets('/api/wiki/format/tune', { prompt: draft, channel: selectedChannelId });
         wikiStylePrompt = normalizeWikiStylePrompt(data.prompt);
@@ -10655,7 +10619,7 @@ Execution rules:
           card.markError(message, err);
           expandAskProcessCard(card);
           answerStatus.className = 'ask-turn-status error';
-          answerStatus.textContent = err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'BYOK needed' : 'Transport error';
+          answerStatus.textContent = err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error';
           if (selectedAskTurnId === turnState.id) {
             appendAskScanRow(message);
             setAskScanMeta('error');
@@ -12162,7 +12126,7 @@ Execution rules:
           if (reconnectCodeRunStream(err, streamHandlers, { card, statusEl })) return;
           const message = streamErrorMessage(err);
           card.markError(message, err);
-          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'BYOK needed' : 'Transport error');
+          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
           answerContent.className = 'ask-reader-body';
           answerContent.innerHTML = renderErrorBanner(message, err);
           appendAskScanRow(message);
@@ -12358,7 +12322,7 @@ Execution rules:
           if (reconnectCodeRunStream(err, streamHandlers, { card, statusEl })) return;
           const message = streamErrorMessage(err);
           card.markError(message, err);
-          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'BYOK needed' : 'Transport error');
+          setTurnStatus(statusEl, 'error', err?.code === 'MODEL_ACCESS_REQUIRED' || err?.code === 'PROVIDER_SETUP_REQUIRED' ? 'API key needed' : 'Transport error');
           answerContent.className = 'ask-reader-body';
           answerContent.innerHTML = renderErrorBanner(message, err);
           appendAskScanRow(message);

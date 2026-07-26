@@ -16,7 +16,7 @@ describe("rlm-wiki web product surface", () => {
     headers: Array<{ key: string; value: string }>;
   };
 
-  test("product SPA exposes Wiki Ask Code Review and BYOK", async () => {
+  test("product SPA exposes Wiki Ask Code Review and browser-local Keys", async () => {
     const html = await Bun.file(new URL("../public/index.html", import.meta.url)).text();
 
     expect(html).toContain('<title>rlm-wiki</title>');
@@ -25,7 +25,8 @@ describe("rlm-wiki web product surface", () => {
     expect(html).toContain('data-topbar-route="code"');
     expect(html).toContain('data-topbar-route="review"');
     expect(html).toContain('id="provider-keys-btn"');
-    expect(html).toContain(">BYOK<");
+    expect(html).toContain(">Keys<");
+    expect(html).not.toContain(">BYOK<");
     expect(html).toContain('class="hero-video"');
     expect(html).toContain("cloudfront.net");
   });
