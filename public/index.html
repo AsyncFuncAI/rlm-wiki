@@ -1191,6 +1191,20 @@
     return Boolean(providerHasLocalCredentials(channel?.provider));
   }
 
+  /** Prefer a browser-ready channel; never treat a keyless model as the active choice. */
+  function ensureSelectedChannelHasKey() {
+    if (!availableChannels.length) return;
+    const selected = availableChannels.find((c) => c.id === selectedChannelId);
+    if (selected && channelConfiguredForBrowser(selected)) return;
+    const ready = availableChannels.find(channelConfiguredForBrowser);
+    if (ready) {
+      selectedChannelId = ready.id;
+      try { localStorage.setItem(CHANNEL_KEY, selectedChannelId); } catch { /* ignore */ }
+      return;
+    }
+    // No keys at all: keep whatever was selected so the picker still shows a label.
+  }
+
   function providerChannels(provider) {
     try {
       return Array.isArray(availableChannels)
@@ -1709,8 +1723,10 @@
   }
 
   function currentChannel() {
-    return availableChannels.find((c) => c.id === selectedChannelId)
+    ensureSelectedChannelHasKey();
+    return availableChannels.find((c) => c.id === selectedChannelId && channelConfiguredForBrowser(c))
       || availableChannels.find(channelConfiguredForBrowser)
+      || availableChannels.find((c) => c.id === selectedChannelId)
       || availableChannels[0]
       || null;
   }
@@ -1729,9 +1745,17 @@
   }
 
   function syncWikiChannelDefaults() {
-    const fallback = channelIdOrDefault(selectedChannelId);
-    if (!channelById(selectedWikiStructureChannelId)) selectedWikiStructureChannelId = fallback;
-    if (!channelById(selectedWikiPageChannelId)) selectedWikiPageChannelId = fallback;
+    ensureSelectedChannelHasKey();
+    const fallback = (availableChannels.find(channelConfiguredForBrowser)
+      || channelById(selectedChannelId)
+      || availableChannels[0]
+      || null)?.id || selectedChannelId;
+    if (!channelById(selectedWikiStructureChannelId) || !channelConfiguredForBrowser(channelById(selectedWikiStructureChannelId))) {
+      selectedWikiStructureChannelId = fallback;
+    }
+    if (!channelById(selectedWikiPageChannelId) || !channelConfiguredForBrowser(channelById(selectedWikiPageChannelId))) {
+      selectedWikiPageChannelId = fallback;
+    }
   }
 
   function updateTopbarModelLabel() {
@@ -1758,7 +1782,12 @@
   }
 
   function selectChannel(channelId) {
-    if (!channelId || !availableChannels.find((c) => c.id === channelId)) return;
+    const channel = availableChannels.find((c) => c.id === channelId);
+    if (!channel) return;
+    if (!channelConfiguredForBrowser(channel)) {
+      openProviderKeysDialog(channel.provider);
+      return;
+    }
     selectedChannelId = channelId;
     localStorage.setItem(CHANNEL_KEY, selectedChannelId);
     updateTopbarModelLabel();
@@ -2163,7 +2192,7 @@
     const spec = PROVIDER_ACCESS_BY_PROVIDER.get(normalizedProvider);
     const title = setup?.message || message || `${spec?.shortLabel || 'This model'} needs access before it can run.`;
     const detail = setup?.detail || (providerAcceptsKeys(normalizedProvider)
-      ? 'Use a session key or connect the provider, then retry.'
+      ? 'Add a key under Keys, then retry.'
       : 'This provider is not available with browser API keys.');
     return `
       <div class="provider-setup-notice">
@@ -2289,6 +2318,7 @@
   function renderTopbarModelControl() {
     const trigger = document.getElementById('topbar-model-trigger');
     const menu = document.getElementById('topbar-model-menu');
+    ensureSelectedChannelHasKey();
     updateTopbarModelLabel();
     if (!trigger || !menu) return;
     if (!availableChannels.length) {
@@ -2323,6 +2353,7 @@
   }
 
   function renderChannelOptions() {
+    ensureSelectedChannelHasKey();
     updateTopbarModelLabel();
     renderTopbarModelControl();
     const container = document.getElementById('channel-options');
@@ -2335,8 +2366,7 @@
       container.innerHTML = '<span class="channel-hint">no models</span>';
       return;
     }
-    const chosenUsesSessionKey = providerHasLocalCredentials(chosen.provider);
-    const chosenSub = chosenUsesSessionKey ? `${chosen.sub} · session key` : chosen.sub;
+    const chosenReady = channelConfiguredForBrowser(chosen);
     const chosenIcon = providerIconMarkup(channelProviderSpec(chosen), 'channel');
     const channelGroupMarkup = groupedChannelsForPicker(availableChannels).map((group) => `
       <div class="channel-menu-group" role="group" aria-label="${escapeHtml(group.label)}">
@@ -2350,7 +2380,6 @@
           ${chosenIcon}
           <span class="channel-trigger-main">
             <span class="channel-trigger-label">${escapeHtml(chosen.label)}</span>
-            <span class="channel-trigger-sub">${escapeHtml(chosenSub)}</span>
           </span>
           <span class="channel-chevron">⌄</span>
         </button>
@@ -2380,6 +2409,7 @@
         closeChannelMenus();
       });
     });
+    if (!hint) return;
     if (providerSetupState?.status === 'opened') {
       hint.innerHTML = `Setup window opened. Finish connecting ${escapeHtml(providerSetupState.label || 'the provider')}, then retry.`;
       hint.style.color = '#d8d0bd';
@@ -2400,10 +2430,7 @@
         </div>
       `;
       hint.style.color = '';
-    } else if (chosen && providerHasLocalCredentials(chosen.provider)) {
-      hint.innerHTML = 'Using a session key from this browser.';
-      hint.style.color = '#7ee787';
-    } else if (chosen && !channelConfiguredForBrowser(chosen)) {
+    } else if (chosen && !chosenReady) {
       hint.innerHTML = renderProviderAccessNotice(chosen.provider, chosen.setup);
       hint.style.color = '';
     } else {
@@ -2415,13 +2442,14 @@
   function renderWikiChannelPicker(container, selectedId, label, onSelect) {
     if (!container) return;
     syncWikiChannelDefaults();
-    const chosen = channelById(selectedId) || currentChannel();
+    let chosen = channelById(selectedId) || currentChannel();
+    if (chosen && !channelConfiguredForBrowser(chosen)) {
+      chosen = availableChannels.find(channelConfiguredForBrowser) || chosen;
+    }
     if (!chosen) {
       container.innerHTML = '<span class="channel-hint">no models</span>';
       return;
     }
-    const chosenUsesSessionKey = providerHasLocalCredentials(chosen.provider);
-    const chosenSub = chosenUsesSessionKey ? `${chosen.sub} · session key` : chosen.sub;
     const chosenIcon = providerIconMarkup(channelProviderSpec(chosen), 'channel');
     const channelGroupMarkup = groupedChannelsForPicker(availableChannels).map((group) => `
       <div class="channel-menu-group" role="group" aria-label="${escapeHtml(group.label)}">
@@ -2436,7 +2464,6 @@
           ${chosenIcon}
           <span class="channel-trigger-main">
             <span class="channel-trigger-label">${escapeHtml(chosen.label)}</span>
-            <span class="channel-trigger-sub">${escapeHtml(chosenSub)}</span>
           </span>
           <span class="channel-chevron">⌄</span>
         </button>
@@ -2532,28 +2559,25 @@
   }
 
   function channelMenuItemMarkup(c, activeChannelId = selectedChannelId) {
-    const active = c.id === activeChannelId ? ' active' : '';
     const ready = channelConfiguredForBrowser(c);
+    // Only mark active when the selected channel actually has a local key.
+    const active = ready && c.id === activeChannelId ? ' active' : '';
     const disabled = !ready ? ' disabled' : '';
     const title = ready
-      ? `${c.sub} · session key`
+      ? c.label
       : c.acceptsProviderSecrets
-        ? `Add ${c.label} key`
+        ? `Add a ${channelProviderSpec(c).shortLabel || c.provider} key to use this model`
         : 'Unavailable with browser API keys';
-    const accessAttr = !ready ? ` data-provider-access="${escapeHtml(c.provider)}"` : '';
-    const chip = ready
-      ? '<span class="channel-setup-chip ready">session</span>'
-      : c.acceptsProviderSecrets
-        ? '<span class="channel-setup-chip">access</span>'
-        : '<span class="channel-setup-chip unavailable">unavailable</span>';
+    const accessAttr = !ready && c.acceptsProviderSecrets
+      ? ` data-provider-access="${escapeHtml(c.provider)}"`
+      : '';
     return `
-      <button class="channel-menu-item${active}${disabled}" type="button" data-channel="${escapeHtml(c.id)}"${accessAttr} title="${escapeHtml(title)}" role="option" aria-selected="${c.id === activeChannelId ? 'true' : 'false'}">
+      <button class="channel-menu-item${active}${disabled}" type="button" data-channel="${escapeHtml(c.id)}"${accessAttr} title="${escapeHtml(title)}" role="option" aria-selected="${active ? 'true' : 'false'}" ${ready ? '' : 'aria-disabled="true"'}>
         ${providerIconMarkup(channelProviderSpec(c), 'channel')}
         <span class="channel-menu-text">
           <span class="channel-menu-label">${escapeHtml(c.label)}</span>
-          <span class="channel-menu-sub">${escapeHtml(title)}</span>
         </span>
-        ${chip}
+        <span class="channel-check" aria-hidden="true">✓</span>
       </button>
     `;
   }
@@ -9299,13 +9323,14 @@ Execution rules:
       const hint = document.getElementById('ask-code-channel-hint');
       if (!container) return;
       const channelId = askCodeChannelId(turn);
-      const chosen = channelById(channelId) || currentChannel();
+      let chosen = channelById(channelId) || currentChannel();
+      if (chosen && !channelConfiguredForBrowser(chosen)) {
+        chosen = availableChannels.find(channelConfiguredForBrowser) || chosen;
+      }
       if (!chosen) {
         container.innerHTML = '<span class="channel-hint">no models</span>';
         return;
       }
-      const chosenUsesSessionKey = providerHasLocalCredentials(chosen.provider);
-      const chosenSub = chosenUsesSessionKey ? `${chosen.sub} · session key` : chosen.sub;
       const chosenIcon = providerIconMarkup(channelProviderSpec(chosen), 'channel');
       container.innerHTML = `
         <div class="channel-dropdown ask-code-channel-dropdown">
@@ -9313,7 +9338,6 @@ Execution rules:
             ${chosenIcon}
             <span class="channel-trigger-main">
               <span class="channel-trigger-label">${escapeHtml(chosen.label)}</span>
-              <span class="channel-trigger-sub">${escapeHtml(chosenSub)}</span>
             </span>
             <span class="channel-chevron">⌄</span>
           </button>

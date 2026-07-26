@@ -1382,23 +1382,29 @@ body.provider-keys-open {
   border-color: var(--border-2);
 }
 .channel-menu-item.disabled {
-  opacity: 0.45;
+  opacity: 0.38;
   cursor: not-allowed;
+  filter: grayscale(0.35);
 }
 .channel-menu-item.disabled[data-provider-access],
 .channel-menu-item.disabled[data-setup-provider] {
-  opacity: 0.78;
+  /* Still clickable so users can jump to Keys, but clearly not ready. */
   cursor: pointer;
+  opacity: 0.42;
 }
 .channel-menu-item.disabled:hover {
   background: transparent;
   border-color: transparent;
-  color: var(--text-2);
+  color: var(--text-3);
 }
 .channel-menu-item.disabled[data-provider-access]:hover,
 .channel-menu-item.disabled[data-setup-provider]:hover {
-  background: rgba(126, 231, 135, 0.055);
-  border-color: rgba(126, 231, 135, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-2);
+  color: var(--text-2);
+}
+.channel-menu-item.disabled .channel-menu-label {
+  color: var(--text-3);
 }
 .channel-menu-text {
   min-width: 0;
@@ -1432,15 +1438,9 @@ body.provider-keys-open {
 .channel-menu-item.active .channel-check {
   opacity: 1;
 }
+/* Legacy chip styles kept inert; the model picker no longer renders access/session tags. */
 .channel-setup-chip {
-  font-family: var(--pixel);
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  color: #c7f9cc;
-  border: 1px solid rgba(126, 231, 135, 0.3);
-  border-radius: 999px;
-  padding: 3px 7px;
-  background: rgba(126, 231, 135, 0.08);
+  display: none;
 }
 .channel-setup-chip.ready {
   color: #e8eadf;

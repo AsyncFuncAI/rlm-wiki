@@ -53,3 +53,15 @@ describe("code surface GitHub connect-first gate", () => {
     expect(indexHtml).toContain("Connect GitHub before publishing a pull request");
   });
 });
+
+describe("model picker key sync", () => {
+  test("menu items gate on browser keys and drop access/session chips", () => {
+    expect(indexHtml).toContain("function channelConfiguredForBrowser");
+    expect(indexHtml).toContain("function ensureSelectedChannelHasKey");
+    expect(indexHtml).toContain("channelConfiguredForBrowser(c)");
+    expect(indexHtml).not.toContain("channel-setup-chip ready\">session");
+    expect(indexHtml).not.toContain("channel-setup-chip\">access");
+    expect(indexHtml).not.toContain("· session key");
+    expect(indexHtml).not.toContain("Using a session key from this browser");
+  });
+});
