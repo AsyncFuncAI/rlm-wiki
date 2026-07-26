@@ -202,7 +202,7 @@ describe("Grok CLI local CLI adapter", () => {
     ]);
   });
 
-  test("runs Pi Codex through read-only JSON mode with gpt-5.5 and bash for code-graph", () => {
+  test("runs Pi Codex through read-only JSON mode with gpt-5.6-sol and bash for code-graph", () => {
     // bash is required so Pi can curl the live code graph (same path as Codex/Claude/Grok).
     expect(piCodexArgs(undefined, undefined, "ask")).toEqual([
       "--mode",
@@ -211,7 +211,7 @@ describe("Grok CLI local CLI adapter", () => {
       "--provider",
       "openai-codex",
       "--model",
-      "gpt-5.5",
+      "gpt-5.6-sol",
       "--no-session",
       "--tools",
       "read,bash,grep,find,ls",
@@ -812,7 +812,13 @@ describe("Grok CLI local CLI adapter", () => {
       .map((entry) => JSON.stringify(entry))
       .join("\n");
 
-    expect(grokTraceUpdatesToEvents(updates)).toEqual([
+    // durationMs is only present when tool start/complete span at least 1ms, so strip it.
+    const events = grokTraceUpdatesToEvents(updates).map((event) => {
+      if (event.type !== "tool_result") return event;
+      const { durationMs: _durationMs, ...rest } = event;
+      return rest;
+    });
+    expect(events).toEqual([
       {
         type: "tool_use",
         id: "call-1",

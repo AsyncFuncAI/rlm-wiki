@@ -8,7 +8,7 @@
 # Build:   docker build -t rlm-wiki .
 # Run:     docker run --rm -p 3141:3141 -e GEMINI_API_KEY=... rlm-wiki
 
-FROM oven/bun:1.3-slim AS runtime-deps
+FROM oven/bun:1.3.14-slim AS runtime-deps
 
 # System deps:
 #  - git + ca-certificates: JCODE clones target repos
@@ -24,7 +24,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ENV JCODE_INSTALL_DIR=/usr/local/bin
-ARG JCODE_VERSION=v0.11.15
+ARG JCODE_VERSION=v0.58.0
 ARG TARGETARCH
 RUN set -eux; \
     build_arch="${TARGETARCH:-$(uname -m)}"; \
@@ -51,7 +51,6 @@ WORKDIR /app
 # Node deps — copy lockfiles and local file dependencies first for layer caching.
 COPY package.json bun.lock ./
 COPY vendor/rlm-bun ./vendor/rlm-bun
-COPY apps/desktop/package.json ./apps/desktop/package.json
 RUN bun install --frozen-lockfile
 
 FROM deps AS web-build
@@ -72,7 +71,6 @@ WORKDIR /app
 # Runtime deps only. Dev tooling such as Vite is only needed in web-build.
 COPY package.json bun.lock ./
 COPY vendor/rlm-bun ./vendor/rlm-bun
-COPY apps/desktop/package.json ./apps/desktop/package.json
 RUN bun install --frozen-lockfile --production
 
 # Application code — the part that changes most often, so last.
