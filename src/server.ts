@@ -8141,6 +8141,17 @@ export function openDesignAgentEvent(event: Record<string, unknown>): Record<str
     if (kind === "tool-output" || kind === "tool-error") {
       return { type: "tool_result", id, name: tool, output: compactString(event.output || event.error || event.message, 80_000), isError: kind === "tool-error", durationMs: event.durationMs };
     }
+    // Keep status/message agent-logs as agent-log so the Ask UI can clear the
+    // "waiting for first agent event" empty state and show startup progress.
+    if (kind === "status" || kind === "message" || !kind) {
+      return {
+        type: "agent-log",
+        kind: kind || "status",
+        id,
+        message: compactString(event.message, 1000),
+        tool: tool || undefined,
+      };
+    }
     return { type: "status", label: kind || "status", message: compactString(event.message, 1000) };
   }
   if (type === "submit") return { type, answer: compactString(event.answer, 200_000), sources: Array.isArray(event.sources) ? event.sources.slice(0, 50) : [] };

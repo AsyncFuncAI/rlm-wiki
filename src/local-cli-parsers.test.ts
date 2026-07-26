@@ -877,6 +877,14 @@ describe("legacy runtime event normalization", () => {
       durationMs: undefined,
     });
 
+    expect(openDesignAgentEvent({ type: "agent-log", kind: "status", message: "Starting agent in /tmp/repo" })).toEqual({
+      type: "agent-log",
+      kind: "status",
+      id: expect.any(String),
+      message: "Starting agent in /tmp/repo",
+      tool: undefined,
+    });
+
     expect(openDesignAgentEvent({ type: "submit", answer: "Done", sources: ["README.md:1-3"] })).toEqual({
       type: "submit",
       answer: "Done",

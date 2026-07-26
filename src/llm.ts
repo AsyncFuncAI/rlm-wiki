@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { GenerateActionParams, LLMClient, LLMUsage, StreamCallback } from "./llm-core.ts";
 import { parseReasoningAndCode } from "./llm-core.ts";
-import { formatJCodeFailure, jcodeBinary } from "./jcode-errors.ts";
+import { extractJCodeStderrError, formatJCodeFailure, jcodeBinary } from "./jcode-errors.ts";
 import { ensureJCodeModelCacheForRun } from "./jcode-model-cache.ts";
 import { providerSetupInfo, type ProviderSetupInfo } from "./provider-setup.ts";
 import { ensureLocalAnthropicProxyBase } from "./anthropic-openai-proxy.ts";
@@ -363,6 +363,7 @@ class JCodeChannelClient implements LLMClient {
       "--quiet",
       "--provider", this.providerArg,
       "--model", this.model,
+      "--disabled-tools", "swarm",
       "run",
       "--json",
       prompt,
@@ -381,10 +382,14 @@ class JCodeChannelClient implements LLMClient {
       new Response(proc.stdout).text(),
       new Response(proc.stderr).text(),
     ]);
-    if (exitCode !== 0) {
+    const stderrError = extractJCodeStderrError(stderr);
+    const stdoutText = stdout.trim();
+    // jcode 0.58 may print non-fatal MCP noise on stderr while still returning
+    // a valid JSON body. Only treat stderr as fatal when exit != 0 or stdout is empty.
+    if (exitCode !== 0 || (!stdoutText && stderrError)) {
       const failure = formatJCodeFailure({
-        exitCode,
-        stderr,
+        exitCode: exitCode !== 0 ? exitCode : 1,
+        stderr: stderrError || stderr,
         stdout,
         providerArg: this.providerArg,
         bin: jcodeBinary(),
@@ -392,14 +397,24 @@ class JCodeChannelClient implements LLMClient {
       throw new Error(failure.message);
     }
     try {
-      const parsed = JSON.parse(stdout) as { text?: string; usage?: { input_tokens?: number; output_tokens?: number } };
+      const parsed = JSON.parse(stdout) as { text?: string; usage?: { input_tokens?: number; output_tokens?: number }; error?: string };
+      if (parsed.error?.trim()) {
+        throw new Error(parsed.error.trim());
+      }
       const promptTokens = parsed.usage?.input_tokens ?? 0;
       const completionTokens = parsed.usage?.output_tokens ?? 0;
       this.lastUsage = { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens };
-      return parsed.text ?? stdout.trim();
-    } catch {
-      this.lastUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
-      return stdout.trim();
+      const text = (parsed.text ?? "").trim() || stdoutText;
+      if (!text) throw new Error(stderrError || "Local agent returned an empty response.");
+      return text;
+    } catch (error) {
+      // Re-throw intentional failures; only fall through for JSON parse errors.
+      if (error instanceof SyntaxError) {
+        this.lastUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+        if (!stdoutText) throw new Error(stderrError || "Local agent returned an empty response.");
+        return stdoutText;
+      }
+      throw error;
     }
   }
 
@@ -467,17 +482,28 @@ function jcodeRuntimeForChannel(
   switch (channel.provider) {
     case "gemini": {
       if (hasGeminiApiKey(providerSecrets)) {
+        // Prefer jcode's first-class gemini-api provider (v0.58+). Keep the
+        // OpenAI-compatible + local thought-signature proxy path when the
+        // proxy is enabled so multi-turn Gemini tool calls keep working.
+        const useProxy = process.env.RLM_WIKI_DISABLE_GEMINI_PROXY !== "1";
+        if (useProxy) {
+          return {
+            providerArg: "openai-compatible",
+            env: {
+              ...secretEnv,
+              JCODE_OPENAI_COMPAT_API_BASE: geminiOpenAICompatApiBase(),
+              JCODE_OPENAI_COMPAT_API_KEY_NAME: "GEMINI_API_KEY",
+              JCODE_OPENAI_COMPAT_DEFAULT_MODEL: channel.model,
+              JCODE_OPENAI_COMPAT_ENV_FILE: "gemini.env",
+            },
+          };
+        }
         return {
-          providerArg: "openai-compatible",
-          env: {
-            ...secretEnv,
-            JCODE_OPENAI_COMPAT_API_BASE: geminiOpenAICompatApiBase(),
-            JCODE_OPENAI_COMPAT_API_KEY_NAME: "GEMINI_API_KEY",
-            JCODE_OPENAI_COMPAT_DEFAULT_MODEL: channel.model,
-            JCODE_OPENAI_COMPAT_ENV_FILE: "gemini.env",
-          },
+          providerArg: "gemini-api",
+          env: secretEnv,
         };
       }
+      // Native `gemini` is Gemini Code Assist OAuth, not AI Studio API keys.
       return { providerArg: "gemini" };
     }
     case "openai":

@@ -4,7 +4,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { createHash, randomBytes } from "node:crypto";
 import type { LLMClient, LLMUsage } from "./llm-core.ts";
 import { shouldInjectAgentSkills } from "./agent-skill-scope.ts";
-import { formatJCodeFailure, jcodeBinary } from "./jcode-errors.ts";
+import { extractJCodeStderrError, formatJCodeFailure, jcodeBinary } from "./jcode-errors.ts";
 import { ensureJCodeModelCacheForRun } from "./jcode-model-cache.ts";
 import { PROVIDER_SECRET_KEYS } from "./provider-secrets.ts";
 import { normalizeRepoSourcePath } from "./types.ts";
@@ -58,6 +58,8 @@ interface JCodeEventState {
   usage: TokenUsage;
   activeToolId: string;
   thinkingBuffer: string;
+  /** Last fatal NDJSON error from jcode. jcode 0.58+ often exits 0 after type:error. */
+  fatalError: string;
 }
 
 type JCodeSubprocess = {
@@ -179,7 +181,7 @@ export class JCodeAgent {
     const toolInputs = new Map<string, string>();
     let usage: TokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0, calls: 0 };
     let step = 0;
-    let eventState: JCodeEventState = { step, usage, activeToolId: "", thinkingBuffer: "" };
+    let eventState: JCodeEventState = { step, usage, activeToolId: "", thinkingBuffer: "", fatalError: "" };
     let proc: (JCodeSubprocess & { exited: Promise<number>; stdout: ReadableStream<Uint8Array>; stderr: ReadableStream<Uint8Array> }) | null = null;
 
     try {
@@ -192,6 +194,9 @@ export class JCodeAgent {
         "--quiet",
         "--provider", model.providerArg,
         "--model", model.model,
+        // jcode 0.58 ships a broken `swarm` tool schema for some providers;
+        // hide it so chat/agent runs do not fail before the first token.
+        "--disabled-tools", "swarm",
         "-C", prepared.cwd,
         "run",
         "--ndjson",
@@ -274,15 +279,21 @@ export class JCodeAgent {
       if (aborted || signal?.aborted) throw new DOMException("Stopped by user.", "AbortError");
       this.flushThinkingLog(eventState, "Reasoning captured");
       const rawText = textChunks.join("").trim();
-      if (exitCode !== 0) {
+      // jcode 0.58 often reports provider failures as NDJSON {type:"error"} and
+      // still exits 0. Treat those (and empty silent failures) as hard errors.
+      const ndjsonError = eventState.fatalError.trim();
+      const stderrError = extractJCodeStderrError(stderr);
+      if (exitCode !== 0 || ndjsonError || (!rawText && stderrError)) {
         const failure = formatJCodeFailure({
-          exitCode,
-          stderr,
+          exitCode: exitCode !== 0 ? exitCode : 1,
+          stderr: ndjsonError || stderrError || stderr,
           stdout: rawText,
           providerArg: model.providerArg,
           bin: jcodeBinary(),
         });
-        this.emit({ type: "error", error: failure.message, code: failure.code, provider: failure.provider, command: failure.command, sourcePath: failure.sourcePath });
+        if (!ndjsonError) {
+          this.emit({ type: "error", error: failure.message, code: failure.code, provider: failure.provider, command: failure.command, sourcePath: failure.sourcePath });
+        }
         throw new Error(failure.message);
       }
 
@@ -403,6 +414,7 @@ export class JCodeAgent {
       }
     } else if (type === "error") {
       const message = str(event.message) || "Agent reported an error";
+      state.fatalError = message;
       this.emit({ type: "error", error: message });
     }
     return state;

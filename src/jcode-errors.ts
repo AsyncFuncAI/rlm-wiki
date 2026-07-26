@@ -25,12 +25,36 @@ export function formatJCodeFailure(opts: {
   const auth = classifyJCodeAuthFailure(raw, opts.providerArg, opts.bin);
   if (auth) return auth;
 
+  // Prefer the clean stderr/NDJSON error alone when jcode already said what failed.
+  // jcode 0.58 often exits 0 after type:error, so callers may pass exitCode 1 synthetically.
+  if (raw && (opts.exitCode === 0 || opts.exitCode === 1) && !/^The local agent exited/i.test(raw)) {
+    const looksLikeProviderError = /error:|not eligible|api key|not configured|invalid_request|failed|unauthorized|authentication|Please pass a valid/i.test(raw);
+    if (looksLikeProviderError) {
+      return { message: raw.replace(/^Error:\s*/i, "").trim() || raw };
+    }
+  }
+
   return {
     message: [
       `The local agent exited with code ${opts.exitCode}.`,
       raw,
     ].filter(Boolean).join("\n"),
   };
+}
+
+/** Pull a useful error string from jcode stderr when NDJSON omitted type:error. */
+export function extractJCodeStderrError(stderr: string): string {
+  const text = String(stderr || "").trim();
+  if (!text) return "";
+  const errorLine = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => /^error:/i.test(line));
+  if (errorLine) return errorLine.replace(/^error:\s*/i, "").trim() || errorLine;
+  if (/not eligible|api key|not configured|authentication|unauthorized|invalid_request_error|failed/i.test(text)) {
+    return text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean)[0] || text;
+  }
+  return "";
 }
 
 function classifyJCodeAuthFailure(raw: string, providerArg?: string, bin = jcodeBinary()): JCodeFailureDetails | null {

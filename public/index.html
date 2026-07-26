@@ -8020,7 +8020,17 @@
       if (event.phase === 'tool') {
         return;
       }
-      if (event.phase === 'jcode' || event.phase === 'connection') return;
+      // Startup/connection phases used to be fully silent, which left the card
+      // stuck on "waiting for first agent event..." whenever jcode hung or
+      // failed before the first tool/text event. Surface a short startup line
+      // when the transcript is still empty.
+      if (event.phase === 'jcode' || event.phase === 'connection' || event.label === 'status') {
+        const startup = visibleAgentStartupStatus(event.message || event.phase || '', card);
+        if (startup && typeof card.addAgentLog === 'function') {
+          card.addAgentLog({ type: 'agent-log', kind: 'status', message: startup }, { replay });
+        }
+        return;
+      }
       const friendly = friendlyStatusFor(event);
       if (friendly === null) return;
       const msg = friendly || `[${event.phase || 'status'}] ${event.message || ''}`.trim();
