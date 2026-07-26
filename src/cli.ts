@@ -184,7 +184,7 @@ Usage:
   grok-wiki agents   [--rescan]
   grok-wiki list
   grok-wiki serve    [--port 3141] [--host 127.0.0.1]
-  grok-wiki worker   [--once]
+  grok-wiki worker   [--once] [--job JOB_ID]
   grok-wiki sidecar  --token TOKEN [--port 0] [--host 127.0.0.1] [--stamp PATH]
 
 Sources:
@@ -923,7 +923,11 @@ async function cmdServe(flags: Record<string, FlagValue>, deps: CliDeps): Promis
 }
 
 async function cmdWorker(flags: Record<string, FlagValue>, deps: CliDeps): Promise<void> {
-  await deps.startWorker({ once: flagBool(flags, "once") });
+  const jobId = flagString(flags, "job") || process.env.RLM_WIKI_JOB_ID || "";
+  await deps.startWorker({
+    once: flagBool(flags, "once") || Boolean(jobId),
+    jobId: jobId || undefined,
+  });
 }
 
 async function cmdSidecar(flags: Record<string, FlagValue>, deps: CliDeps): Promise<void> {

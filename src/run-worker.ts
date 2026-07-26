@@ -32,6 +32,8 @@ interface WorkerOptions {
   once?: boolean;
   pollMs?: number;
   workerId?: string;
+  /** Exact job id to claim once (Unikraft one-shot dispatch). */
+  jobId?: string;
 }
 
 interface PublicRepoRef {
@@ -127,12 +129,33 @@ export async function startWorker(opts: WorkerOptions = {}): Promise<void> {
   const workerId = (opts.workerId || process.env.RLM_WIKI_WORKER_ID || `worker-${crypto.randomUUID().slice(0, 8)}`).slice(0, 80);
   const pollMs = opts.pollMs ?? DEFAULT_WORKER_POLL_MS;
   const startedAt = new Date().toISOString();
+  const exactJobId = (opts.jobId || process.env.RLM_WIKI_JOB_ID || "").trim();
 
   console.log(`rlm-wiki worker starting as ${workerId}`);
   console.log(`  Storage: ${baseStore.root}`);
   console.log(`  Queue:   ${jobQueue.mode}`);
   console.log(`  Secrets: ${secretGrantStore.mode}`);
-  startWorkerHealthServer({ jobQueue, secretGrantStore, workerId, pollMs, startedAt, once: opts.once === true });
+  if (exactJobId) console.log(`  Job:     ${exactJobId}`);
+  startWorkerHealthServer({ jobQueue, secretGrantStore, workerId, pollMs, startedAt, once: opts.once === true || Boolean(exactJobId) });
+
+  // One-shot exact claim path used by Unikraft microVMs (Fable/Claudex: never claimNext in the VM).
+  if (exactJobId) {
+    const job = await jobQueue.claim(exactJobId, {
+      workerId,
+      lockMs: DEFAULT_WORKER_LOCK_MS,
+    });
+    if (!job) {
+      throw new Error(`Could not claim assigned job ${exactJobId}`);
+    }
+    await executeClaimedJob({
+      baseStore,
+      jobQueue,
+      secretGrantStore,
+      workerId,
+      job,
+    });
+    return;
+  }
 
   while (true) {
     const job = await jobQueue.claimNext({
@@ -232,13 +255,23 @@ async function executeClaimedJob(args: {
     return;
   }
 
+  const abort = new AbortController();
   const heartbeat = setInterval(() => {
-    args.jobQueue.heartbeat(args.job.id, args.workerId, DEFAULT_WORKER_LOCK_MS).catch((error) => {
-      console.warn(`[worker] heartbeat failed for ${args.job.id}:`, error instanceof Error ? error.message : error);
-    });
+    args.jobQueue.heartbeat(args.job.id, args.workerId, DEFAULT_WORKER_LOCK_MS)
+      .then((row) => {
+        // null means the job is no longer running under this worker (cancel / reclaim).
+        if (!row && !abort.signal.aborted) {
+          console.warn(`[worker] heartbeat lost ownership of ${args.job.id}; aborting`);
+          abort.abort();
+        }
+      })
+      .catch((error) => {
+        console.warn(`[worker] heartbeat failed for ${args.job.id}:`, error instanceof Error ? error.message : error);
+      });
   }, Math.max(5_000, Math.floor(DEFAULT_WORKER_LOCK_MS / 3)));
 
   try {
+    if (abort.signal.aborted) throw new DOMException("Stopped by cancel.", "AbortError");
     if (args.job.type === "run.code") {
       await executeCodeJob({
         baseRoot: args.baseStore.root,
@@ -247,6 +280,7 @@ async function executeClaimedJob(args: {
         ownerUserId: args.job.ownerUserId,
         run,
         payload: args.job.payload,
+        signal: abort.signal,
       });
     } else if (args.job.type === "run.wiki_generate") {
       await executeWikiJob({
@@ -256,6 +290,7 @@ async function executeClaimedJob(args: {
         ownerUserId: args.job.ownerUserId,
         run,
         payload: args.job.payload,
+        signal: abort.signal,
       });
     } else {
       throw new Error(`Unsupported job type: ${args.job.type}`);
@@ -264,10 +299,18 @@ async function executeClaimedJob(args: {
     await revokeGrantFromPayload(args.secretGrantStore, args.job.ownerUserId, args.job.payload, "worker completed");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const canceled = abort.signal.aborted || (error instanceof Error && error.name === "AbortError");
     await productStore.appendEvent(run.id, "error", { message }).catch(() => null);
-    await productStore.updateRun(run.id, { status: "error", error: message }).catch(() => null);
-    await args.jobQueue.fail(args.job.id, args.workerId, message).catch(() => null);
-    await revokeGrantFromPayload(args.secretGrantStore, args.job.ownerUserId, args.job.payload, "worker failed").catch(() => false);
+    await productStore.updateRun(run.id, {
+      status: canceled ? "canceled" : "error",
+      error: message,
+    }).catch(() => null);
+    if (canceled) {
+      await args.jobQueue.cancel(args.job.id, message).catch(() => null);
+    } else {
+      await args.jobQueue.fail(args.job.id, args.workerId, message).catch(() => null);
+    }
+    await revokeGrantFromPayload(args.secretGrantStore, args.job.ownerUserId, args.job.payload, canceled ? "worker canceled" : "worker failed").catch(() => false);
   } finally {
     clearInterval(heartbeat);
   }
@@ -280,6 +323,7 @@ async function executeCodeJob(args: {
   ownerUserId: string;
   run: ProductRun;
   payload: Record<string, unknown>;
+  signal?: AbortSignal;
 }): Promise<void> {
   const payload = normalizeCodePayload(args.payload);
   const store = new WikiStore(join(args.baseRoot, "users", args.ownerUserId));
@@ -359,6 +403,7 @@ async function executeCodeJob(args: {
     skillSources: runtimeCapabilities.skillSources,
     providerSecrets,
     refs: payload.refs,
+    signal: args.signal,
     onEvent: (ev) => {
       appendRunEvent(args.productStore, args.run.id, ev.type, withTurnId(payload.turnId, ev)).catch((error) => {
         console.warn(`[worker] failed to append ${ev.type} for ${args.run.id}:`, error instanceof Error ? error.message : error);
@@ -399,6 +444,7 @@ async function executeWikiJob(args: {
   ownerUserId: string;
   run: ProductRun;
   payload: Record<string, unknown>;
+  signal?: AbortSignal;
 }): Promise<void> {
   const payload = normalizeWikiPayload(args.payload);
   const store = new WikiStore(join(args.baseRoot, "users", args.ownerUserId));
@@ -454,6 +500,7 @@ async function executeWikiJob(args: {
       stylePrompt: payload.stylePrompt,
       languages: payload.languages,
       knowledgeProfile: payload.knowledgeProfile,
+      signal: args.signal,
       codeKb: {
         enabled: () => codeGraphEnabledForWikiWorker(payload.codeGraphEnabled),
       },

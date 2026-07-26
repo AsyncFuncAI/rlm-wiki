@@ -154,6 +154,11 @@ import {
   type SecretGrantStore,
 } from "./secret-grants.ts";
 import {
+  dispatchJobToUnikraft,
+  unikraftDispatchConfig,
+  unikraftDispatchEnabledForJobType,
+} from "./unikraft-compute.ts";
+import {
   addComposioToolkits,
   addGithubSkill,
   addOrUpdateMCPServer,
@@ -3290,7 +3295,18 @@ function runResponse(
 
   if (mode === "worker" && isExternalWorkerPayload(opts.payload)) {
     queueMicrotask(() => {
-      enqueueRunJob(jobQueue, secretGrantStore, run, ownerUserId, opts).catch(async (error) => {
+      enqueueRunJob(jobQueue, secretGrantStore, run, ownerUserId, opts)
+        .then(async ({ job, grant }) => {
+          // If enqueue created a grant but dispatch+worker both die, grant TTL still expires.
+          void grant;
+          await maybeDispatchJobToUnikraft({
+            job,
+            run,
+            ownerUserId,
+            productStore,
+          });
+        })
+        .catch(async (error) => {
         const message = error instanceof Error ? error.message : String(error);
         console.warn(`[worker-mode] could not enqueue run ${run.id}:`, message);
         try {
@@ -3372,8 +3388,13 @@ async function enqueueRunJob(
       providerSecrets: opts.providerSecrets,
     })
     : null;
+  const jobType = `run.${run.kind}`;
+  // Ephemeral Unikraft VMs make mid-job death routine; allow one reclaim on lock expiry.
+  const maxAttempts = unikraftDispatchEnabledForJobType(jobType)
+    ? Math.max(2, unikraftDispatchConfig().maxAttempts)
+    : 1;
   const job = await jobQueue.enqueue({
-    type: `run.${run.kind}`,
+    type: jobType,
     ownerUserId,
     runId: run.id,
     payload: {
@@ -3384,9 +3405,58 @@ async function enqueueRunJob(
       input: run.input,
       ...(grant ? { secretGrantId: grant.id, secretGrantExpiresAt: grant.expiresAt } : {}),
     },
-    maxAttempts: 1,
+    maxAttempts,
   });
   return { job, grant };
+}
+
+/**
+ * After a job is enqueued for external workers, optionally spawn a Unikraft
+ * one-shot microVM that claims that exact job id. Failures fall back to a
+ * Railway worker reclaim (maxAttempts >= 2).
+ */
+async function maybeDispatchJobToUnikraft(args: {
+  job: JobRecord;
+  run: ProductRun;
+  ownerUserId: string;
+  productStore: ProductStore;
+}): Promise<void> {
+  if (!unikraftDispatchEnabledForJobType(args.job.type)) return;
+  try {
+    const result = await dispatchJobToUnikraft({
+      jobId: args.job.id,
+      jobType: args.job.type,
+      runId: args.run.id,
+      ownerUserId: args.ownerUserId,
+    });
+    if (!result.dispatched) {
+      console.log(
+        `[unikraft] skip dispatch job=${args.job.id} type=${args.job.type} reason=${result.skippedReason || "unknown"}`,
+      );
+      return;
+    }
+    const instance = result.instance;
+    console.log(
+      `[unikraft] dispatched job=${args.job.id} type=${args.job.type} instance=${instance?.name || instance?.uuid || "?"}`,
+    );
+    await args.productStore.appendEvent(args.run.id, "status", {
+      phase: "compute",
+      message: `Dispatched to Unikraft sandbox${instance?.name ? ` (${instance.name})` : ""}.`,
+      unikraft: {
+        instanceName: instance?.name || null,
+        instanceUuid: instance?.uuid || null,
+        metro: instance?.metro || null,
+        jobId: args.job.id,
+      },
+    }).catch(() => null);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[unikraft] dispatch failed for job ${args.job.id}:`, message);
+    await args.productStore.appendEvent(args.run.id, "status", {
+      phase: "compute",
+      message: `Unikraft dispatch failed; waiting for Railway worker reclaim. ${message}`,
+    }).catch(() => null);
+  }
 }
 
 async function runQueuedHandler(
@@ -4610,6 +4680,15 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
 
         const run = await productStore.getRun(id);
         if (!run) return jsonResponse({ error: "not found" }, 404);
+
+        // Cancel any queue jobs first so remote workers lose heartbeat ownership
+        // (Fable/Claudex: null heartbeat aborts the Unikraft/Railway worker).
+        const jobs = await baseJobQueue.listByRun(id).catch(() => []);
+        for (const job of jobs) {
+          if (job.status === "queued" || job.status === "running") {
+            await baseJobQueue.cancel(job.id, USER_STOP_MESSAGE).catch(() => null);
+          }
+        }
 
         const active = activeRunControllers.get(id);
         if (active) {

@@ -600,6 +600,13 @@ function jcodeEnv(model: JCodeModelClient): Record<string, string> {
 function jcodeBaseEnv(): Record<string, string> {
   const env: Record<string, string> = { ...process.env } as Record<string, string>;
   for (const key of PROVIDER_SECRET_KEYS) delete env[key];
+  // Control-plane secrets must never reach the agent process (Claudex review).
+  delete env.UNIKRAFT_API_KEY;
+  delete env.UKC_TOKEN;
+  delete env.KRAFTCLOUD_TOKEN;
+  delete env.RLM_WIKI_SECRET_GRANT_KEY;
+  delete env.DATABASE_URL;
+  delete env.DATABASE_PUBLIC_URL;
   delete env.DEEPSEEK_API_KEYS;
   for (const key of Object.keys(env)) {
     if (/^DEEPSEEK_API_KEY_\d+$/.test(key)) delete env[key];
