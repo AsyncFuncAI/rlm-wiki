@@ -1,12 +1,12 @@
 # rlm-wiki
 
-I built this on nights and weekends. Not a product launch. Just a tool I wanted for myself, and then decided to leave open so other people could use it too.
+I built this on nights and weekends for myself. After it started working, I left the repo open.
 
-The idea is simple: paste a GitHub repo, let an agent actually open the code, and get something useful back — a wiki, an answer, a patch, a PR review. No embedding index. No “we trained a graph on your monorepo.” The agent clones the repo and looks around, the way you would if you had a free afternoon and a lot of patience.
+Paste a GitHub URL. An agent clones the repo, opens files, follows imports and callers, and comes back with a wiki, an answer, a patch, or a PR review. It works from the tree in front of it — the same slow way you would if you had an afternoon free and enough patience to click around.
 
-I hit my peak of wanting this when I was tired of opening five tabs, grepping by hand, and still not trusting the summary. So I wrote a small app that keeps the loop honest: read the tree, follow callers, write only what it can point at.
+I started writing it after too many evenings of five tabs, a half-remembered grep, and a summary I still didn’t trust. The loop I wanted was smaller: read the tree, follow the callers, only write claims you can point at.
 
-If that sounds useful, try it. If it doesn’t, no hard feelings.
+You can try it if that sounds useful.
 
 ## What it looks like
 
@@ -37,7 +37,7 @@ Wiki is the same family: paste a repo, get pages written from the real tree.
 - **Code** — give it a task, get a patch from a temporary worktree  
 - **Review** — pull request review / investigation  
 
-Bring your own model keys. They stay in your browser. We don’t put them in a vault on our servers. They’re only sent with the run so the model can answer.
+Bring your own model keys. They live in your browser storage and go out only with the run request, so the model can answer.
 
 Live demo (when I’m keeping it up): [rlmwiki.deepascii.com](https://rlmwiki.deepascii.com)
 
@@ -89,7 +89,7 @@ You don’t have to care about that on day one. Pick a model, paste a repo, pres
 
 Open **Keys** in the top bar. Paste a provider key. Save.
 
-That’s it. Local browser storage only. Clear anytime. Server-side env keys can still help for local CLI experiments; the web app itself expects you to bring keys in the browser.
+Local browser storage only. Clear anytime. Env vars on the machine still help for CLI experiments; the web UI expects keys from the Keys panel.
 
 ## Layout
 
@@ -125,18 +125,18 @@ docker build -t rlm-wiki .
 docker run --rm -p 3141:3141 rlm-wiki
 ```
 
-## Honest limits
+## Limits
 
-- GitHub-first. Not every forge.  
-- Agent mode wants JCODE installed where the server runs.  
-- Page failures don’t always stop the whole wiki run; a page can error and the rest continue.  
-- This is a hobby project. Expect sharp edges. PRs and issues are welcome when something is truly broken.
+- GitHub is the main path.  
+- Agent mode needs JCODE on the machine that runs the server.  
+- A single wiki page can fail while the rest of the run keeps going.  
+- Hobby project. Sharp edges are normal. Issues and PRs help when something is broken for real.
 
-## Why share it
+## Why the repo is open
 
-I kept wanting a quieter loop: less magic, more “show me the file.” Building that for myself was enough reason. Opening the repo is the second step — so you can fork it, host it, or take one idea and put it somewhere better.
+I wanted a quieter coding loop — one that ends with a file path, not a vibe. Building that for myself was enough. Putting the code here is so you can fork it, host it, or steal one idea and put it somewhere better.
 
-If you make something with it, I’d like to hear about it.
+If you make something with it, tell me.
 
 —
-MIT license. Use it kindly.
+MIT. Use it kindly.
