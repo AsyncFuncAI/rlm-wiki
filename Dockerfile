@@ -24,7 +24,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 ENV JCODE_INSTALL_DIR=/usr/local/bin
-ARG JCODE_VERSION=v0.58.0
+# Pin to v0.11.15: jcode v0.58 hangs on Gemini API-key Agent runs after the
+# first NDJSON start event (no stream/error), which freezes Ask Agent UI.
+ARG JCODE_VERSION=v0.11.15
 ARG TARGETARCH
 RUN set -eux; \
     build_arch="${TARGETARCH:-$(uname -m)}"; \

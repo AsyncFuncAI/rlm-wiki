@@ -194,9 +194,6 @@ export class JCodeAgent {
         "--quiet",
         "--provider", model.providerArg,
         "--model", model.model,
-        // jcode 0.58 ships a broken `swarm` tool schema for some providers;
-        // hide it so chat/agent runs do not fail before the first token.
-        "--disabled-tools", "swarm",
         "-C", prepared.cwd,
         "run",
         "--ndjson",

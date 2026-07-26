@@ -363,7 +363,6 @@ class JCodeChannelClient implements LLMClient {
       "--quiet",
       "--provider", this.providerArg,
       "--model", this.model,
-      "--disabled-tools", "swarm",
       "run",
       "--json",
       prompt,
@@ -482,25 +481,17 @@ function jcodeRuntimeForChannel(
   switch (channel.provider) {
     case "gemini": {
       if (hasGeminiApiKey(providerSecrets)) {
-        // Prefer jcode's first-class gemini-api provider (v0.58+). Keep the
-        // OpenAI-compatible + local thought-signature proxy path when the
-        // proxy is enabled so multi-turn Gemini tool calls keep working.
-        const useProxy = process.env.RLM_WIKI_DISABLE_GEMINI_PROXY !== "1";
-        if (useProxy) {
-          return {
-            providerArg: "openai-compatible",
-            env: {
-              ...secretEnv,
-              JCODE_OPENAI_COMPAT_API_BASE: geminiOpenAICompatApiBase(),
-              JCODE_OPENAI_COMPAT_API_KEY_NAME: "GEMINI_API_KEY",
-              JCODE_OPENAI_COMPAT_DEFAULT_MODEL: channel.model,
-              JCODE_OPENAI_COMPAT_ENV_FILE: "gemini.env",
-            },
-          };
-        }
+        // Gemini API keys run through Google's OpenAI-compatible endpoint
+        // (optionally via the local thought-signature proxy for tool loops).
         return {
-          providerArg: "gemini-api",
-          env: secretEnv,
+          providerArg: "openai-compatible",
+          env: {
+            ...secretEnv,
+            JCODE_OPENAI_COMPAT_API_BASE: geminiOpenAICompatApiBase(),
+            JCODE_OPENAI_COMPAT_API_KEY_NAME: "GEMINI_API_KEY",
+            JCODE_OPENAI_COMPAT_DEFAULT_MODEL: channel.model,
+            JCODE_OPENAI_COMPAT_ENV_FILE: "gemini.env",
+          },
         };
       }
       // Native `gemini` is Gemini Code Assist OAuth, not AI Studio API keys.
