@@ -215,9 +215,14 @@
   border: 0;
 }
 
-html,
-body,
-#app {
+/*
+ * Public share shells (public-wiki / public-ask) need a fixed viewport + internal
+ * scroll. Scope this tightly: Vite builds with cssCodeSplit:false, so unscoped
+ * html/body rules would also lock the product SPA (/wikis, /ask, /code, …).
+ */
+html:has(body.public-wiki-body),
+body.public-wiki-body,
+body.public-wiki-body #app {
   width: 100%;
   height: 100%;
   margin: 0;
