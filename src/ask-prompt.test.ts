@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { buildWorkspaceChatPrompt } from "./chat.ts";
+import { askAnswerQualityIssue, buildAskStrictRetryPrompt, buildWorkspaceChatPrompt } from "./chat.ts";
 import { shouldInjectAgentSkills } from "./agent-skill-scope.ts";
 import { buildLocalCliPrompt } from "./local-cli-sidecar.ts";
 import { buildChatPrompt } from "./prompts/chat.ts";
+import { preludeForRuntime } from "./prompts/prelude.ts";
 import { compactAskHistory } from "./prompts/ask-history.ts";
+
+const AGENT_FINAL_OUTPUT =
+  "Return the complete user-facing answer inside one `<ANSWER>...</ANSWER>` block as non-empty Markdown with concise source citations for representative evidence.";
 
 describe("ask prompts", () => {
   test("native single-repo ask prompt stays compact and citation-focused", () => {
@@ -21,12 +25,29 @@ describe("ask prompts", () => {
     expect(prompt).toContain("do not append `Sources:` to every sentence or every bullet");
     expect(prompt).toContain("Use the full repo-relative path found by search/read");
     expect(prompt).toContain("Do not cite file-line references as bare text or inline code");
-    expect(prompt).toContain("Return the complete answer as plain Markdown with concise source citations for representative evidence.");
-    expect(prompt).not.toContain("<ANSWER>");
-    expect(prompt).not.toContain("SUBMIT");
+    expect(prompt).toContain(AGENT_FINAL_OUTPUT);
+    expect(prompt).toContain("A tools-only transcript with no final answer is a failed task");
+    expect(prompt).toContain("<ANSWER>");
+    expect(prompt).toContain("Do not call SUBMIT");
+    expect(prompt).not.toContain("SUBMIT({");
     expect(prompt).not.toContain("## How To Work");
     expect(prompt).not.toContain("Start with the direct answer.");
     expect(prompt).not.toContain("Budget:");
+  });
+
+  test("agent runtime ask prompt requires a non-empty <ANSWER> block", () => {
+    const prompt = buildChatPrompt({
+      owner: "owner",
+      repo: "repo",
+      question: "Where is auth handled?",
+      askMode: "deep",
+      runtime: "agent",
+    });
+
+    expect(prompt).toContain(AGENT_FINAL_OUTPUT);
+    expect(prompt).toContain("Do not call SUBMIT");
+    expect(prompt).toContain("tools-only transcript");
+    expect(prompt).not.toContain("SUBMIT({");
   });
 
   test("single-repo ask prompt names scoped GitHub tree paths", () => {
@@ -79,9 +100,11 @@ describe("ask prompts", () => {
     expect(prompt).toContain("do not append `Sources:` to every sentence or every bullet");
     expect(prompt).toContain("Use the full repo-relative path found by search/read");
     expect(prompt).toContain("Do not cite file-line references as bare text or inline code");
-    expect(prompt).toContain("Return the complete answer as plain Markdown with concise source citations for representative evidence.");
-    expect(prompt).not.toContain("<ANSWER>");
-    expect(prompt).not.toContain("SUBMIT");
+    expect(prompt).toContain(AGENT_FINAL_OUTPUT);
+    expect(prompt).toContain("A tools-only transcript with no final answer is a failed task");
+    expect(prompt).toContain("<ANSWER>");
+    expect(prompt).toContain("Do not call SUBMIT");
+    expect(prompt).not.toContain("SUBMIT({");
     expect(prompt).not.toContain("## How To Work");
     expect(prompt).not.toContain("Start with the direct answer.");
     expect(prompt).not.toContain("local-cli v1 has no MCP integration");
@@ -233,5 +256,47 @@ describe("clarify interview context injection", () => {
     const blank = buildChatPrompt({ owner: "o", repo: "r", question: "q?", runtime: "local-cli", clarifyContext: "   " });
     expect(none).not.toContain("## Clarified intent");
     expect(blank).not.toContain("## Clarified intent");
+  });
+});
+
+describe("agent empty-answer quality gate", () => {
+  test("agent prelude forbids tools-only endings", () => {
+    const jcode = preludeForRuntime("gemini-3.1-pro-preview", "deep", "agent");
+    const local = preludeForRuntime("gemini-3.1-pro-preview", "deep", "local-cli");
+    expect(jcode).toContain("Never finish with tools only");
+    expect(jcode).toContain("<ANSWER>");
+    expect(local).toContain("Never finish with tools only");
+    expect(local).toContain("<ANSWER>");
+    expect(local).toContain("non-empty final answer");
+  });
+
+  test("empty or thin agent answers are rejected", () => {
+    expect(askAnswerQualityIssue("Where is auth?", "", [], "deep", "repo", "agent")).toBe(
+      "the Ask answer was empty or too thin",
+    );
+    expect(askAnswerQualityIssue("Where is auth?", "Too short.", [], "deep", "repo", "agent")).toBe(
+      "the Ask answer was empty or too thin",
+    );
+  });
+
+  test("substantive agent answers skip rlm-only citation gates", () => {
+    const body =
+      "Auth is handled in the middleware layer. The session cookie is verified before handlers run, and unauthenticated requests are rejected with 401. This path is stable and used by the API and UI.";
+    expect(askAnswerQualityIssue("Where is auth?", body, [], "deep", "repo", "agent")).toBeNull();
+    expect(askAnswerQualityIssue("Where is auth?", body, [], "deep", "repo", "local-cli")).toBeNull();
+  });
+
+  test("agent strict retry requires <ANSWER> and forbids SUBMIT", () => {
+    const retry = buildAskStrictRetryPrompt("# Ask Task\nquestion", "the Ask answer was empty or too thin", "agent");
+    expect(retry).toContain("## STRICT RETRY REPAIR");
+    expect(retry).toContain("<ANSWER>...</ANSWER>");
+    expect(retry).toContain("Do not end after tools only");
+    expect(retry).toContain("Do not call SUBMIT");
+    expect(retry).not.toContain("Call SUBMIT({ sources })");
+  });
+
+  test("rlm strict retry still requires SUBMIT", () => {
+    const retry = buildAskStrictRetryPrompt("# Ask Task\nquestion", "the Ask answer was empty or too thin", "rlm");
+    expect(retry).toContain("Call SUBMIT({ sources })");
   });
 });

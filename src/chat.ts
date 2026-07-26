@@ -128,11 +128,11 @@ export async function askRepo(
 
   try {
     const first = normalizeAskRunResult(await runAttempt(prompt));
-    const firstIssue = runtime === "rlm" ? askAnswerQualityIssue(question, first.answer, first.sources, askMode, askIntent) : null;
+    const firstIssue = askAnswerQualityIssue(question, first.answer, first.sources, askMode, askIntent, runtime);
     const result = firstIssue
-      ? normalizeAskRunResult(await runAttempt(buildAskStrictRetryPrompt(prompt, firstIssue)))
+      ? normalizeAskRunResult(await runAttempt(buildAskStrictRetryPrompt(prompt, firstIssue, runtime)))
       : first;
-    const finalIssue = runtime === "rlm" ? askAnswerQualityIssue(question, result.answer, result.sources, askMode, askIntent) : null;
+    const finalIssue = askAnswerQualityIssue(question, result.answer, result.sources, askMode, askIntent, runtime);
     if (firstIssue) emitAskRetryStatus(emit, firstIssue, finalIssue);
     const { answer, sources } = result;
     emit({ type: "answer", answer, sources });
@@ -237,11 +237,11 @@ export async function askWorkspace(
 
   try {
     const first = normalizeAskRunResult(await runAttempt(prompt));
-    const firstIssue = runtime === "rlm" ? askAnswerQualityIssue(question, first.answer, first.sources, askMode, askIntent) : null;
+    const firstIssue = askAnswerQualityIssue(question, first.answer, first.sources, askMode, askIntent, runtime);
     const result = firstIssue
-      ? normalizeAskRunResult(await runAttempt(buildAskStrictRetryPrompt(prompt, firstIssue)))
+      ? normalizeAskRunResult(await runAttempt(buildAskStrictRetryPrompt(prompt, firstIssue, runtime)))
       : first;
-    const finalIssue = runtime === "rlm" ? askAnswerQualityIssue(question, result.answer, result.sources, askMode, askIntent) : null;
+    const finalIssue = askAnswerQualityIssue(question, result.answer, result.sources, askMode, askIntent, runtime);
     if (firstIssue) emitAskRetryStatus(emit, firstIssue, finalIssue);
     const { answer, sources } = result;
     emit({ type: "answer", answer, sources });
@@ -266,12 +266,14 @@ function normalizeAskRunResult(result: { answer: string; sources: string[] }): {
   };
 }
 
-function askAnswerQualityIssue(
+/** Exported for unit tests covering Agent empty-answer retries. */
+export function askAnswerQualityIssue(
   question: string,
   answer: string,
   sources: string[],
   askMode: AskMode,
   askIntent: AskIntent = "repo",
+  runtime: AgentRuntime = "rlm",
 ): string | null {
   const text = answer.trim();
   if (text.length < 80) return "the Ask answer was empty or too thin";
@@ -282,6 +284,10 @@ function askAnswerQualityIssue(
     return "the Ask answer looked like unfinished exploration instead of final user-facing markdown";
   }
   if (looksLikePlaceholderAskAnswer(text)) return "the Ask answer looked like a placeholder";
+
+  // Agent / local-cli: only gate structural emptiness and unfinished/placeholder
+  // answers. Citation depth stays advisory via the prompt (avoid retry churn).
+  if (runtime !== "rlm") return null;
 
   const requiresEvidence = requiresAskEvidence(question, text);
   if (askIntent === "docs-inline") return null;
@@ -366,7 +372,27 @@ function countAskLineCitations(text: string): number {
   return matches?.length ?? 0;
 }
 
-function buildAskStrictRetryPrompt(prompt: string, issue: string): string {
+/** Exported for unit tests covering Agent empty-answer retries. */
+export function buildAskStrictRetryPrompt(
+  prompt: string,
+  issue: string,
+  runtime: AgentRuntime = "rlm",
+): string {
+  if (runtime !== "rlm") {
+    return `${prompt}
+
+## STRICT RETRY REPAIR
+The previous Ask attempt was rejected because ${issue}.
+
+This attempt must repair the final-answer contract:
+- Do not end after tools only. Exploration notes, planning text, or an empty body are not answers.
+- Write the full user-facing markdown inside <ANSWER>...</ANSWER> only after you have enough evidence.
+- The <ANSWER> body must be non-empty substantive Markdown that directly answers the question.
+- Include exact file:line citations in the prose for every implementation claim when evidence is available.
+- Do not call SUBMIT.
+- If a path cannot be found, show the search evidence briefly in the answer and cite the closest verified files instead of guessing.`;
+  }
+
   return `${prompt}
 
 ## STRICT RETRY REPAIR
@@ -531,7 +557,7 @@ Some repositories are scoped to a folder path. Treat each listed scope as that r
     ? docsInline
       ? "Return the complete markdown answer inside one `<ANSWER>...</ANSWER>` block. If you answered from Documentation context only, call `SUBMIT({ sources: [] })` after the answer. If you inspected repository files, include representative cited paths in `SUBMIT({ sources: [...] })`. Do not put the answer inside JavaScript or a markdown fence."
       : "Return the complete markdown answer inside one `<ANSWER>...</ANSWER>` block. Include concise source citations for representative evidence inside the answer. After the answer, emit one tiny JavaScript block that calls `SUBMIT({ sources: [...] })`. Do not put the answer inside JavaScript or a markdown fence."
-    : "Return the complete answer as plain Markdown with concise source citations for representative evidence.";
+    : "Return the complete user-facing answer inside one `<ANSWER>...</ANSWER>` block as non-empty Markdown with concise source citations for representative evidence. A tools-only transcript with no final answer is a failed task — after any tools, you must still emit the `<ANSWER>` block. Do not put the answer inside a markdown fence. Do not call SUBMIT.";
 
   if (runtime !== "rlm") {
     return `# Ask Task

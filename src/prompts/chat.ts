@@ -168,7 +168,7 @@ Useful tools include \`inspect\`, \`readFile\`, \`readFileRange\`, \`rg\`, \`gre
     ? docsInline
       ? `Return the complete markdown answer inside one \`<ANSWER>...</ANSWER>\` block. If you answered from Documentation context only, call \`SUBMIT({ sources: [] })\` after the answer. If you inspected repository files, include representative cited paths in \`SUBMIT({ sources: [...] })\`. Do not put the answer inside JavaScript or a markdown fence.`
       : `Return the complete markdown answer inside one \`<ANSWER>...</ANSWER>\` block. Include concise source citations for representative evidence inside the answer. After the answer, emit one tiny JavaScript block that calls \`SUBMIT({ sources: [...] })\` with representative cited paths. Do not put the answer inside JavaScript or a markdown fence.`
-    : `Return the complete answer as plain Markdown with concise source citations for representative evidence.`;
+    : `Return the complete user-facing answer inside one \`<ANSWER>...</ANSWER>\` block as non-empty Markdown with concise source citations for representative evidence. A tools-only transcript with no final answer is a failed task — after any tools, you must still emit the \`<ANSWER>\` block. Do not put the answer inside a markdown fence. Do not call SUBMIT.`;
 
   if (runtime !== "rlm") {
     return `# Ask Task

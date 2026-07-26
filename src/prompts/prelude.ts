@@ -39,6 +39,7 @@ function jcodePreludeForChannel(_channelId: string, depth: WikiDepth = "deep"): 
     "Use JCODE native tools directly. Do not emit legacy JavaScript tool loops, JIT blocks, or SUBMIT calls.",
     "Think Socratically before tool use: what evidence would change the answer, which command or file can produce it, and what is the smallest reliable next step?",
     "When a prompt asks for <ANSWER> tags, put the final answer inside <ANSWER>...</ANSWER> and stop.",
+    "Never finish with tools only. A tools-only transcript with an empty or missing final answer is a failed task — always end with a non-empty user-facing answer in the requested format.",
     speed,
     "",
   ].join("\n");
@@ -103,7 +104,9 @@ function localCliPreludeForChannel(depth: WikiDepth = "deep"): string {
   return [
     "# Local CLI Agent Instructions",
     "Use native CLI tools directly.",
-    "When done, return the final answer as plain Markdown.",
+    "When a prompt asks for <ANSWER> tags, put the final answer inside <ANSWER>...</ANSWER> and stop.",
+    "When done, return a non-empty final answer as Markdown (inside <ANSWER> when requested).",
+    "Never finish with tools only. A tools-only transcript with an empty or missing final answer is a failed task.",
     speed,
     "",
   ].join("\n");

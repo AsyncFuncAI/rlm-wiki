@@ -2167,7 +2167,8 @@ export const LOCAL_CLI_PROMPT_ECHO_MARKERS = [
   "\n## Knowledge Profile",
   "\n<code-kb>",
   "Parallelize tool calls whenever possible. Especially file reads",
-  "Use native CLI tools directly.\nWhen done, return the final answer as plain Markdown.",
+  "Use native CLI tools directly.\nWhen a prompt asks for <ANSWER> tags, put the final answer inside <ANSWER>...</ANSWER> and stop.",
+  "When done, return a non-empty final answer as Markdown",
 ] as const;
 
 const LOCAL_CLI_SYSTEM_INTRO =
@@ -2188,7 +2189,8 @@ export function isLocalCliScaffoldAt(text: string, idx: number): boolean {
     /<code-kb>/i,
     /Socratic-thinking general-purpose/i,
     /Parallelize tool calls whenever possible/i,
-    /When done, return the final answer as plain Markdown/i,
+    /When done, return a non-empty final answer as Markdown/i,
+    /Never finish with tools only/i,
     /##\s*Knowledge Profile/i,
     /##\s*Wiki context\b/i,
   ];
