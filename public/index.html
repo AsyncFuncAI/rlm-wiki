@@ -2820,9 +2820,11 @@
 
     function renderConnected() {
       const active = state.connected.filter((app) => app.isActive || app.isNoAuth);
+      const inactive = state.connected.filter((app) => !(app.isActive || app.isNoAuth));
+      const configured = state.settings.composio?.configured !== false;
       connectedCount.textContent = String(active.length);
-      connectedList.innerHTML = active.length
-        ? active.map((app) => `
+      if (active.length) {
+        connectedList.innerHTML = active.map((app) => `
             <article class="cap-connected-item">
               ${toolkitLogo(app)}
               <div class="cap-connected-main">
@@ -2831,8 +2833,18 @@
               </div>
               <span class="cap-status connected">Connected</span>
             </article>
-          `).join('')
-        : '<div class="cap-empty">No connected apps yet. Connect one below and it will appear here.</div>';
+          `).join('');
+        return;
+      }
+      if (!configured) {
+        connectedList.innerHTML = '<div class="cap-empty">Set <code>COMPOSIO_API_KEY</code> in the server environment to enable app connectors.</div>';
+        return;
+      }
+      if (inactive.length) {
+        connectedList.innerHTML = `<div class="cap-empty">${inactive.length} saved app${inactive.length === 1 ? '' : 's'} need authorization. Use Authorize below (GitHub, Slack, …) to finish OAuth.</div>`;
+        return;
+      }
+      connectedList.innerHTML = '<div class="cap-empty">No connected apps yet. Connect one below and it will appear here.</div>';
     }
 
     function renderSkeletons() {
