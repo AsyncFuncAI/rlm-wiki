@@ -154,9 +154,13 @@ import {
   type SecretGrantStore,
 } from "./secret-grants.ts";
 import {
+  DEFAULT_UNIKRAFT_GRACE_MS,
+  deleteUnikraftInstanceBestEffort,
   dispatchJobToUnikraft,
   unikraftDispatchConfig,
   unikraftDispatchEnabledForJobType,
+  unikraftGraceUntilIso,
+  unikraftInstanceNameForJob,
 } from "./unikraft-compute.ts";
 import {
   addComposioToolkits,
@@ -3304,6 +3308,7 @@ function runResponse(
             run,
             ownerUserId,
             productStore,
+            jobQueue,
           });
         })
         .catch(async (error) => {
@@ -3389,8 +3394,9 @@ async function enqueueRunJob(
     })
     : null;
   const jobType = `run.${run.kind}`;
+  const unikraft = unikraftDispatchEnabledForJobType(jobType);
   // Ephemeral Unikraft VMs make mid-job death routine; allow one reclaim on lock expiry.
-  const maxAttempts = unikraftDispatchEnabledForJobType(jobType)
+  const maxAttempts = unikraft
     ? Math.max(2, unikraftDispatchConfig().maxAttempts)
     : 1;
   const job = await jobQueue.enqueue({
@@ -3404,6 +3410,13 @@ async function enqueueRunJob(
       title: run.title,
       input: run.input,
       ...(grant ? { secretGrantId: grant.id, secretGrantExpiresAt: grant.expiresAt } : {}),
+      // Reserve the job for Unikraft during boot grace so Railway claimNext cannot steal it.
+      ...(unikraft
+        ? {
+          unikraftDispatched: true,
+          unikraftGraceUntil: unikraftGraceUntilIso(Date.now(), DEFAULT_UNIKRAFT_GRACE_MS),
+        }
+        : {}),
     },
     maxAttempts,
   });
@@ -3420,6 +3433,7 @@ async function maybeDispatchJobToUnikraft(args: {
   run: ProductRun;
   ownerUserId: string;
   productStore: ProductStore;
+  jobQueue: JobQueue;
 }): Promise<void> {
   if (!unikraftDispatchEnabledForJobType(args.job.type)) return;
   try {
@@ -3433,12 +3447,24 @@ async function maybeDispatchJobToUnikraft(args: {
       console.log(
         `[unikraft] skip dispatch job=${args.job.id} type=${args.job.type} reason=${result.skippedReason || "unknown"}`,
       );
+      // Clear grace so a Railway worker can claim immediately.
+      await args.jobQueue.patchPayload(args.job.id, {
+        unikraftDispatched: true,
+        unikraftGraceUntil: new Date(0).toISOString(),
+        unikraftSkipReason: result.skippedReason || "unknown",
+      }).catch(() => null);
       return;
     }
     const instance = result.instance;
     console.log(
       `[unikraft] dispatched job=${args.job.id} type=${args.job.type} instance=${instance?.name || instance?.uuid || "?"}`,
     );
+    await args.jobQueue.patchPayload(args.job.id, {
+      unikraftDispatched: true,
+      unikraftInstanceUuid: instance?.uuid || null,
+      unikraftInstanceName: instance?.name || null,
+      unikraftMetro: instance?.metro || null,
+    }).catch(() => null);
     await args.productStore.appendEvent(args.run.id, "status", {
       phase: "compute",
       message: `Dispatched to Unikraft sandbox${instance?.name ? ` (${instance.name})` : ""}.`,
@@ -3452,6 +3478,11 @@ async function maybeDispatchJobToUnikraft(args: {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.warn(`[unikraft] dispatch failed for job ${args.job.id}:`, message);
+    await args.jobQueue.patchPayload(args.job.id, {
+      unikraftDispatched: true,
+      unikraftGraceUntil: new Date(0).toISOString(),
+      unikraftSkipReason: message,
+    }).catch(() => null);
     await args.productStore.appendEvent(args.run.id, "status", {
       phase: "compute",
       message: `Unikraft dispatch failed; waiting for Railway worker reclaim. ${message}`,
@@ -4687,6 +4718,20 @@ export async function startServer(opts: ServerOptions = {}): Promise<void> {
         for (const job of jobs) {
           if (job.status === "queued" || job.status === "running") {
             await baseJobQueue.cancel(job.id, USER_STOP_MESSAGE).catch(() => null);
+          }
+          // Best-effort delete of the dispatched microVM (don't wait for 45m autokill).
+          const instanceId = String(
+            job.payload?.unikraftInstanceUuid
+            || job.payload?.unikraftInstanceName
+            || "",
+          ).trim() || unikraftInstanceNameForJob(job.id);
+          if (unikraftDispatchConfig().enabled || job.payload?.unikraftDispatched) {
+            await deleteUnikraftInstanceBestEffort(instanceId).catch((error) => {
+              console.warn(
+                `[unikraft] cancel delete failed for ${instanceId}:`,
+                error instanceof Error ? error.message : error,
+              );
+            });
           }
         }
 

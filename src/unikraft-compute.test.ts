@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import {
-  __resetUnikraftDispatchStateForTests,
   buildWorkerEnv,
+  countLiveWorkerInstances,
   createUnikraftClient,
   dispatchJobToUnikraft,
   unikraftDispatchConfig,
   unikraftDispatchEnabledForJobType,
+  unikraftGraceUntilIso,
+  unikraftInstanceNameForJob,
 } from "./unikraft-compute.ts";
+import { isUnikraftGraceQueued, type JobRecord } from "./job-queue.ts";
 
 describe("unikraftDispatchConfig", () => {
   test("disabled without token or image", () => {
@@ -68,12 +71,12 @@ describe("buildWorkerEnv", () => {
         },
       });
       expect(env.RLM_WIKI_JOB_ID).toBe("job-1");
-      expect(env.RLM_WIKI_RUN_ID).toBe("run-1");
       expect(env.DATABASE_URL).toBe("postgres://example");
       expect(env.RLM_WIKI_SECRET_GRANT_KEY).toBe("grant-key");
       expect(env.SAFE_CUSTOM).toBe("ok");
       expect(env.UNIKRAFT_API_KEY).toBeUndefined();
       expect(env.UKC_TOKEN).toBeUndefined();
+      expect(env.RLM_WIKI_RUN_ID).toBeUndefined();
     } finally {
       if (previous === undefined) delete process.env.UNIKRAFT_API_KEY;
       else process.env.UNIKRAFT_API_KEY = previous;
@@ -81,19 +84,36 @@ describe("buildWorkerEnv", () => {
   });
 });
 
+describe("isUnikraftGraceQueued", () => {
+  test("reserves queued unikraft jobs during grace window", () => {
+    const now = Date.now();
+    const job = {
+      status: "queued",
+      payload: {
+        unikraftDispatched: true,
+        unikraftGraceUntil: new Date(now + 60_000).toISOString(),
+      },
+    } as unknown as JobRecord;
+    expect(isUnikraftGraceQueued(job, now)).toBe(true);
+    expect(isUnikraftGraceQueued(job, now + 120_000)).toBe(false);
+  });
+});
+
 describe("dispatchJobToUnikraft", () => {
   test("creates a delete-on-stop instance for an assigned job", async () => {
-    __resetUnikraftDispatchStateForTests();
-    const calls: Array<{ method?: string; body?: unknown }> = [];
-    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+    const calls: Array<{ method?: string; url?: string; body?: unknown }> = [];
+    const fetchImpl = (async (url: string, init?: RequestInit) => {
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
-      calls.push({ method: init?.method, body });
+      calls.push({ method: init?.method, url: String(url), body });
+      if (String(url).endsWith("/instances") && (init?.method || "GET") === "GET") {
+        return new Response(JSON.stringify({ status: "success", data: { instances: [] } }), { status: 200 });
+      }
       return new Response(JSON.stringify({
         status: "success",
         data: {
           instances: [{
             uuid: "11111111-1111-4111-8111-111111111111",
-            name: "rlm-job-1",
+            name: unikraftInstanceNameForJob("job-abc"),
             state: "starting",
           }],
         },
@@ -118,13 +138,14 @@ describe("dispatchJobToUnikraft", () => {
 
     expect(result.dispatched).toBe(true);
     expect(result.instance?.uuid).toBe("11111111-1111-4111-8111-111111111111");
-    expect(calls[0]?.method).toBe("POST");
-    const body = calls[0]?.body as {
+    const create = calls.find((call) => call.method === "POST");
+    const body = create?.body as {
       features?: string[];
       args?: string[];
       entrypoint?: string[];
       env?: Record<string, string>;
       image?: { url?: string };
+      name?: string;
     };
     expect(body.features).toContain("delete-on-stop");
     expect(body.image?.url).toBe("oci://example/worker:latest");
@@ -132,50 +153,42 @@ describe("dispatchJobToUnikraft", () => {
     expect(body.args).toEqual(["run", "./bin/rlm-wiki.ts", "worker", "--once", "--job", "job-abc"]);
     expect(body.env?.RLM_WIKI_JOB_ID).toBe("job-abc");
     expect(body.env?.UNIKRAFT_API_KEY).toBeUndefined();
+    expect(body.name).toBe(unikraftInstanceNameForJob("job-abc"));
   });
 
-  test("skips when at concurrency cap", async () => {
-    __resetUnikraftDispatchStateForTests();
+  test("skips when live instance count is at cap", async () => {
+    const client = {
+      createInstance: async () => {
+        throw new Error("should not create");
+      },
+      deleteInstance: async () => {},
+      listInstances: async () => ([
+        { uuid: "a", name: "rlm-a", state: "running" },
+        { uuid: "b", name: "rlm-b", state: "starting" },
+      ]),
+    };
     const config = unikraftDispatchConfig({
       RLM_WIKI_UNIKRAFT_DISPATCH: "1",
       UNIKRAFT_API_KEY: "token",
       RLM_WIKI_UNIKRAFT_IMAGE: "oci://example/worker:latest",
-      RLM_WIKI_UNIKRAFT_MAX_CONCURRENT: "1",
+      RLM_WIKI_UNIKRAFT_MAX_CONCURRENT: "2",
     });
-
-    let resolveCreate: (() => void) | null = null;
-    const blocked = new Promise<void>((resolve) => {
-      resolveCreate = resolve;
-    });
-    const client = {
-      createInstance: async () => {
-        await blocked;
-        return { uuid: "u", name: "n" };
-      },
-      deleteInstance: async () => {},
-      listInstances: async () => [],
-    };
-
-    const first = dispatchJobToUnikraft({
-      jobId: "job-1",
-      jobType: "run.wiki_generate",
-      ownerUserId: "user",
-      client,
-      config,
-    });
-    // Allow first call to enter inFlight++
-    await Promise.resolve();
-    const second = await dispatchJobToUnikraft({
+    const result = await dispatchJobToUnikraft({
       jobId: "job-2",
       jobType: "run.wiki_generate",
       ownerUserId: "user",
       client,
       config,
     });
-    expect(second.dispatched).toBe(false);
-    expect(second.skippedReason).toBe("max_concurrent_reached");
-    resolveCreate?.();
-    await first;
-    __resetUnikraftDispatchStateForTests();
+    expect(result.dispatched).toBe(false);
+    expect(result.skippedReason).toContain("max_concurrent_reached");
+    expect(await countLiveWorkerInstances(client)).toBe(2);
+  });
+});
+
+describe("unikraftGraceUntilIso", () => {
+  test("returns a future ISO timestamp", () => {
+    const ts = Date.parse(unikraftGraceUntilIso(1_000_000, 5_000));
+    expect(ts).toBe(1_005_000);
   });
 });

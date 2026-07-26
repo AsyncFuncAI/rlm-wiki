@@ -62,6 +62,8 @@ export interface JobQueue {
   cancel(jobId: string, reason?: string): Promise<JobRecord | null>;
   getJob(jobId: string): Promise<JobRecord | null>;
   listByRun(runId: string): Promise<JobRecord[]>;
+  /** Merge fields into a job payload (used to record Unikraft instance ids). */
+  patchPayload(jobId: string, patch: Record<string, unknown>): Promise<JobRecord | null>;
   stats(): Promise<JobQueueStats>;
 }
 
@@ -114,6 +116,15 @@ function jsonObject(value: unknown): Record<string, unknown> {
 
 function pgJson(value: unknown): postgres.JSONValue {
   return value as postgres.JSONValue;
+}
+
+/** Queued jobs reserved for Unikraft should not be stolen by Railway claimNext during boot grace. */
+export function isUnikraftGraceQueued(job: JobRecord, nowMs = Date.now()): boolean {
+  if (job.status !== "queued") return false;
+  const payload = job.payload ?? {};
+  if (payload.unikraftDispatched !== true && payload.unikraftDispatched !== "true") return false;
+  const graceUntil = Date.parse(String(payload.unikraftGraceUntil || ""));
+  return Number.isFinite(graceUntil) && graceUntil > nowMs;
 }
 
 function cleanOwnerUserId(value: string): string {
@@ -211,14 +222,15 @@ class FileJobQueue implements JobQueue {
 
   async claim(jobId: string, args: { workerId: string; lockMs?: number }): Promise<JobRecord | null> {
     const job = await this.getJob(jobId);
-    if (!job || !this.claimable(job)) return null;
+    // Exact claim ignores available_at so Unikraft can take a reserved job immediately.
+    if (!job || !this.exactClaimable(job)) return null;
     return this.writeClaimed(job, args.workerId, args.lockMs);
   }
 
   async claimNext(args: { workerId: string; types?: string[]; lockMs?: number }): Promise<JobRecord | null> {
     const types = args.types?.length ? new Set(args.types) : null;
     const job = this.readJobs()
-      .filter((item) => (!types || types.has(item.type)) && this.claimable(item))
+      .filter((item) => (!types || types.has(item.type)) && this.claimable(item) && !isUnikraftGraceQueued(item))
       .sort((a, b) => (
         b.priority - a.priority
         || a.availableAt.localeCompare(b.availableAt)
@@ -280,6 +292,18 @@ class FileJobQueue implements JobQueue {
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
+  async patchPayload(jobId: string, patch: Record<string, unknown>): Promise<JobRecord | null> {
+    const job = await this.getJob(jobId);
+    if (!job) return null;
+    const updated = {
+      ...job,
+      payload: { ...job.payload, ...patch },
+      updatedAt: nowIso(),
+    };
+    this.writeJob(updated);
+    return updated;
+  }
+
   async stats(): Promise<JobQueueStats> {
     const stats = emptyStats(this.mode);
     const now = Date.now();
@@ -302,6 +326,15 @@ class FileJobQueue implements JobQueue {
       && job.attempts < job.maxAttempts
       && Boolean(job.lockedUntil)
       && Date.parse(job.lockedUntil!) <= now;
+  }
+
+  /** Exact job assignment: queued jobs are always claimable by id (ignore available_at). */
+  private exactClaimable(job: JobRecord): boolean {
+    if (job.status === "queued") return true;
+    return job.status === "running"
+      && job.attempts < job.maxAttempts
+      && Boolean(job.lockedUntil)
+      && Date.parse(job.lockedUntil!) <= Date.now();
   }
 
   private writeClaimed(job: JobRecord, workerId: string, lockMs = DEFAULT_LOCK_MS): JobRecord {
@@ -409,6 +442,7 @@ class PostgresJobQueue implements JobQueue {
 
   async claim(jobId: string, args: { workerId: string; lockMs?: number }): Promise<JobRecord | null> {
     const lockMs = args.lockMs ?? DEFAULT_LOCK_MS;
+    // Exact claim ignores available_at so Unikraft can claim a grace-reserved job immediately.
     const rows = await this.sql`
       update rlm_jobs
       set status = ${"running"},
@@ -419,7 +453,7 @@ class PostgresJobQueue implements JobQueue {
           updated_at = now()
       where id = ${jobId}
         and (
-          (status = ${"queued"} and available_at <= now())
+          status = ${"queued"}
           or (status = ${"running"} and locked_until <= now() and attempts < max_attempts)
         )
       returning *
@@ -431,12 +465,20 @@ class PostgresJobQueue implements JobQueue {
     const lockMs = args.lockMs ?? DEFAULT_LOCK_MS;
     return this.sql.begin(async (sql) => {
       const typeFilter = args.types?.length ? args.types : null;
+      // Skip Unikraft-reserved queued jobs during boot grace (payload.unikraftGraceUntil).
       const rows = typeFilter
         ? await sql`
             select id from rlm_jobs
             where type in ${sql(typeFilter)}
               and (
-                (status = ${"queued"} and available_at <= now())
+                (
+                  status = ${"queued"}
+                  and available_at <= now()
+                  and not (
+                    coalesce(payload->>'unikraftDispatched', 'false') in ('true', '1')
+                    and coalesce((payload->>'unikraftGraceUntil')::timestamptz, to_timestamp(0)) > now()
+                  )
+                )
                 or (status = ${"running"} and locked_until <= now() and attempts < max_attempts)
               )
             order by priority desc, available_at asc, created_at asc
@@ -446,7 +488,14 @@ class PostgresJobQueue implements JobQueue {
         : await sql`
             select id from rlm_jobs
             where (
-              (status = ${"queued"} and available_at <= now())
+              (
+                status = ${"queued"}
+                and available_at <= now()
+                and not (
+                  coalesce(payload->>'unikraftDispatched', 'false') in ('true', '1')
+                  and coalesce((payload->>'unikraftGraceUntil')::timestamptz, to_timestamp(0)) > now()
+                )
+              )
               or (status = ${"running"} and locked_until <= now() and attempts < max_attempts)
             )
             order by priority desc, available_at asc, created_at asc
@@ -515,6 +564,17 @@ class PostgresJobQueue implements JobQueue {
       order by updated_at desc
     `;
     return rows.map(normalizeJob);
+  }
+
+  async patchPayload(jobId: string, patch: Record<string, unknown>): Promise<JobRecord | null> {
+    const rows = await this.sql`
+      update rlm_jobs
+      set payload = coalesce(payload, '{}'::jsonb) || ${this.sql.json(pgJson(patch))}::jsonb,
+          updated_at = now()
+      where id = ${jobId}
+      returning *
+    `;
+    return rows[0] ? normalizeJob(rows[0]) : null;
   }
 
   async stats(): Promise<JobQueueStats> {

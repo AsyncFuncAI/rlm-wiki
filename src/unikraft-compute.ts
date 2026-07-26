@@ -61,8 +61,16 @@ const DEFAULT_AUTOKILL_MS = 45 * 60_000;
 const DEFAULT_MAX_CONCURRENT = 2;
 const DEFAULT_JOB_TYPES = ["run.wiki_generate", "run.code"];
 const DEFAULT_MAX_ATTEMPTS = 2;
+/** Railway claimNext skips Unikraft-reserved jobs for this long so the VM can boot + claim. */
+export const DEFAULT_UNIKRAFT_GRACE_MS = 120_000;
 
-let inFlightDispatches = 0;
+const LIVE_INSTANCE_STATES = new Set([
+  "starting",
+  "running",
+  "standby",
+  "draining",
+  "migrating",
+]);
 
 export function unikraftDispatchConfig(
   env: NodeJS.ProcessEnv = process.env,
@@ -212,11 +220,22 @@ export async function dispatchJobToUnikraft(
   if (!config.jobTypes.includes(args.jobType)) {
     return { dispatched: false, skippedReason: `job_type_not_enabled:${args.jobType}` };
   }
-  if (inFlightDispatches >= config.maxConcurrent) {
-    return { dispatched: false, skippedReason: "max_concurrent_reached" };
-  }
 
   const client = args.client ?? createUnikraftClient(config);
+  // Cap live VMs (not just in-flight create HTTP calls).
+  try {
+    const live = await countLiveWorkerInstances(client);
+    if (live >= config.maxConcurrent) {
+      return { dispatched: false, skippedReason: `max_concurrent_reached:${live}` };
+    }
+  } catch (error) {
+    // If listing fails, still allow a create but surface the skip reason on second failure.
+    console.warn(
+      `[unikraft] listInstances failed while checking concurrency:`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+
   const workerEnv = buildWorkerEnv({
     jobId: args.jobId,
     runId: args.runId,
@@ -224,25 +243,43 @@ export async function dispatchJobToUnikraft(
     extra: args.env,
   });
 
-  inFlightDispatches += 1;
-  try {
-    const instance = await client.createInstance({
-      name: `rlm-${args.jobId.slice(0, 28).replace(/[^a-z0-9-]/gi, "-").toLowerCase()}`,
-      env: workerEnv,
-      // Same image CMD can be overridden to force exact job worker.
-      args: ["run", "./bin/rlm-wiki.ts", "worker", "--once", "--job", args.jobId],
-      entrypoint: ["bun"],
-      tags: ["rlm-wiki", "worker", args.jobType, args.jobId],
-    });
-    return { dispatched: true, instance };
-  } finally {
-    inFlightDispatches = Math.max(0, inFlightDispatches - 1);
-  }
+  const instance = await client.createInstance({
+    name: unikraftInstanceNameForJob(args.jobId),
+    env: workerEnv,
+    // Same image CMD can be overridden to force exact job worker.
+    args: ["run", "./bin/rlm-wiki.ts", "worker", "--once", "--job", args.jobId],
+    entrypoint: ["bun"],
+    tags: ["rlm-wiki", "worker", args.jobType, args.jobId],
+  });
+  return { dispatched: true, instance };
 }
 
-/** Test helper — reset process-local concurrency counter. */
-export function __resetUnikraftDispatchStateForTests(): void {
-  inFlightDispatches = 0;
+export function unikraftInstanceNameForJob(jobId: string): string {
+  const slug = jobId.slice(0, 28).replace(/[^a-z0-9-]/gi, "-").toLowerCase().replace(/^-+|-+$/g, "");
+  return `rlm-${slug || "job"}`;
+}
+
+export function unikraftGraceUntilIso(nowMs = Date.now(), graceMs = DEFAULT_UNIKRAFT_GRACE_MS): string {
+  return new Date(nowMs + graceMs).toISOString();
+}
+
+export async function countLiveWorkerInstances(client: UnikraftClient): Promise<number> {
+  const instances = await client.listInstances();
+  return instances.filter((instance) => {
+    const state = String(instance.state || "").toLowerCase();
+    return !state || LIVE_INSTANCE_STATES.has(state);
+  }).length;
+}
+
+/** Best-effort stop/delete of a dispatched sandbox (cancel path). */
+export async function deleteUnikraftInstanceBestEffort(
+  idOrName: string,
+  config: UnikraftDispatchConfig = unikraftDispatchConfig(),
+  client?: UnikraftClient,
+): Promise<void> {
+  if (!config.token || !idOrName.trim()) return;
+  const api = client ?? createUnikraftClient(config);
+  await api.deleteInstance(idOrName.trim());
 }
 
 export function buildWorkerEnv(args: {
@@ -258,8 +295,6 @@ export function buildWorkerEnv(args: {
     RLM_WIKI_OWNER_USER_ID: args.ownerUserId,
     RLM_WIKI_ROOT: process.env.RLM_WIKI_UNIKRAFT_WORKER_ROOT || "/tmp/rlm-wiki-worker",
   };
-  if (args.runId) env.RLM_WIKI_RUN_ID = args.runId;
-
   // Control-plane secrets required for grant redemption + event writeback.
   // Never forward UNIKRAFT_API_KEY into the VM (Claudex: control key stays on web).
   const passThrough = [

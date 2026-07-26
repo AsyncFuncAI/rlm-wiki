@@ -97,7 +97,7 @@ EXPOSE 3141
 # rlm-wiki owns its own PORT handling (see bin/rlm-wiki.ts :: cmdServe).
 CMD ["bun", "run", "./bin/rlm-wiki.ts", "serve"]
 
-# Optional Unikraft / remote worker image target:
+# Optional Unikraft / remote worker image target (NOT the default final stage):
 #   docker build --target worker -t rlm-wiki-worker .
 # One-shot exact-job mode (set by Unikraft dispatcher):
 #   RLM_WIKI_JOB_ID=job-... bun run ./bin/rlm-wiki.ts worker --once --job "$RLM_WIKI_JOB_ID"
@@ -107,3 +107,8 @@ ENV RLM_WIKI_SERVE_DIST=0
 # Ephemeral sandboxes write scratch under /tmp by default.
 ENV RLM_WIKI_ROOT=/tmp/rlm-wiki-worker
 CMD ["bun", "run", "./bin/rlm-wiki.ts", "worker", "--once"]
+
+# Default final stage must remain the web service. Leaving `worker` last made
+# plain `docker build` / Railway images boot as workers and break /api serve.
+FROM base AS web
+CMD ["bun", "run", "./bin/rlm-wiki.ts", "serve"]
