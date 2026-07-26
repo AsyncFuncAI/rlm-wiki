@@ -138,26 +138,37 @@ export function createUnikraftClient(
     async createInstance(args) {
       const image = args.image || config.image;
       if (!image) throw new Error("RLM_WIKI_UNIKRAFT_IMAGE is required");
-      const payload = {
+      // Unikraft Cloud currently expects image as a plain string (registry ref),
+      // not an object. Older docs showed { url }; live API returns 400 for that.
+      const payload: Record<string, unknown> = {
         name: args.name || `rlm-job-${crypto.randomUUID().slice(0, 8)}`,
-        image: { url: image },
+        image,
         memory_mb: args.memoryMb ?? config.memoryMb,
         vcpus: args.vcpus ?? config.vcpus,
         env: args.env,
-        args: args.args,
-        entrypoint: args.entrypoint,
         autostart: true,
         restart_policy: "never",
         features: ["delete-on-stop"],
-        autokill: {
-          time_ms: args.autokillMs ?? config.autokillMs,
-        },
-        timeout_s: args.timeoutS ?? 120,
+        // API allows -1..10 seconds wait-for-running on create.
+        timeout_s: Math.min(10, Math.max(-1, args.timeoutS ?? 10)),
         tags: args.tags ?? ["rlm-wiki", "worker"],
       };
+      // Note: `autokill` is rejected by the live Unikraft API on instance create
+      // (400: not a valid member). Rely on delete-on-stop + explicit cancel delete.
+      if (args.args?.length) payload.args = args.args;
+      if (args.entrypoint?.length) payload.entrypoint = args.entrypoint;
       const response = await request<UnikraftApiEnvelope>("POST", "/instances", payload);
+      if (response.status && response.status !== "success") {
+        throw new Error(extractErrorMessage(response) || `Unikraft create failed: ${JSON.stringify(response).slice(0, 400)}`);
+      }
       const instance = firstInstance(response);
-      if (!instance?.uuid && !instance?.name) {
+      if (!instance) {
+        throw new Error(`Unikraft create instance returned no instance: ${JSON.stringify(response).slice(0, 400)}`);
+      }
+      if (String(instance.status || "success") === "error") {
+        throw new Error(String(instance.message || extractErrorMessage(response) || "Unikraft instance create failed"));
+      }
+      if (!instance.uuid && !instance.name) {
         throw new Error(`Unikraft create instance returned no instance: ${JSON.stringify(response).slice(0, 400)}`);
       }
       return {
@@ -170,11 +181,10 @@ export function createUnikraftClient(
     },
 
     async deleteInstance(idOrName) {
-      const body = [{ name: idOrName, dont_retain: true, timeout_s: 30 }];
-      // API accepts uuid or name objects; try uuid form when it looks like one.
+      // Live API accepts only uuid/name members on delete (no timeout_s/dont_retain).
       const payload = looksLikeUuid(idOrName)
-        ? [{ uuid: idOrName, dont_retain: true, timeout_s: 30 }]
-        : body;
+        ? [{ uuid: idOrName }]
+        : [{ name: idOrName }];
       await request("DELETE", "/instances", payload);
     },
 
@@ -243,12 +253,11 @@ export async function dispatchJobToUnikraft(
     extra: args.env,
   });
 
+  // Worker image CMD already runs `worker --once`; exact job id is in env.
+  // Live Unikraft API rejects `entrypoint` on create for this account/metro.
   const instance = await client.createInstance({
     name: unikraftInstanceNameForJob(args.jobId),
     env: workerEnv,
-    // Same image CMD can be overridden to force exact job worker.
-    args: ["run", "./bin/rlm-wiki.ts", "worker", "--once", "--job", args.jobId],
-    entrypoint: ["bun"],
     tags: ["rlm-wiki", "worker", args.jobType, args.jobId],
   });
   return { dispatched: true, instance };

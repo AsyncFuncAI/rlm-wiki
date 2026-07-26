@@ -148,9 +148,9 @@ describe("dispatchJobToUnikraft", () => {
       name?: string;
     };
     expect(body.features).toContain("delete-on-stop");
-    expect(body.image?.url).toBe("oci://example/worker:latest");
-    expect(body.entrypoint).toEqual(["bun"]);
-    expect(body.args).toEqual(["run", "./bin/rlm-wiki.ts", "worker", "--once", "--job", "job-abc"]);
+    expect((body as { image?: string }).image).toBe("oci://example/worker:latest");
+    expect(body.entrypoint).toBeUndefined();
+    expect(body.args).toBeUndefined();
     expect(body.env?.RLM_WIKI_JOB_ID).toBe("job-abc");
     expect(body.env?.UNIKRAFT_API_KEY).toBeUndefined();
     expect(body.name).toBe(unikraftInstanceNameForJob("job-abc"));
